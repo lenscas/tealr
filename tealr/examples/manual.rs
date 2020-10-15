@@ -1,5 +1,9 @@
 use rlua::{Lua, Result, UserData, UserDataMethods};
 use tealr::{TealData, TealDataMethods, TypeWalker, UserDataWrapper};
+//This example shows how to manually implement UserData using TealData
+//As you can see the amount of code is small and easy copy/pasteable.
+//Because of this it may make sense to do the implementation yourself
+//instead of paying the compile time cost of the macro
 
 //First, create the struct you want to export to lua.
 #[derive(Clone,Copy)]
@@ -19,13 +23,10 @@ impl TealData for Example {
         methods.add_function_mut("example_function_mut", |_, x: (bool,Option<Example>)| Ok(x))
     }
 }
-
-//implement userdata by redirecting it to TealData
-//the plan is to provide a Derive macro that does it for you
 impl UserData for Example {
     fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
-        let mut x = UserDataWrapper::from_user_data_methods(methods);
-        <Self as TealData>::add_methods(&mut x);
+        let mut wrapper = UserDataWrapper::from_user_data_methods(methods);
+        <Self as TealData>::add_methods(&mut wrapper)
     }
 }
 

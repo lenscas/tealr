@@ -19,8 +19,10 @@ jobs:
       #Release to crates.io first as that has the highest chance of failing
       - name: Login to crates.io
         run: cargo login ${{ secrets.CRATES_TOKEN }}
-      - name: Release on crates.io
-        run: cargo publish
+      - name: Release the derive crate
+        run: cd tealr_derive && cargo publish
+      - name: Release the main crate
+        run: cd tealr && cargo publish
       #Now, release to github as well.
       - name: Create Release on github
         id: create_release
