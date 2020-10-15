@@ -21,6 +21,10 @@ jobs:
         run: cargo login ${{ secrets.CRATES_TOKEN }}
       - name: Release the derive crate
         run: cd tealr_derive && cargo publish
+      - name: Backoff a bit before releasing tealr
+        uses: jakejarvis/wait-action@master
+        with:
+          time: '5s'
       - name: Release the main crate
         run: cd tealr && cargo publish
       #Now, release to github as well.
