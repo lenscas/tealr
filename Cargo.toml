@@ -3,6 +3,10 @@ name = "tealr"
 version = "0.0.1"
 authors = ["Casper <lenscas@gmail.com>"]
 edition = "2018"
+description = "Traits and structs to generate teal type defintions."
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
