@@ -1,0 +1,34 @@
+# This job automatically creates and publishes a new version on crates.io and github whenever a tag starting with `v`
+on:
+  push:
+    tags:
+      - 'v*'
+
+name: Create Release
+
+jobs:
+  build:
+    name: Create Releases
+    runs-on: ubuntu-latest
+    steps:
+      #get the code and the correct rust version
+      - uses: actions/checkout@v2
+      - uses: "actions-rs/toolchain@v1"
+        with:
+          toolchain: stable
+      #Release to crates.io first as that has the highest chance of failing
+      - name: Login to crates.io
+        run: cargo login ${{ secrets.CRATES_TOKEN }}
+      - name: Release on crates.io
+        run: cargo publish
+      #Now, release to github as well.
+      - name: Create Release on github
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
