@@ -35,7 +35,7 @@ impl ExportedFunctions {
 }
 
 struct TypeGenerator {
-    type_name: &'static str,
+    type_name: String,
     methods: Vec<ExportedFunctions>,
     mut_methods: Vec<ExportedFunctions>,
     functions: Vec<ExportedFunctions>,
@@ -68,17 +68,17 @@ impl TypeGenerator {
     }
     fn generate(self) -> std::result::Result<String, FromUtf8Error> {
         //let head = format!("local record {}", self.type_name);
-        let type_name = self.type_name;
+        let type_name = self.type_name.clone();
         let methods: Vec<_> = self
             .methods
             .into_iter()
-            .map(|v| v.generate(Some(type_name.to_owned())))
+            .map(|v| v.generate(Some(type_name.clone())))
             .collect::<std::result::Result<_, _>>()?;
 
         let methods_mut: Vec<_> = self
             .mut_methods
             .into_iter()
-            .map(|v| v.generate(Some(type_name.to_owned())))
+            .map(|v| v.generate(Some(type_name.clone())))
             .collect::<std::result::Result<_, _>>()?;
 
         let functions: Vec<_> = self
@@ -98,7 +98,7 @@ impl TypeGenerator {
         let functions = Self::combine_function_names(functions, "Pure functions");
         let functions_mut = Self::combine_function_names(functions_mut, "Mutating Functions");
         Ok(format!(
-            "\tlocal record {}\n{}{}{}{}\n\tend",
+            "\trecord {}\n{}{}{}{}\n\tend",
             self.type_name, methods, methods_mut, functions, functions_mut
         ))
     }
@@ -242,6 +242,6 @@ impl TypeWalker {
             .map(|v| v.generate())
             .collect::<std::result::Result<_, _>>()?;
         let v = v.join("\n");
-        Ok(format!("local record {}\n{}\nend",outer_name,v))
+        Ok(format!("local record {name}\n{record}\nend\nreturn {name}",name= outer_name, record=v))
     }
 }

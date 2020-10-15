@@ -3,11 +3,11 @@ use crate::teal_data::TealData;
 ///Represents a type
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TealType {
-    pub(crate) name: &'static str,
+    pub(crate) name: String,
     pub(crate) is_external: bool,
 }
 impl TealType {
-    fn new(name: &'static str, is_external: bool) -> Self {
+    fn new(name: String, is_external: bool) -> Self {
         Self { name, is_external }
     }
     ///generates a [TealType](crate::TealType) based on a type implementing [TealData](crate::TealData).
@@ -27,41 +27,57 @@ impl TealType {
 pub trait TealMultiValue {
     fn get_types() -> Vec<TealType>;
 }
-//TODO replace with macro like Rlua does
-//the returned vec code should look something like : vec![A::get_type(),B::get_type()]
-impl<T: TealData> TealMultiValue for T {
+
+macro_rules! impl_teal_multi_value {
+    () => (
+        impl TealMultiValue for () {
+            fn get_types() -> Vec<TealType> {
+                vec![]
+            }
+        }
+    );
+
+    ($($names:ident) +) => (
+        impl<$($names,)* > TealMultiValue for ($($names,)*)
+            where $($names: TealData,)*
+        {
+            #[allow(unused_mut)]
+            #[allow(non_snake_case)]
+            fn get_types() ->  Vec<TealType>{
+                let mut types = Vec::new();
+                $(types.push(TealType::from::<$names>());)*
+                types
+            }
+        }
+    );
+}
+
+impl<A> TealMultiValue for A
+where
+    A: TealData,
+{
+    #[allow(unused_mut)]
+    #[allow(non_snake_case)]
     fn get_types() -> Vec<TealType> {
-        vec![TealType::from::<T>()]
+        vec![TealType::from::<A>()]
     }
 }
 
-impl<A: TealData, B: TealData> TealMultiValue for (A, B) {
-    fn get_types() -> Vec<TealType> {
-        vec![TealType::from::<A>(), TealType::from::<B>()]
-    }
-}
+impl_teal_multi_value!();
+impl_teal_multi_value!(A);
+impl_teal_multi_value!(A B);
+impl_teal_multi_value!(A B C);
+impl_teal_multi_value!(A B C D);
+impl_teal_multi_value!(A B C D E);
+impl_teal_multi_value!(A B C D E F);
+impl_teal_multi_value!(A B C D E F G);
+impl_teal_multi_value!(A B C D E F G H);
+impl_teal_multi_value!(A B C D E F G H I);
+impl_teal_multi_value!(A B C D E F G H I J);
+impl_teal_multi_value!(A B C D E F G H I J K);
+impl_teal_multi_value!(A B C D E F G H I J K L);
+impl_teal_multi_value!(A B C D E F G H I J K L M);
+impl_teal_multi_value!(A B C D E F G H I J K L M N);
+impl_teal_multi_value!(A B C D E F G H I J K L M N O);
+impl_teal_multi_value!(A B C D E F G H I J K L M N O P);
 
-impl TealData for i8 {
-    fn get_type_name() -> &'static str {
-        "number"
-    }
-    fn is_external() -> bool {
-        false
-    }
-}
-impl TealData for f32 {
-    fn get_type_name() -> &'static str {
-        "number"
-    }
-    fn is_external() -> bool {
-        false
-    }
-}
-impl TealData for String {
-    fn get_type_name() -> &'static str {
-        "string"
-    }
-    fn is_external() -> bool {
-        false
-    }
-}
