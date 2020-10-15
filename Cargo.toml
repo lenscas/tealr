@@ -1,16 +1,5 @@
-[package]
-name = "tealr"
-version = "0.0.1"
-authors = ["Lenscas <lenscas@gmail.com>"]
-edition = "2018"
-description = "Traits and structs to generate teal type defintions."
-readme = "README.md"
-license = "MIT OR Apache-2.0"
-repository = "https://github.com/lenscas/tealr/"
-
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-rlua = "0.17"
-bstr = {version = "0.2",default_features = false}
+[workspace]
+members = [
+    "tealr",
+    "tealr_derive"
+]
