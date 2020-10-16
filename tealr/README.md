@@ -11,6 +11,7 @@ impl TealData for Example {
     fn get_type_name() -> String {
         String::from("Example")
     }
+}
 fn main() -> Result<()> {
     let file_contents = TypeWalker::new() 
         .proccess_type::<Example>()
