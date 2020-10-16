@@ -34,10 +34,7 @@ jobs:
       run: cargo test
 
   clippy:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
     - uses: hecrj/setup-rust-action@v1.2.0
       with:
