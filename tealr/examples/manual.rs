@@ -6,7 +6,7 @@ use tealr::{TealData, TealDataMethods, TypeWalker, UserDataWrapper};
 //instead of paying the compile time cost of the macro
 
 //First, create the struct you want to export to lua.
-#[derive(Clone,Copy)]
+#[derive(Clone, Copy)]
 struct Example {}
 
 //now, implement TealData. This tells rlua what methods are available and tealr what the types are
@@ -20,7 +20,9 @@ impl TealData for Example {
         methods.add_method("example_method", |_, _, x: i8| Ok(x));
         methods.add_method_mut("example_method_mut", |_, _, x: (i8, String)| Ok(x.1));
         methods.add_function("example_function", |_, x: Vec<String>| Ok((x, 8)));
-        methods.add_function_mut("example_function_mut", |_, x: (bool,Option<Example>)| Ok(x))
+        methods.add_function_mut("example_function_mut", |_, x: (bool, Option<Example>)| {
+            Ok(x)
+        })
     }
 }
 impl UserData for Example {

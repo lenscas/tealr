@@ -26,14 +26,14 @@ where
     ///wraps it.
     ///```
     ///# use rlua::{Lua, Result, UserData, UserDataMethods};
-    ///# use tealr::{TealData, TealDataMethods, TypePrinter, TypeWalker, UserDataWrapper};
+    ///# use tealr::{TealData, TealDataMethods, TypeWalker, UserDataWrapper};
     ///struct Example {}
     ///impl TealData for Example {
-    ///    fn get_type_name() -> &'static str {
-    ///        "Example"
+    ///    fn get_type_name() -> String {
+    ///        String::from("Example")
     ///    }
     ///}
-     ///impl UserData for Example {
+    ///impl UserData for Example {
     ///    fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
     ///        let mut x =UserDataWrapper::from_user_data_methods(methods);
     ///        <Self as TealData>::add_methods(&mut x);

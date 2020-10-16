@@ -201,7 +201,7 @@ pub struct TypeWalker {
     given_types: Vec<TypeGenerator>,
 }
 impl TypeWalker {
-    pub fn new()-> Self {
+    pub fn new() -> Self {
         Default::default()
     }
     ///prepares a type to have a `.d.tl` file generated, and adds it to the list of types to generate.
@@ -213,27 +213,23 @@ impl TypeWalker {
     }
     ///generates the `.d.tl` file. It outputs the string, its up to you to store it.
     ///```
-    ///# use rlua::{Lua, Result, UserData, UserDataMethods};
-    ///# use tealr::{TealData, TealDataMethods, TypePrinter, TypeWalker, UserDataWrapper};
+    ///# use rlua::{Lua, Result, UserDataMethods};
+    ///# use tealr::{TealData, TealDataMethods, TypeWalker, UserDataWrapper,UserData};
+    ///#[derive(UserData)]
     ///struct Example {}
     ///impl TealData for Example {
-    ///    fn get_type_name()-> &'static str {
-    ///        "Example"
+    ///    fn get_type_name()-> String {
+    ///        String::from("Example")
     ///    }
     ///}
-    /////This implementation is planned to be replaced by a derive.
-    ///impl UserData for Example {
-    ///    fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
-    ///        let mut x =UserDataWrapper::from_user_data_methods(methods);
-    ///        <Self as TealData>::add_methods(&mut x);
-    ///    }
-    ///}
-    ///let generated_string = TypeWalker::new().proccess_type::<Example>().generate("examples");
-    ///assert_eq!(generated_string,Ok(String::from("local record examples
-    ///\tlocal record Example
+    ///let generated_string = TypeWalker::new().proccess_type::<Example>().generate("Examples");
+    ///assert_eq!(generated_string,Ok(String::from("local record Examples
+    ///\trecord Example
     ///
     ///\tend
-    ///end")));
+    ///end
+    ///return Examples"
+    ///)));
     ///```
     pub fn generate(self, outer_name: &str) -> std::result::Result<String, FromUtf8Error> {
         let v: Vec<_> = self
@@ -242,6 +238,10 @@ impl TypeWalker {
             .map(|v| v.generate())
             .collect::<std::result::Result<_, _>>()?;
         let v = v.join("\n");
-        Ok(format!("local record {name}\n{record}\nend\nreturn {name}",name= outer_name, record=v))
+        Ok(format!(
+            "local record {name}\n{record}\nend\nreturn {name}",
+            name = outer_name,
+            record = v
+        ))
     }
 }

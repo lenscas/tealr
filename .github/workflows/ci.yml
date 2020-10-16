@@ -1,0 +1,45 @@
+name: Tests
+on:
+  pull_request:
+    paths:
+      - 'tealr/src/**.rs'
+      - 'tealr_derive/src/**.r'
+      - 'Cargo.toml'
+      - 'tealr/Cargo.lock'
+      - 'tealr_derive/Cargo.lock'
+      - '.github/workflows/ci.yml'
+jobs:
+  formatting:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: hecrj/setup-rust-action@v1
+      with:
+        rust-version: stable
+        components: rustfmt
+    - name: Formatting check
+      run: cargo fmt --all -- --check
+
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+    steps:
+    - uses: hecrj/setup-rust-action@v1.2.0
+      with:
+        rust-version: stable
+    - uses: actions/checkout@master
+    - name: Run tests
+      run: cargo test
+
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: hecrj/setup-rust-action@v1.2.0
+      with:
+        rust-version: stable
+        components: clippy
+    - uses: actions/checkout@master
+    - name: Clippy
+      run: cargo clippy -- -D warnings

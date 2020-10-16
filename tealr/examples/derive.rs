@@ -1,4 +1,4 @@
-use rlua::{Lua, Result, UserData, UserDataMethods};
+use rlua::{Lua, Result, UserDataMethods};
 use tealr::{TealData, TealDataMethods, TypeWalker, UserData};
 //this example shows how the new traits allow you to generate the .d.tl file
 //and shows how to use them to share data with lua
@@ -6,7 +6,7 @@ use tealr::{TealData, TealDataMethods, TypeWalker, UserData};
 //NOTE: All it does it generate the contents of the file. Storing it is left to the user.
 
 //First, create the struct you want to export to lua.
-#[derive(Clone,Copy,UserData)]
+#[derive(Clone, Copy, UserData)]
 struct Example {}
 
 //now, implement TealData. This tells rlua what methods are available and tealr what the types are
@@ -20,7 +20,9 @@ impl TealData for Example {
         methods.add_method("example_method", |_, _, x: i8| Ok(x));
         methods.add_method_mut("example_method_mut", |_, _, x: (i8, String)| Ok(x.1));
         methods.add_function("example_function", |_, x: Vec<String>| Ok((x, 8)));
-        methods.add_function_mut("example_function_mut", |_, x: (bool,Option<Example>)| Ok(x))
+        methods.add_function_mut("example_function_mut", |_, x: (bool, Option<Example>)| {
+            Ok(x)
+        })
     }
 }
 
@@ -38,7 +40,6 @@ fn main() -> Result<()> {
 
     //normally you would now save the file somewhere.
     println!("{}\n ", file_contents);
-
 
     //how you pass this type to lua hasn't changed:
     let lua = Lua::new();
