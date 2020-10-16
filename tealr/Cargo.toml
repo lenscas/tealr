@@ -1,6 +1,6 @@
 [package]
 name = "tealr"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Lenscas <lenscas@gmail.com>"]
 edition = "2018"
 description = "Traits and structs to generate teal type defintions."
