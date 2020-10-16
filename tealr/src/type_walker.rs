@@ -201,7 +201,7 @@ pub struct TypeWalker {
     given_types: Vec<TypeGenerator>,
 }
 impl TypeWalker {
-    pub fn new()-> Self {
+    pub fn new() -> Self {
         Default::default()
     }
     ///prepares a type to have a `.d.tl` file generated, and adds it to the list of types to generate.
@@ -238,6 +238,10 @@ impl TypeWalker {
             .map(|v| v.generate())
             .collect::<std::result::Result<_, _>>()?;
         let v = v.join("\n");
-        Ok(format!("local record {name}\n{record}\nend\nreturn {name}",name= outer_name, record=v))
+        Ok(format!(
+            "local record {name}\n{record}\nend\nreturn {name}",
+            name = outer_name,
+            record = v
+        ))
     }
 }

@@ -33,7 +33,7 @@ where
     ///        String::from("Example")
     ///    }
     ///}
-     ///impl UserData for Example {
+    ///impl UserData for Example {
     ///    fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
     ///        let mut x =UserDataWrapper::from_user_data_methods(methods);
     ///        <Self as TealData>::add_methods(&mut x);
