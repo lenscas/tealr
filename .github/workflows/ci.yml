@@ -6,7 +6,7 @@ on:
       - 'tealr_derive/src/**.r'
       - 'Cargo.toml'
       - 'tealr/Cargo.lock'
-      - 'tealr_derive/Cargo.lock'
+      - 'tealr_derive/Cargo.toml'
       - '.github/workflows/ci.yml'
 jobs:
   formatting:
