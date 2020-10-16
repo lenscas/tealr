@@ -213,7 +213,7 @@ impl TypeWalker {
     }
     ///generates the `.d.tl` file. It outputs the string, its up to you to store it.
     ///```
-    ///# use rlua::{Lua, Result, UserDataMethods,UserData};
+    ///# use rlua::{Lua, Result, UserDataMethods};
     ///# use tealr::{TealData, TealDataMethods, TypeWalker, UserDataWrapper,UserData};
     ///#[derive(UserData)]
     ///struct Example {}

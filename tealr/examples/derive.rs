@@ -1,4 +1,4 @@
-use rlua::{Lua, Result, UserData, UserDataMethods};
+use rlua::{Lua, Result, UserDataMethods};
 use tealr::{TealData, TealDataMethods, TypeWalker, UserData};
 //this example shows how the new traits allow you to generate the .d.tl file
 //and shows how to use them to share data with lua
