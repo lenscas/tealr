@@ -3,7 +3,7 @@ proc-macro = true
 
 [package]
 name = "tealr_derive"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["Lenscas <lenscas@gmail.com>"]
 edition = "2018"
 repository = "https://github.com/lenscas/tealr/"
