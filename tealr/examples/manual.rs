@@ -1,5 +1,5 @@
 use rlua::{Lua, Result, UserData, UserDataMethods};
-use tealr::{TealData, TealDataMethods, TypeWalker, UserDataWrapper};
+use tealr::{TealData, TealDataMethods, TypeRepresentation, TypeWalker, UserDataWrapper};
 //This example shows how to manually implement UserData using TealData
 //As you can see the amount of code is small and easy copy/pasteable.
 //Because of this it may make sense to do the implementation yourself
@@ -11,10 +11,6 @@ struct Example {}
 
 //now, implement TealData. This tells rlua what methods are available and tealr what the types are
 impl TealData for Example {
-    //how the type should be called in lua.
-    fn get_type_name() -> String {
-        String::from("Example")
-    }
     //implement your methods/functions
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method("example_method", |_, _, x: i8| Ok(x));
@@ -25,6 +21,14 @@ impl TealData for Example {
         })
     }
 }
+
+impl TypeRepresentation for Example {
+    //how the type should be called in lua.
+    fn get_type_name() -> std::borrow::Cow<'static, str> {
+        "Example".into()
+    }
+}
+
 impl UserData for Example {
     fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
         let mut wrapper = UserDataWrapper::from_user_data_methods(methods);

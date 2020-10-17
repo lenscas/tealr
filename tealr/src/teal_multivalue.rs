@@ -1,13 +1,15 @@
-use crate::teal_data::TealData;
+use std::borrow::Cow;
+
+use crate::teal_data::TypeRepresentation;
 
 ///Represents a type
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TealType {
-    pub(crate) name: String,
+    pub(crate) name: Cow<'static, str>,
     pub(crate) is_external: bool,
 }
 impl TealType {
-    fn new(name: String, is_external: bool) -> Self {
+    fn new(name: Cow<'static, str>, is_external: bool) -> Self {
         Self { name, is_external }
     }
     ///generates a [TealType](crate::TealType) based on a type implementing [TealData](crate::TealData).
@@ -18,13 +20,18 @@ impl TealType {
     /// //both i8 and f32 become a "number" in lua/teal. As such, their TealTypes are equal.
     ///assert_eq!(nummeric_i8,nummeric_float)
     ///```
-    pub fn from<A: TealData>() -> Self {
+    pub fn from<A: TypeRepresentation>() -> Self {
         Self::new(A::get_type_name(), A::is_external())
     }
 }
 
-///Used to get the types of the parameters and return types of methods/functions
+///A collection of TealValues.
+///
+///It is implemented by various tuples so they can be used
+//as function/method parameters and their return types.
 pub trait TealMultiValue {
+    ///Gets the types contained in this collection.
+    ///Order *IS* important.
     fn get_types() -> Vec<TealType>;
 }
 
@@ -39,7 +46,7 @@ macro_rules! impl_teal_multi_value {
 
     ($($names:ident) +) => (
         impl<$($names,)* > TealMultiValue for ($($names,)*)
-            where $($names: TealData,)*
+            where $($names: TypeRepresentation,)*
         {
             #[allow(unused_mut)]
             #[allow(non_snake_case)]
@@ -54,7 +61,7 @@ macro_rules! impl_teal_multi_value {
 
 impl<A> TealMultiValue for A
 where
-    A: TealData,
+    A: TypeRepresentation,
 {
     #[allow(unused_mut)]
     #[allow(non_snake_case)]
