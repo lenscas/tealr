@@ -9,7 +9,6 @@ use crate::{teal_data_methods::TealDataMethods, teal_multivalue::TealMultiValue}
 ///This allows you to easily implement [UserData](rlua::UserData) by wrapping the [UserDataMethods](rlua::UserDataMethods) in this struct
 ///and then passing it to the TealData implementation
 ///
-///TODO: Make a derive that does this automatically.
 pub struct UserDataWrapper<'a, 'lua, Container, T>
 where
     Container: UserDataMethods<'lua, T>,
@@ -26,18 +25,10 @@ where
     ///wraps it.
     ///```
     ///# use rlua::{Lua, Result, UserData, UserDataMethods};
-    ///# use tealr::{TealData, TealDataMethods, TypeWalker, UserDataWrapper};
+    ///# use tealr::{TealData, TealDataMethods, TypeWalker, UserDataWrapper, TypeRepresentation, TealDerive};
+    ///#[derive(TealDerive)]
     ///struct Example {}
     ///impl TealData for Example {
-    ///    fn get_type_name() -> String {
-    ///        String::from("Example")
-    ///    }
-    ///}
-    ///impl UserData for Example {
-    ///    fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
-    ///        let mut x =UserDataWrapper::from_user_data_methods(methods);
-    ///        <Self as TealData>::add_methods(&mut x);
-    ///    }
     ///}
     ///```
     pub fn from_user_data_methods(cont: &'a mut Container) -> Self {

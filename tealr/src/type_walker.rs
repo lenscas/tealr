@@ -1,8 +1,8 @@
-use std::string::FromUtf8Error;
+use std::{borrow::Cow, string::FromUtf8Error};
 
 use rlua::{Context, FromLuaMulti, MetaMethod, Result, ToLuaMulti, UserData};
 
-use crate::{TealData, TealDataMethods, TealMultiValue, TealType};
+use crate::{TealData, TealDataMethods, TealMultiValue, TealType, teal_data::TypeRepresentation};
 
 struct ExportedFunctions {
     name: Vec<u8>,
@@ -10,7 +10,7 @@ struct ExportedFunctions {
     returns: Vec<TealType>,
 }
 impl ExportedFunctions {
-    fn generate(self, self_type: Option<String>) -> std::result::Result<String, FromUtf8Error> {
+    fn generate(self, self_type: Option<Cow<'static,str>>) -> std::result::Result<String, FromUtf8Error> {
         let params = self_type
             .iter()
             .map(|v| v.to_owned())
@@ -35,7 +35,7 @@ impl ExportedFunctions {
 }
 
 struct TypeGenerator {
-    type_name: String,
+    type_name: Cow<'static,str>,
     methods: Vec<ExportedFunctions>,
     mut_methods: Vec<ExportedFunctions>,
     functions: Vec<ExportedFunctions>,
@@ -43,7 +43,7 @@ struct TypeGenerator {
 }
 
 impl TypeGenerator {
-    fn new<A: TealData>() -> Self {
+    fn new<A: TypeRepresentation>() -> Self {
         Self {
             type_name: A::get_type_name(),
             methods: Default::default(),
@@ -201,11 +201,12 @@ pub struct TypeWalker {
     given_types: Vec<TypeGenerator>,
 }
 impl TypeWalker {
+    ///creates the TypeWalker
     pub fn new() -> Self {
         Default::default()
     }
     ///prepares a type to have a `.d.tl` file generated, and adds it to the list of types to generate.
-    pub fn proccess_type<A: 'static + TealData + UserData>(mut self) -> Self {
+    pub fn proccess_type<A: 'static + TypeRepresentation + TealData + UserData>(mut self) -> Self {
         let mut new_type = TypeGenerator::new::<A>();
         <A as TealData>::add_methods(&mut new_type);
         self.given_types.push(new_type);
@@ -214,14 +215,10 @@ impl TypeWalker {
     ///generates the `.d.tl` file. It outputs the string, its up to you to store it.
     ///```
     ///# use rlua::{Lua, Result, UserDataMethods};
-    ///# use tealr::{TealData, TealDataMethods, TypeWalker, UserDataWrapper,UserData};
-    ///#[derive(UserData)]
+    ///# use tealr::{TealData, TealDataMethods, TypeWalker, UserDataWrapper,UserData,TypeRepresentation};
+    ///#[derive(UserData,TypeRepresentation)]
     ///struct Example {}
-    ///impl TealData for Example {
-    ///    fn get_type_name()-> String {
-    ///        String::from("Example")
-    ///    }
-    ///}
+    ///impl TealData for Example {}
     ///let generated_string = TypeWalker::new().proccess_type::<Example>().generate("Examples");
     ///assert_eq!(generated_string,Ok(String::from("local record Examples
     ///\trecord Example

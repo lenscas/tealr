@@ -1,20 +1,20 @@
 use rlua::{Lua, Result, UserDataMethods};
-use tealr::{TealData, TealDataMethods, TypeWalker, UserData};
+use tealr::{TealData, TealDataMethods, TypeWalker, UserData,TypeRepresentation};
 //this example shows how the new traits allow you to generate the .d.tl file
 //and shows how to use them to share data with lua
 //It also shows how to generate the file
 //NOTE: All it does it generate the contents of the file. Storing it is left to the user.
 
 //First, create the struct you want to export to lua.
-#[derive(Clone, Copy, UserData)]
+//instead of both deriving UserData and TypeRepresentation you can also
+//derive TealDerive, which does both. However you will still need to import
+//UserData and TypeRepresentation
+//The clone is only needed because one of the example functions has it as a parameter
+#[derive(Clone, UserData,TypeRepresentation)]
 struct Example {}
 
 //now, implement TealData. This tells rlua what methods are available and tealr what the types are
 impl TealData for Example {
-    //how the type should be called in lua.
-    fn get_type_name() -> String {
-        String::from("Example")
-    }
     //implement your methods/functions
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method("example_method", |_, _, x: i8| Ok(x));
@@ -34,8 +34,11 @@ fn main() -> Result<()> {
         .proccess_type::<Example>()
         //generate the file
         .generate("test")
-        //due to how the typings work, we technically can get an error.
-        //this is however rather unlikely, so using a .expect is probly fine
+        //the name parameter for TealDataMethods::{add_method,add_method_mut,add_function,add_function_mut}
+        //takes anything that can be used as a &[u8]
+        //this is to match the types from UserDataMethods
+        //however, as we turn it back into a string it is technically possible to get an error
+        //in this case, as &str's where used it can't happen though, so the .expect is fine
         .expect("oh no :(");
 
     //normally you would now save the file somewhere.
