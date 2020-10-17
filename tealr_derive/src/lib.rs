@@ -6,7 +6,6 @@
 //!
 //!Read the [README.md](https://github.com/lenscas/tealr/tree/master/tealr/README.md) in [tealr](https://github.com/lenscas/tealr/tree/master/tealr) for more information.
 
-
 extern crate proc_macro;
 extern crate syn;
 #[macro_use]

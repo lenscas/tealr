@@ -11,7 +11,6 @@ struct Example {}
 
 //now, implement TealData. This tells rlua what methods are available and tealr what the types are
 impl TealData for Example {
-   
     //implement your methods/functions
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method("example_method", |_, _, x: i8| Ok(x));
@@ -24,8 +23,8 @@ impl TealData for Example {
 }
 
 impl TypeRepresentation for Example {
-     //how the type should be called in lua.
-     fn get_type_name() -> std::borrow::Cow<'static,str> {
+    //how the type should be called in lua.
+    fn get_type_name() -> std::borrow::Cow<'static, str> {
         "Example".into()
     }
 }

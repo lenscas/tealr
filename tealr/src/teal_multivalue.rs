@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::teal_data::{TypeRepresentation};
+use crate::teal_data::TypeRepresentation;
 
 ///Represents a type
 #[derive(Debug, PartialEq, Eq, Clone)]

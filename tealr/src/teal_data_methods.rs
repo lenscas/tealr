@@ -32,7 +32,7 @@ pub trait TealDataMethods<'lua, T> {
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         F: 'static + Send + Fn(Context<'lua>, A) -> Result<R>;
-    
+
     ///Exposes a mutable function to lua
     fn add_function_mut<S, A, R, F>(&mut self, name: &S, function: F)
     where

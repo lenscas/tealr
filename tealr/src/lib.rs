@@ -13,7 +13,7 @@
 //!impl TealData for Example {
 //!}
 //!fn main() -> Result<()> {
-//!    let file_contents = TypeWalker::new() 
+//!    let file_contents = TypeWalker::new()
 //!        .proccess_type::<Example>()
 //!        .generate("test")
 //!        .expect("oh no :(");
@@ -28,20 +28,15 @@
 //!
 //!This should make it pretty much as easy to work with teal as with lua. However, I am not sure if doing this breaks any rules from rlua. As such, some research is required.
 
-
 pub use rlua::UserData;
-pub use teal_data::{TealData,TypeRepresentation};
+pub use teal_data::{TealData, TypeRepresentation};
 pub use teal_data_methods::TealDataMethods;
 pub use teal_multivalue::{TealMultiValue, TealType};
 pub use type_walker::TypeWalker;
 pub use user_data_wrapper::UserDataWrapper;
 
 #[cfg(feature = "derive")]
-pub use tealr_derive::{
-    UserData,
-    TypeRepresentation,
-    TealDerive
-};
+pub use tealr_derive::{TealDerive, TypeRepresentation, UserData};
 
 mod teal_data;
 mod teal_data_methods;

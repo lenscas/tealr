@@ -30,7 +30,7 @@ macro_rules! impl_teal_data {
 ///A trait to collect the required type information like the name of the type.
 pub trait TypeRepresentation {
     ///returns the type name as how it should show up in the generated `.d.tl` file
-    fn get_type_name()-> Cow<'static, str>;
+    fn get_type_name() -> Cow<'static, str>;
     ///This method tells the generator that the type will always be available
     ///This is pretty much only the case for native lua/teal types like `number`
     ///
@@ -41,7 +41,10 @@ pub trait TypeRepresentation {
     }
 }
 
-use std::{borrow::Cow, collections::{BTreeMap, HashMap}};
+use std::{
+    borrow::Cow,
+    collections::{BTreeMap, HashMap},
+};
 
 impl_teal_data!("boolean" bool);
 impl_teal_data!("string" String,std::ffi::CString,bstr::BString,&str,&std::ffi::CStr,&bstr::BStr);

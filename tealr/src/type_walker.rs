@@ -2,7 +2,7 @@ use std::{borrow::Cow, string::FromUtf8Error};
 
 use rlua::{Context, FromLuaMulti, MetaMethod, Result, ToLuaMulti, UserData};
 
-use crate::{TealData, TealDataMethods, TealMultiValue, TealType, teal_data::TypeRepresentation};
+use crate::{teal_data::TypeRepresentation, TealData, TealDataMethods, TealMultiValue, TealType};
 
 struct ExportedFunctions {
     name: Vec<u8>,
@@ -10,7 +10,10 @@ struct ExportedFunctions {
     returns: Vec<TealType>,
 }
 impl ExportedFunctions {
-    fn generate(self, self_type: Option<Cow<'static,str>>) -> std::result::Result<String, FromUtf8Error> {
+    fn generate(
+        self,
+        self_type: Option<Cow<'static, str>>,
+    ) -> std::result::Result<String, FromUtf8Error> {
         let params = self_type
             .iter()
             .map(|v| v.to_owned())
@@ -35,7 +38,7 @@ impl ExportedFunctions {
 }
 
 struct TypeGenerator {
-    type_name: Cow<'static,str>,
+    type_name: Cow<'static, str>,
     methods: Vec<ExportedFunctions>,
     mut_methods: Vec<ExportedFunctions>,
     functions: Vec<ExportedFunctions>,
