@@ -49,8 +49,8 @@ fn impl_type_representation_derive(ast: &syn::DeriveInput) -> syn::export::Token
     let name = &ast.ident;
     let gen = quote! {
         impl TypeRepresentation for #name {
-            fn get_type_name() -> std::borrow::Cow<'static, str> {
-                stringify!(#name).into()
+            fn get_type_name() -> ::std::borrow::Cow<'static, str> {
+                ::std::borrow::Cow::from(stringify!(#name))
             }
         }
     };
