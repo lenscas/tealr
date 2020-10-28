@@ -222,7 +222,61 @@ impl TypeWalker {
     ///#[derive(UserData,TypeRepresentation)]
     ///struct Example {}
     ///impl TealData for Example {}
-    ///let generated_string = TypeWalker::new().proccess_type::<Example>().generate("Examples");
+    ///let generated_string = TypeWalker::new().proccess_type::<Example>().generate("Examples",true);
+    ///assert_eq!(generated_string,Ok(String::from("global record Examples
+    ///\trecord Example
+    ///
+    ///\tend
+    ///end
+    ///return Examples"
+    ///)));
+    ///```
+    pub fn generate(self, outer_name: &str, is_global : bool ) -> std::result::Result<String, FromUtf8Error> {
+        let v: Vec<_> = self
+            .given_types
+            .into_iter()
+            .map(|v| v.generate())
+            .collect::<std::result::Result<_, _>>()?;
+        let v = v.join("\n");
+        let scope = if is_global {
+            "global"
+        } else {
+            "local"
+        };
+        Ok(format!(
+            "{} record {name}\n{record}\nend\nreturn {name}",
+            scope,
+            name = outer_name,
+            record = v
+        ))
+    }
+    ///Same as calling [Typewalker::generate(outer_name,true)](crate::TypeWalker::generate).
+    ///```
+    ///# use rlua::{Lua, Result, UserDataMethods};
+    ///# use tealr::{TealData, TealDataMethods, TypeWalker, UserDataWrapper,UserData,TypeRepresentation};
+    ///#[derive(UserData,TypeRepresentation)]
+    ///struct Example {}
+    ///impl TealData for Example {}
+    ///let generated_string = TypeWalker::new().proccess_type::<Example>().generate_global("Examples");
+    ///assert_eq!(generated_string,Ok(String::from("global record Examples
+    ///\trecord Example
+    ///
+    ///\tend
+    ///end
+    ///return Examples"
+    ///)));
+    ///```
+    pub fn generate_global(self, outer_name: &str) -> std::result::Result<String, FromUtf8Error> {
+        self.generate(outer_name, true)
+    }
+    ///Same as calling [Typewalker::generate(outer_name,false)](crate::TypeWalker::generate).
+    ///```
+    ///# use rlua::{Lua, Result, UserDataMethods};
+    ///# use tealr::{TealData, TealDataMethods, TypeWalker, UserDataWrapper,UserData,TypeRepresentation};
+    ///#[derive(UserData,TypeRepresentation)]
+    ///struct Example {}
+    ///impl TealData for Example {}
+    ///let generated_string = TypeWalker::new().proccess_type::<Example>().generate_local("Examples");
     ///assert_eq!(generated_string,Ok(String::from("local record Examples
     ///\trecord Example
     ///
@@ -231,17 +285,7 @@ impl TypeWalker {
     ///return Examples"
     ///)));
     ///```
-    pub fn generate(self, outer_name: &str) -> std::result::Result<String, FromUtf8Error> {
-        let v: Vec<_> = self
-            .given_types
-            .into_iter()
-            .map(|v| v.generate())
-            .collect::<std::result::Result<_, _>>()?;
-        let v = v.join("\n");
-        Ok(format!(
-            "local record {name}\n{record}\nend\nreturn {name}",
-            name = outer_name,
-            record = v
-        ))
+    pub fn generate_local(self,outer_name: &str) -> std::result::Result<String,FromUtf8Error> {
+        self.generate(outer_name, false)
     }
 }

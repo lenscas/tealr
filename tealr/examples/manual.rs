@@ -42,7 +42,7 @@ fn main() -> Result<()> {
         //add more calls to process_type to generate more types in the same file
         .proccess_type::<Example>()
         //generate the file
-        .generate("test")
+        .generate_global("test")
         //due to how the typings work, we technically can get an error.
         //this is however rather unlikely, so using a .expect is probly fine
         .expect("oh no :(");

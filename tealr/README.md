@@ -15,13 +15,13 @@ impl TealData for Example {
 fn main() -> Result<()> {
     let file_contents = TypeWalker::new() 
         .proccess_type::<Example>()
-        .generate("test")
+        .generate_global("test")
         .expect("oh no :(");
     println!("{}\n ", file_contents);
     Ok(())
 }
 ```
-You can find longer ones [here](https://github.com/lenscas/tealr/tree/master/tealr/examples)
+You can find longer ones with comments on what each call does [here](https://github.com/lenscas/tealr/tree/master/tealr/examples)
 
 ## Future plans
 Its possible for lua to load .tl files directly after it loaded the compiler. I would like to make use of this and expose methods that already perpare the lua vm in this way.
