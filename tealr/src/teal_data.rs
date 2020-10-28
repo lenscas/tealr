@@ -50,6 +50,40 @@ impl_teal_data!("boolean" bool);
 impl_teal_data!("string" String,std::ffi::CString,bstr::BString,&str,&std::ffi::CStr,&bstr::BStr);
 impl_teal_data!("number" i8,u8,u16,i16,u32,i32,u64,i64,u128,i128,isize,usize,f32,f64);
 
+impl<'lua> TypeRepresentation for rlua::Value<'lua> {
+    fn get_type_name() -> Cow<'static, str> {
+        Cow::from("any")
+    }
+    fn is_external() -> bool {
+        false
+    }
+}
+
+impl<'lua> TypeRepresentation for rlua::Table<'lua> {
+    fn get_type_name() -> Cow<'static, str> {
+        Cow::from("{any:any}")
+    }
+    fn is_external() -> bool {
+        false
+    }
+}
+impl<'lua> TypeRepresentation for rlua::String<'lua> {
+    fn get_type_name() -> Cow<'static, str> {
+        Cow::from("string")
+    }
+    fn is_external() -> bool {
+        false
+    }
+}
+impl<'lua> TypeRepresentation for rlua::Function<'lua> {
+    fn get_type_name() -> Cow<'static, str> {
+        Cow::from("function(...:any):any...")
+    }
+    fn is_external() -> bool {
+        false
+    }
+}
+
 impl<T: TypeRepresentation> TypeRepresentation for Vec<T> {
     fn get_type_name() -> Cow<'static, str> {
         Cow::from(format!("{{{}}}", T::get_type_name()))
