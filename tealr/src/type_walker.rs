@@ -231,18 +231,18 @@ impl TypeWalker {
     ///return Examples"
     ///)));
     ///```
-    pub fn generate(self, outer_name: &str, is_global : bool ) -> std::result::Result<String, FromUtf8Error> {
+    pub fn generate(
+        self,
+        outer_name: &str,
+        is_global: bool,
+    ) -> std::result::Result<String, FromUtf8Error> {
         let v: Vec<_> = self
             .given_types
             .into_iter()
             .map(|v| v.generate())
             .collect::<std::result::Result<_, _>>()?;
         let v = v.join("\n");
-        let scope = if is_global {
-            "global"
-        } else {
-            "local"
-        };
+        let scope = if is_global { "global" } else { "local" };
         Ok(format!(
             "{} record {name}\n{record}\nend\nreturn {name}",
             scope,
@@ -285,7 +285,7 @@ impl TypeWalker {
     ///return Examples"
     ///)));
     ///```
-    pub fn generate_local(self,outer_name: &str) -> std::result::Result<String,FromUtf8Error> {
+    pub fn generate_local(self, outer_name: &str) -> std::result::Result<String, FromUtf8Error> {
         self.generate(outer_name, false)
     }
 }
