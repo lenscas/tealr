@@ -15,7 +15,7 @@
 //!fn main() -> Result<()> {
 //!    let file_contents = TypeWalker::new()
 //!        .proccess_type::<Example>()
-//!        .generate("test")
+//!        .generate_global("test")
 //!        .expect("oh no :(");
 //!    println!("{}\n ", file_contents);
 //!    Ok(())

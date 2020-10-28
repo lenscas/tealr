@@ -33,7 +33,7 @@ fn main() -> Result<()> {
         //add more calls to process_type to generate more types in the same file
         .proccess_type::<Example>()
         //generate the file
-        .generate("test")
+        .generate_global("test")
         //the name parameter for TealDataMethods::{add_method,add_method_mut,add_function,add_function_mut}
         //takes anything that can be used as a &[u8]
         //this is to match the types from UserDataMethods
