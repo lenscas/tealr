@@ -38,7 +38,7 @@ jobs:
               source lua53/bin/activate 
               luarocks install tl
               eval $(luarocks path --bin)
-              tl --help
+              
           elif [ "$RUNNER_OS" == "Windows" ]; then
               pip install git+https://github.com/luarocks/hererocks
               hererocks lua53 -l5.3 -rlatest
@@ -59,6 +59,7 @@ jobs:
       shell: bash
     - name: Run tests
       run: cargo test
+      shell: bash
 
   clippy:
     runs-on: ubuntu-latest
