@@ -38,6 +38,7 @@ jobs:
               source lua53/bin/activate 
               luarocks install tl
               eval $(luarocks path --bin)
+              luarocks path --bin
               
           elif [ "$RUNNER_OS" == "Windows" ]; then
               pip install git+https://github.com/luarocks/hererocks
