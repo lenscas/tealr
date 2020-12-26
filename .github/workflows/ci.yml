@@ -47,7 +47,7 @@ jobs:
               luarocks install tl
               
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew install lua5.3
+              brew install lua@5.3
               brew install luarocks
               luarocks install tl
               cargo test
