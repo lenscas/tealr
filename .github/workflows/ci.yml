@@ -35,7 +35,7 @@ jobs:
           if [ "$RUNNER_OS" == "Linux" ]; then
               sudo pip install git+https://github.com/luarocks/hererocks
               sudo hererocks lua53 -l5.3 -rlatest  
-              source lua53/bin/activate 
+              sudo source lua53/bin/activate 
               sudo luarocks install tl
           elif [ "$RUNNER_OS" == "Windows" ]; then
               pip install git+https://github.com/luarocks/hererocks
