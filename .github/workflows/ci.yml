@@ -30,7 +30,7 @@ jobs:
       with:
         rust-version: stable
     - uses: actions/checkout@master
-    - name:  Install
+    - name:  Install dependencies and run tests
       run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
               sudo pip install git+https://github.com/luarocks/hererocks
@@ -38,7 +38,7 @@ jobs:
               source lua53/bin/activate 
               luarocks install tl
               eval $(luarocks path --bin)
-              luarocks path --bin
+              cargo test
               
           elif [ "$RUNNER_OS" == "Windows" ]; then
               pip install git+https://github.com/luarocks/hererocks
@@ -56,12 +56,6 @@ jobs:
             echo "$RUNNER_OS not supported"
             exit 1
           fi
-    - name: Run tests
-      run: |
-        echo $PATH
-        eval $(luarocks path --bin)
-        cargo test
-
   clippy:
     runs-on: ubuntu-latest
     steps:
