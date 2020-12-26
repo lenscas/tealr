@@ -32,16 +32,23 @@ jobs:
     - uses: actions/checkout@master
     - name:  Install
       run:   |
-         if [ "$RUNNER_OS" == "Linux" ]; then
+          if [ "$RUNNER_OS" == "Linux" ]; then
               sudo apt install lua5.3 luarocks
-         elif [ "$RUNNER_OS" == "Windows" ]; then
+              sudo luarocks install tl
+          elif [ "$RUNNER_OS" == "Windows" ]; then
               choco install lua;
               choco install luarocks
-         elif [ "$RUNNER_OS" == "Windows" ]; then
+              luarocks install tl
+              
+          elif [ "$RUNNER_OS" == "macOs" ]; then
               brew install lua
               brew install luarocks
-         fi
-         luarocks install tl
+              sudo luarocks install tl
+          else 
+            echo "$RUNNER_OS not supported"
+            exit 1
+          fi
+         
       shell: bash
     - name: Run tests
       run: cargo test
