@@ -30,6 +30,19 @@ jobs:
       with:
         rust-version: stable
     - uses: actions/checkout@master
+    - name:  Install
+      run:   |
+         if [ "$RUNNER_OS" == "Linux" ]; then
+              apt install lua5.3 luarocks
+         elif [ "$RUNNER_OS" == "Windows" ]; then
+              choco install lua;
+              choco install luarocks
+         elif [ "$RUNNER_OS" == "Windows" ]; then
+              brew install lua
+              brew install luarocks
+         fi
+         luarocks install tl
+      shell: bash
     - name: Run tests
       run: cargo test
 
