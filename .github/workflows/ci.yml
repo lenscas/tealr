@@ -48,7 +48,8 @@ jobs:
               pip install git+https://github.com/luarocks/hererocks
               hererocks lua53 -l5.3 -rlatest  
               source lua53/bin/activate 
-              sudo luarocks install tl
+              luarocks install tl
+              eval $(luarocks path --bin)
           else 
             echo "$RUNNER_OS not supported"
             exit 1
