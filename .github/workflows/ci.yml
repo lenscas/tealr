@@ -33,7 +33,7 @@ jobs:
     - name:  Install
       run:   |
          if [ "$RUNNER_OS" == "Linux" ]; then
-              apt install lua5.3 luarocks
+              sudo apt install lua5.3 luarocks
          elif [ "$RUNNER_OS" == "Windows" ]; then
               choco install lua;
               choco install luarocks
