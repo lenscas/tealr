@@ -2,15 +2,20 @@
 proc-macro = true
 
 [package]
-name = "tealr_derive"
-version = "0.2.0"
 authors = ["Lenscas <lenscas@gmail.com>"]
-edition = "2018"
-repository = "https://github.com/lenscas/tealr/"
 description = "The derive macro for tealr"
+edition = "2018"
+keywords = ["derive", "macro", "teal", "lua", "tealr"]
 license = "MIT OR Apache-2.0"
-keywords=["derive","macro","teal","lua","tealr"]
+name = "tealr_derive"
+repository = "https://github.com/lenscas/tealr/"
+version = "0.2.0"
+
+[features]
+compile = ["tempfile"]
+derive = []
 
 [dependencies]
-syn = "1"
 quote = "1"
+syn = "1"
+tempfile = {version = "3.1.0", optional = true}
