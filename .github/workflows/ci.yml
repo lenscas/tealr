@@ -47,11 +47,9 @@ jobs:
               luarocks install tl
               
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              sudo pip install git+https://github.com/luarocks/hererocks
-              hererocks lua53 -l5.3 -rlatest  
-              source lua53/bin/activate 
+              brew install lua5.3
+              brew install luarocks
               luarocks install tl
-              eval $(luarocks path --bin)
               cargo test
           else 
             echo "$RUNNER_OS not supported"
