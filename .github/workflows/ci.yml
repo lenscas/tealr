@@ -24,7 +24,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        os: [ubuntu-latest, ] #windows-latest, macOS-latest
     steps:
     - uses: hecrj/setup-rust-action@v1.3.4 
       with:
@@ -36,8 +36,9 @@ jobs:
               sudo pip install git+https://github.com/luarocks/hererocks
               hererocks lua53 -l5.3 -rlatest  
               source lua53/bin/activate 
-              sudo luarocks install tl
+              luarocks install tl
               eval $(luarocks path --bin)
+              tl --help
           elif [ "$RUNNER_OS" == "Windows" ]; then
               pip install git+https://github.com/luarocks/hererocks
               hererocks lua53 -l5.3 -rlatest
