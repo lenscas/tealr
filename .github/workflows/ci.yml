@@ -58,7 +58,10 @@ jobs:
          
       shell: bash
     - name: Run tests
-      run: cargo test
+      run: |
+        eval $(luarocks path --bin)
+        cargo test
+
       shell: bash
 
   clippy:
