@@ -40,7 +40,7 @@ jobs:
               choco install luarocks
               luarocks install tl
               
-          elif [ "$RUNNER_OS" == "macOs" ]; then
+          elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install lua
               brew install luarocks
               sudo luarocks install tl
