@@ -45,7 +45,7 @@ jobs:
               luarocks install tl
               
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew pip install git+https://github.com/luarocks/hererocks
+              pip install git+https://github.com/luarocks/hererocks
               hererocks lua53 -l5.3 -rlatest  
               source lua53/bin/activate 
               sudo luarocks install tl
