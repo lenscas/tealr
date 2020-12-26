@@ -33,16 +33,20 @@ jobs:
     - name:  Install
       run:   |
           if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt install lua5.3 luarocks
+              sudo pip install git+https://github.com/luarocks/hererocks
+              sudo hererocks lua53 -l5.3 -rlatest  
+              source lua53/bin/activate 
               sudo luarocks install tl
           elif [ "$RUNNER_OS" == "Windows" ]; then
-              choco install lua;
-              choco install luarocks
+              pip install git+https://github.com/luarocks/hererocks
+              hererocks lua53 -l5.3 -rlatest
+              lua53/bin/activate   
               luarocks install tl
               
           elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew install lua
-              brew install luarocks
+              brew pip install git+https://github.com/luarocks/hererocks
+              hererocks lua53 -l5.3 -rlatest  
+              source lua53/bin/activate 
               sudo luarocks install tl
           else 
             echo "$RUNNER_OS not supported"
