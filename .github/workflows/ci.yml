@@ -43,9 +43,12 @@ jobs:
           elif [ "$RUNNER_OS" == "Windows" ]; then
               pip install git+https://github.com/luarocks/hererocks
               hererocks lua53 -l5.3 -rlatest
-              lua53/bin/activate   
+              echo "before activate"
+              lua53/bin/activate
+              echo "time to install"
               luarocks install tl
-              
+              cargo test
+
           elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install lua@5.3
               brew install luarocks
