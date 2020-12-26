@@ -58,6 +58,7 @@ jobs:
           fi
     - name: Run tests
       run: |
+        echo $PATH
         eval $(luarocks path --bin)
         cargo test
 
