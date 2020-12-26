@@ -44,7 +44,7 @@ jobs:
               pip install git+https://github.com/luarocks/hererocks
               hererocks lua53 -l5.3 -rlatest
               echo "before activate"
-              lua53\bin\activate
+              lua53\\bin\\activate
               echo "time to install"
               luarocks install tl
               cargo test
