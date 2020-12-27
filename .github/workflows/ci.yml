@@ -33,9 +33,9 @@ jobs:
       with:
         luaVersion: "5.3"
     - uses: leafo/gh-actions-luarocks@v4.0.0
-    - uses: actions/checkout@master
-    - name:  Install dependencies and run tests
+    - name:  Install dependencies
       run: luarocks install tl
+    - uses: actions/checkout@master
     - name: run tests
       run: cargo test
   clippy:
