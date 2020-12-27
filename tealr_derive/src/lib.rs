@@ -111,7 +111,10 @@ impl Parse for CompileInput {
 ///The macro tries it best to pass the correct `--include-dir` to tl using `CARGO_MANIFEST_DIR`.
 ///However, this isn't always where you want it to be. In that case you can add an extra argument that will be joined with `CARGO_MANIFEST_DIR` using [std::path::PathBuf::join](std::path::PathBuf#method.join)
 ///
-///NOTE: At this point in time this requires you to have the teal compiler installed and accessible as `tl`.
+///## Compile time requirement!
+///At this point in time this requires you to have the teal compiler installed and accessible as `tl`.
+///
+///## Example
 ///```
 ///# use tealr_derive::compile_inline_teal;
 ///assert_eq!(compile_inline_teal!("local a : number = 1\n"),"local a = 1\n")
@@ -188,10 +191,18 @@ pub fn compile_inline_teal(input: TokenStream) -> TokenStream {
 ///It returns a closure that takes the file that needs to run
 ///and returns valid lua code that both prepares the lua vm so it can run teal files and
 ///loads the given file using `require`, returning the result of the file that got loaded.
-
-///NOTE: Due to how the teal files are being loaded, they won't be typed checked.
+///## NOTE!
+///Due to how the teal files are being loaded, they won't be typed checked.
 ///More info on: https://github.com/teal-language/tl/blob/master/docs/tutorial.md (Search for "loader")
-
+///
+///## Compile time requirement!
+///This needs to be able to run `lua` at compile time to compile the teal compiler.
+///##Example
+///```rust
+///# use tealr_derive::embed_compiler;
+/// let compiler = embed_compiler!("v0.9.0");
+/// let lua_code = compiler("your_teal_file.tl");
+///```
 #[cfg(feature = "embed_compiler")]
 #[proc_macro]
 pub fn embed_compiler(input: TokenStream) -> TokenStream {
