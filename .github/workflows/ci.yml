@@ -37,7 +37,10 @@ jobs:
       run: luarocks install tl
     - uses: actions/checkout@master
     - name: run tests
-      run: cargo test
+      run: |
+      lua -v
+      tl --version
+      cargo test
   clippy:
     runs-on: ubuntu-latest
     steps:
