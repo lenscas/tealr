@@ -24,7 +24,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
     steps:
     - uses: actions/checkout@master
     - uses: hecrj/setup-rust-action@v1.3.4 
@@ -37,10 +37,7 @@ jobs:
     - name:  Install dependencies
       run: luarocks install tl
     - name: run tests
-      run: |
-        lua -v
-        tl --version
-        cargo test
+      run: cargo test
   clippy:
     runs-on: ubuntu-latest
     steps:
