@@ -11,6 +11,7 @@ extern crate syn;
 #[macro_use]
 extern crate quote;
 
+#[cfg(feature = "embed_compiler")]
 mod compiler_downloader;
 
 use std::{
@@ -21,6 +22,7 @@ use std::{
     process::Command,
 };
 
+#[cfg(feature = "embed_compiler")]
 use compiler_downloader::EmbedOptions;
 use proc_macro::TokenStream;
 use syn::{parse::Parse, parse_macro_input, LitStr, Token};
