@@ -4,7 +4,8 @@
 //!
 //!tealr adds some traits that replace/extend those from [rlua](https://crates.io/crates/rlua), allowing it to generate the `.d.tl` files needed for teal.
 //!
-//!## Small example
+//!It also contains some macro's to make it easier to load/execute teal scripts. Without having to compile them yourself first.
+//!## Small example type generation
 //!```rust
 //!# use rlua::{Lua, Result, UserDataMethods};
 //!# use tealr::{TealData, TealDataMethods, TypeWalker, TealDerive,UserData,TypeRepresentation};
@@ -17,19 +18,36 @@
 //!        .proccess_type::<Example>()
 //!        .generate_global("test")
 //!        .expect("oh no :(");
+//!    //save the file
 //!    println!("{}\n ", file_contents);
 //!    Ok(())
 //!}
 //!```
+//!## Compile inline teal code to lua at the same time as your rust code
+//!```rust
+//!# use tealr::compile_inline_teal;
+//!let lua_code = compile_inline_teal!("-- your teal code");
+//!```
+//!## Embed the teal compiler, allowing you to run external teal files the same way as external lua files.
+//!```rust
+//!# use tealr::embed_compiler;
+//!let compiler = embed_compiler!("v0.9.0");
+//!let lua_code_to_run_external_file = compiler("your_teal_file.tl");
+//!```
 //!You can find longer ones [here](https://github.com/lenscas/tealr/tree/master/tealr/examples)
+//!which also go over on how to use the generated lua code.
 //!
 //!## Future plans
-//!Its possible for lua to load .tl files directly after it loaded the compiler. I would like to make use of this and expose methods that already perpare the lua vm in this way.
+//!Tealr can already help with 2 ways to run teal scripts
 //!
-//!This should make it pretty much as easy to work with teal as with lua. However, I am not sure if doing this breaks any rules from rlua. As such, some research is required.
+//!It can compile inline teal code at the same time as your rust code
+//!
+//!It can also embed the teal compiler for you, allowing you to execute external teal scripts like normal lua scripts.
+//!
+//!There is a third method I want tealr to help with. In this mode, it will compile a teal project, pack it into 1 file and embed it into the project.
 
 pub use rlua::UserData;
-pub use teal_data::{TealData, TypeRepresentation};
+pub use teal_data::{TealData, TypeRepresentation, TypedFunction};
 pub use teal_data_methods::TealDataMethods;
 pub use teal_multivalue::{TealMultiValue, TealType};
 pub use type_walker::TypeWalker;
