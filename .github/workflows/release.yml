@@ -24,7 +24,7 @@ jobs:
       - name: Backoff a bit before releasing tealr
         uses: jakejarvis/wait-action@master
         with:
-          time: '5s'
+          time: '20s'
       - name: Release the main crate
         run: cd tealr && cargo publish
       #Now, release to github as well.
