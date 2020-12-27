@@ -9,7 +9,8 @@ All notable changes to this project are documented in this file.
 - [`0.0.1`](#001)
 
 ## upcomming
-
+- Macro to compile inline teal code at the same time as your rust code
+- Macro to embed the teal compiler into your application. Allowing you to execute external teal files as normal lua files.
 ## 0.2.0
 - **BREAKING** Allow the scope of the container type to be either `local` or `global`
 - Add some more types that tealr recognizes.
