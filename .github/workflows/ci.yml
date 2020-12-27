@@ -26,39 +26,18 @@ jobs:
       matrix:
         os: [ubuntu-latest, macOS-latest]
     steps:
+    - uses: actions/checkout@master
     - uses: hecrj/setup-rust-action@v1.3.4 
       with:
         rust-version: stable
-    - uses: actions/checkout@master
-    - name:  Install dependencies and run tests
-      run: |
-          if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo pip install git+https://github.com/luarocks/hererocks
-              hererocks lua53 -l5.3 -rlatest  
-              source lua53/bin/activate 
-              luarocks install tl
-              eval $(luarocks path --bin)
-              cargo test
-              
-          elif [ "$RUNNER_OS" == "Windows" ]; then
-              pip install git+https://github.com/luarocks/hererocks
-              hererocks lua53 -l5.3 -rlatest
-              echo "before activate"
-              lua53\\bin\\activate
-              echo "time to install"
-              luarocks install tl
-              cargo test
-
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew install lua@5.3
-              brew install luarocks
-              luarocks install tl
-              cargo test
-          else 
-            echo "$RUNNER_OS not supported"
-            exit 1
-          fi
-      shell: bash
+    - uses: leafo/gh-actions-lua@v8.0.0
+      with:
+        luaVersion: "5.3"
+    - uses: leafo/gh-actions-luarocks@v4.0.0
+    - name:  Install dependencies
+      run: luarocks install tl
+    - name: run tests
+      run: cargo test
   clippy:
     runs-on: ubuntu-latest
     steps:
