@@ -11,6 +11,8 @@ extern crate syn;
 #[macro_use]
 extern crate quote;
 
+mod compiler_downloader;
+
 use std::{
     ffi::OsStr,
     fs::{read_to_string, File},
@@ -19,6 +21,7 @@ use std::{
     process::Command,
 };
 
+use compiler_downloader::EmbedOptions;
 use proc_macro::TokenStream;
 use syn::{parse::Parse, parse_macro_input, LitStr, Token};
 
@@ -175,5 +178,33 @@ pub fn compile_inline_teal(input: TokenStream) -> TokenStream {
         read_to_string(temp_path.join("output.lua")).expect("Could not read generated lua");
 
     let stream = quote! {#contents};
+    stream.into()
+}
+///Embeds the teal compiler, making it easy to load teal files directly.
+///
+///It does so by downloading the given version of the teal compiler from github
+///Compiling it without the lua5.3 compatibility library and embedding it into your application.
+///
+///It returns a closure that takes the file that needs to run
+///and returns valid lua code that both prepares the lua vm so it can run teal files and
+///loads the given file using `require`, returning the result of the file that got loaded.
+
+///NOTE: Due to how the teal files are being loaded, they won't be typed checked.
+///More info on: https://github.com/teal-language/tl/blob/master/docs/tutorial.md (Search for "loader")
+
+#[cfg(feature = "embed_compiler")]
+#[proc_macro]
+pub fn embed_compiler(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as EmbedOptions);
+    let compiler = compiler_downloader::download_teal(input);
+    let primed_vm_string = format!(
+        "local tl = (function()\n{}\nend)()\ntl.loader()\n",
+        compiler
+    );
+    let stream = quote! {
+        |require:&str| {
+            format!("{}\n return require('{}')",#primed_vm_string,require)
+        }
+    };
     stream.into()
 }
