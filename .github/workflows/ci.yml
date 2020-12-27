@@ -38,9 +38,9 @@ jobs:
     - uses: actions/checkout@master
     - name: run tests
       run: |
-      lua -v
-      tl --version
-      cargo test
+        lua -v
+        tl --version
+        cargo test
   clippy:
     runs-on: ubuntu-latest
     steps:
