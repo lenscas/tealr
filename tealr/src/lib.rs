@@ -41,6 +41,9 @@ pub use tealr_derive::{TealDerive, TypeRepresentation, UserData};
 #[cfg(feature = "compile")]
 pub use tealr_derive::compile_inline_teal;
 
+#[cfg(feature = "embed_compiler")]
+pub use tealr_derive::embed_compiler;
+
 mod teal_data;
 mod teal_data_methods;
 mod teal_multivalue;
