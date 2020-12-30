@@ -101,7 +101,7 @@ impl TypeGenerator {
         let functions = Self::combine_function_names(functions, "Pure functions");
         let functions_mut = Self::combine_function_names(functions_mut, "Mutating Functions");
         Ok(format!(
-            "\trecord {}\n{}{}{}{}\n\tend",
+            "\trecord {}\n\t\tuserdata\n{}{}{}{}\n\tend",
             self.type_name, methods, methods_mut, functions, functions_mut
         ))
     }
@@ -225,6 +225,7 @@ impl TypeWalker {
     ///let generated_string = TypeWalker::new().proccess_type::<Example>().generate("Examples",true);
     ///assert_eq!(generated_string,Ok(String::from("global record Examples
     ///\trecord Example
+    ///\t\tuserdata
     ///
     ///\tend
     ///end
@@ -260,6 +261,7 @@ impl TypeWalker {
     ///let generated_string = TypeWalker::new().proccess_type::<Example>().generate_global("Examples");
     ///assert_eq!(generated_string,Ok(String::from("global record Examples
     ///\trecord Example
+    ///\t\tuserdata
     ///
     ///\tend
     ///end
@@ -279,6 +281,7 @@ impl TypeWalker {
     ///let generated_string = TypeWalker::new().proccess_type::<Example>().generate_local("Examples");
     ///assert_eq!(generated_string,Ok(String::from("local record Examples
     ///\trecord Example
+    ///\t\tuserdata
     ///
     ///\tend
     ///end
