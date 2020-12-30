@@ -10,6 +10,7 @@ All notable changes to this project are documented in this file.
 - [`0.0.1`](#001)
 
 ## upcomming
+- **BREAKING** mark the generated record types as UserData. This sets the minimal compatible teal version to 0.10.0
 ## 0.3.0
 - Macro to compile inline teal code at the same time as your rust code
 - Macro to embed the teal compiler into your application. Allowing you to execute external teal files as normal lua files.
