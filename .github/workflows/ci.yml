@@ -30,10 +30,14 @@ jobs:
     - uses: hecrj/setup-rust-action@v1.3.4 
       with:
         rust-version: stable
-    - uses: xpol/setup-lua@v0.2
+    - uses: actions/setup-python@v1
+    - uses: BSFishy/pip-action@v1
       with:
-        lua-version: "5.3.5"
-    - uses: leafo/gh-actions-luarocks@v4.0.0
+          packages: hererocks
+    - name: Install lua and luarocks
+      run: |
+        python -m hererocks -l 5.3 -rlatest .luaenv
+        . ./.luaenv/bin/activate
     - name:  Install dependencies
       run: luarocks install tl
     - name: run tests
