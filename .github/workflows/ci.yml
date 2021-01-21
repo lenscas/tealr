@@ -35,11 +35,11 @@ jobs:
       with:
           packages: hererocks
     - name: Install lua and luarocks
-      run: |
-        python -m hererocks -l 5.3 -rlatest .luaenv
-        . ./.luaenv/bin/activate
+      run: python -m hererocks -l 5.3 -rlatest .luaenv
     - name:  Install dependencies
-      run: luarocks install tl
+      run: |
+        ./.luaenv/bin/activate
+        luarocks install tl
     - name: run tests
       run: cargo test
   clippy:
