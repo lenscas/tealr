@@ -32,7 +32,7 @@ jobs:
         rust-version: stable
     - uses: xpol/setup-lua@v0.2
       with:
-        lua-version: "5.3"
+        lua-version: "5.3.5"
     - uses: leafo/gh-actions-luarocks@v4.0.0
     - name:  Install dependencies
       run: luarocks install tl
