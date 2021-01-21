@@ -38,7 +38,7 @@ jobs:
       run: python -m hererocks -l 5.3 -rlatest .luaenv
     - name:  Install dependencies
       run: |
-        ./.luaenv/bin/activate
+        . ./.luaenv/bin/activate
         luarocks install tl
     - name: run tests
       run: cargo test
