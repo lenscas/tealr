@@ -38,7 +38,7 @@ pub fn user_data_derive(input: TokenStream) -> TokenStream {
     impl_user_data_derive(&ast).into()
 }
 
-fn impl_user_data_derive(ast: &syn::DeriveInput) -> syn::export::TokenStream2 {
+fn impl_user_data_derive(ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
     let name = &ast.ident;
     let gen = quote! {
         impl UserData for #name {
@@ -61,7 +61,7 @@ pub fn type_representation_derive(input: TokenStream) -> TokenStream {
 
     impl_type_representation_derive(&ast).into()
 }
-fn impl_type_representation_derive(ast: &syn::DeriveInput) -> syn::export::TokenStream2 {
+fn impl_type_representation_derive(ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
     let name = &ast.ident;
     let gen = quote! {
         impl TypeRepresentation for #name {
