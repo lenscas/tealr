@@ -7,12 +7,19 @@ use crate::{
     Direction, TealMultiValue, TealType, TypeBody, TypeName,
 };
 
-pub struct ExportedFunctions {
+///Contains the data needed to write down the type of a function
+pub struct ExportedFunction {
     name: Vec<u8>,
     params: Vec<TealType>,
     returns: Vec<TealType>,
 }
-impl ExportedFunctions {
+impl ExportedFunction {
+    ///Creates an ExportedFunction with the given name, Parameters and return value
+    ///```no_run
+    ///# use tealr::ExportedFunction;
+    ///# use std::borrow::Cow;
+    ///ExportedFunction::new::<(String,String),String>(Cow::from("concat"));
+    ///```
     pub fn new<
         'lua,
         Params: ToLuaMulti<'lua> + TealMultiValue,
@@ -62,13 +69,13 @@ pub struct TypeGenerator {
     ///The exposed fields and their types
     pub fields: Vec<(Cow<'static, str>, Cow<'static, str>)>,
     ///exported methods
-    pub methods: Vec<ExportedFunctions>,
+    pub methods: Vec<ExportedFunction>,
     ///exported methods that mutate something
-    pub mut_methods: Vec<ExportedFunctions>,
+    pub mut_methods: Vec<ExportedFunction>,
     ///exported functions
-    pub functions: Vec<ExportedFunctions>,
+    pub functions: Vec<ExportedFunction>,
     ///exported functions that mutate something
-    pub mut_functions: Vec<ExportedFunctions>,
+    pub mut_functions: Vec<ExportedFunction>,
 }
 
 impl TypeGenerator {
@@ -90,8 +97,8 @@ impl TypeGenerator {
         S: ?Sized + AsRef<[u8]>,
     >(
         name: &S,
-    ) -> ExportedFunctions {
-        ExportedFunctions {
+    ) -> ExportedFunction {
+        ExportedFunction {
             name: name.as_ref().to_vec(),
             params: A::get_types(Direction::FromLua),
             returns: R::get_types(Direction::ToLua),

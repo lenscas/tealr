@@ -10,7 +10,7 @@ pub trait TealData: Sized {
     ///same as [UserData::add_methods](rlua::UserData::add_methods).
     ///Refer to its documentation on how to use it.
     ///
-    ///only difference is that it takes a [TealDataMethods](crate::TealDataMethods),
+    ///only difference is that it takes a [TealDataMethods](crate::rlu::TealDataMethods),
     ///which is the teal version of [UserDataMethods](rlua::UserDataMethods)
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(_methods: &mut T) {}
 }
@@ -73,7 +73,7 @@ where
     Params: ToLuaMulti<'lua> + TealMultiValue,
     Response: FromLuaMulti<'lua> + TealMultiValue,
 {
-    ///same as [rlua::Function::call](rlua::Function#method.call). Calls the function with the given parameters.
+    ///Same as [rlua::Function::call](rlua::Function#method.call). Calls the function with the given parameters.
     pub fn call(&self, params: Params) -> rlua::Result<Response> {
         self.inner_function.call(params)
     }

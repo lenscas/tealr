@@ -12,7 +12,7 @@ impl TealType {
     fn new(name: Cow<'static, str>, is_external: bool) -> Self {
         Self { name, is_external }
     }
-    ///generates a [TealType](crate::TealType) based on a type implementing [TealData](crate::TealData).
+    ///generates a [TealType](crate::TealType) based on a type implementing [TealData](crate::rlu::TealData).
     ///```
     ///# use tealr::{Direction,TealType};
     ///let numeric_i8 = TealType::from::<i8>(Direction::ToLua);

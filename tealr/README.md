@@ -54,3 +54,5 @@ Tealr can already help with 2 ways to run teal scripts.
 It can compile inline teal code at the same time as your rust code
 It can also embed the teal compiler for you, allowing you to execute external teal scripts like normal lua scripts.
 There is a third method I want tealr to help with. In this mode, it will compile a teal project, pack it into 1 file and embed it into the project.
+
+Besides support for just rlua, supporting mlua is also planned.

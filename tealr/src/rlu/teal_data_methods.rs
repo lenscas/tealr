@@ -5,9 +5,9 @@ use crate::TealMultiValue;
 ///The teal version of [UserDataMethods](rlua::UserDataMethods)
 ///
 ///The meaning of every method is the same, and so is its use.
-///Look at RLua for documentation
+///Look at  [rlua](rlua::UserDataMethods) for documentation
 ///
-///The only difference is that [TealDataMethods](crate::TealDataMethods) have an extra type bound on `A` and `R`.
+///The only difference is that [TealDataMethods](crate::rlu::TealDataMethods) have an extra type bound on `A` and `R`.
 ///These are to get the type names when generating the `.d.tl` file
 pub trait TealDataMethods<'lua, T> {
     ///Exposes a method to lua
