@@ -2,7 +2,8 @@ use std::marker::PhantomData;
 
 use rlua::{Context, FromLuaMulti, MetaMethod, Result, ToLuaMulti, UserData, UserDataMethods};
 
-use crate::{teal_data_methods::TealDataMethods, teal_multivalue::TealMultiValue};
+use super::TealDataMethods;
+use crate::TealMultiValue;
 
 ///Used to turn [UserDataMethods](rlua::UserDataMethods) into [TealDataMethods](crate::TealDataMethods).
 ///
@@ -25,7 +26,7 @@ where
     ///wraps it.
     ///```
     ///# use rlua::{Lua, Result, UserData, UserDataMethods};
-    ///# use tealr::{TealData, TealDataMethods, TypeWalker, UserDataWrapper, TypeRepresentation, TealDerive};
+    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper,}, TypeWalker,  TypeName, TealDerive};
     ///#[derive(TealDerive)]
     ///struct Example {}
     ///impl TealData for Example {

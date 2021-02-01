@@ -2,14 +2,30 @@ use std::{borrow::Cow, string::FromUtf8Error};
 
 use rlua::{Context, FromLuaMulti, MetaMethod, Result, ToLuaMulti, UserData};
 
-use crate::{teal_data::TypeRepresentation, TealData, TealDataMethods, TealMultiValue, TealType};
+use crate::{
+    rlu::{TealData, TealDataMethods},
+    Direction, TealMultiValue, TealType, TypeBody, TypeName,
+};
 
-struct ExportedFunctions {
+pub struct ExportedFunctions {
     name: Vec<u8>,
     params: Vec<TealType>,
     returns: Vec<TealType>,
 }
 impl ExportedFunctions {
+    pub fn new<
+        'lua,
+        Params: ToLuaMulti<'lua> + TealMultiValue,
+        Response: FromLuaMulti<'lua> + TealMultiValue,
+    >(
+        name: Cow<'static, str>,
+    ) -> Self {
+        Self {
+            name: name.as_bytes().to_owned(),
+            params: Params::get_types(Direction::FromLua),
+            returns: Response::get_types(Direction::ToLua),
+        }
+    }
     fn generate(
         self,
         self_type: Option<Cow<'static, str>>,
@@ -37,18 +53,30 @@ impl ExportedFunctions {
     }
 }
 
-struct TypeGenerator {
-    type_name: Cow<'static, str>,
-    methods: Vec<ExportedFunctions>,
-    mut_methods: Vec<ExportedFunctions>,
-    functions: Vec<ExportedFunctions>,
-    mut_functions: Vec<ExportedFunctions>,
+///This struct collects all the information needed to create the .d.tl file for your type.
+pub struct TypeGenerator {
+    ///Represents if the type is UserData
+    pub is_user_data: bool,
+    ///The name of the type in teal
+    pub type_name: Cow<'static, str>,
+    ///The exposed fields and their types
+    pub fields: Vec<(Cow<'static, str>, Cow<'static, str>)>,
+    ///exported methods
+    pub methods: Vec<ExportedFunctions>,
+    ///exported methods that mutate something
+    pub mut_methods: Vec<ExportedFunctions>,
+    ///exported functions
+    pub functions: Vec<ExportedFunctions>,
+    ///exported functions that mutate something
+    pub mut_functions: Vec<ExportedFunctions>,
 }
 
 impl TypeGenerator {
-    fn new<A: TypeRepresentation>() -> Self {
+    fn new<A: TypeName>(dir: Direction) -> Self {
         Self {
-            type_name: A::get_type_name(),
+            is_user_data: false,
+            type_name: A::get_type_name(dir),
+            fields: Default::default(),
             methods: Default::default(),
             mut_methods: Default::default(),
             functions: Default::default(),
@@ -65,13 +93,20 @@ impl TypeGenerator {
     ) -> ExportedFunctions {
         ExportedFunctions {
             name: name.as_ref().to_vec(),
-            params: A::get_types(),
-            returns: R::get_types(),
+            params: A::get_types(Direction::FromLua),
+            returns: R::get_types(Direction::ToLua),
         }
     }
     fn generate(self) -> std::result::Result<String, FromUtf8Error> {
         //let head = format!("local record {}", self.type_name);
         let type_name = self.type_name.clone();
+
+        let fields: Vec<_> = self
+            .fields
+            .into_iter()
+            .map(|(name, lua_type)| format!("{} : {}", name, lua_type))
+            .collect();
+
         let methods: Vec<_> = self
             .methods
             .into_iter()
@@ -96,13 +131,16 @@ impl TypeGenerator {
             .map(|f| f.generate(None))
             .collect::<std::result::Result<_, _>>()?;
 
+        let fields = Self::combine_function_names(fields, "fields");
         let methods = Self::combine_function_names(methods, "pure Methods");
         let methods_mut = Self::combine_function_names(methods_mut, "Mutating Methods");
         let functions = Self::combine_function_names(functions, "Pure functions");
         let functions_mut = Self::combine_function_names(functions_mut, "Mutating Functions");
+
+        let userdata_string = if self.is_user_data { "userdata" } else { "" };
         Ok(format!(
-            "\trecord {}\n\t\tuserdata\n{}{}{}{}\n\tend",
-            self.type_name, methods, methods_mut, functions, functions_mut
+            "\trecord {}\n\t\t{}\n{}{}{}{}{}\n\tend",
+            self.type_name, userdata_string, fields, methods, methods_mut, functions, functions_mut
         ))
     }
     fn combine_function_names(function_list: Vec<String>, top_doc: &str) -> String {
@@ -209,20 +247,21 @@ impl TypeWalker {
         Default::default()
     }
     ///prepares a type to have a `.d.tl` file generated, and adds it to the list of types to generate.
-    pub fn proccess_type<A: 'static + TypeRepresentation + TealData + UserData>(mut self) -> Self {
-        let mut new_type = TypeGenerator::new::<A>();
-        <A as TealData>::add_methods(&mut new_type);
+    pub fn process_type<A: 'static + TypeName + TypeBody>(mut self, dir: Direction) -> Self {
+        let mut new_type = TypeGenerator::new::<A>(dir);
+        <A as TypeBody>::get_type_body(dir, &mut new_type);
+        //<A as TealData>::add_methods(&mut new_type);
         self.given_types.push(new_type);
         self
     }
     ///generates the `.d.tl` file. It outputs the string, its up to you to store it.
     ///```
     ///# use rlua::{Lua, Result, UserDataMethods};
-    ///# use tealr::{TealData, TealDataMethods, TypeWalker, UserDataWrapper,UserData,TypeRepresentation};
-    ///#[derive(UserData,TypeRepresentation)]
+    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker, UserData,TypeName};
+    ///#[derive(UserData,TypeName)]
     ///struct Example {}
     ///impl TealData for Example {}
-    ///let generated_string = TypeWalker::new().proccess_type::<Example>().generate("Examples",true);
+    ///let generated_string = TypeWalker::new().process_type::<Example>(tealr::Direction::ToLua).generate("Examples",true);
     ///assert_eq!(generated_string,Ok(String::from("global record Examples
     ///\trecord Example
     ///\t\tuserdata
@@ -254,11 +293,11 @@ impl TypeWalker {
     ///Same as calling [Typewalker::generate(outer_name,true)](crate::TypeWalker::generate).
     ///```
     ///# use rlua::{Lua, Result, UserDataMethods};
-    ///# use tealr::{TealData, TealDataMethods, TypeWalker, UserDataWrapper,UserData,TypeRepresentation};
-    ///#[derive(UserData,TypeRepresentation)]
+    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker, UserData,TypeName};
+    ///#[derive(UserData,TypeName)]
     ///struct Example {}
     ///impl TealData for Example {}
-    ///let generated_string = TypeWalker::new().proccess_type::<Example>().generate_global("Examples");
+    ///let generated_string = TypeWalker::new().process_type::<Example>(tealr::Direction::ToLua).generate_global("Examples");
     ///assert_eq!(generated_string,Ok(String::from("global record Examples
     ///\trecord Example
     ///\t\tuserdata
@@ -274,11 +313,11 @@ impl TypeWalker {
     ///Same as calling [Typewalker::generate(outer_name,false)](crate::TypeWalker::generate).
     ///```
     ///# use rlua::{Lua, Result, UserDataMethods};
-    ///# use tealr::{TealData, TealDataMethods, TypeWalker, UserDataWrapper,UserData,TypeRepresentation};
-    ///#[derive(UserData,TypeRepresentation)]
+    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker, UserData,TypeName};
+    ///#[derive(UserData,TypeName)]
     ///struct Example {}
     ///impl TealData for Example {}
-    ///let generated_string = TypeWalker::new().proccess_type::<Example>().generate_local("Examples");
+    ///let generated_string = TypeWalker::new().process_type::<Example>(tealr::Direction::ToLua).generate_local("Examples");
     ///assert_eq!(generated_string,Ok(String::from("local record Examples
     ///\trecord Example
     ///\t\tuserdata

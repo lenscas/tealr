@@ -8,14 +8,14 @@
 //!## Small example type generation
 //!```rust
 //!# use rlua::{Lua, Result, UserDataMethods};
-//!# use tealr::{TealData, TealDataMethods, TypeWalker, TealDerive,UserData,TypeRepresentation};
+//!# use tealr::{Direction,rlu::{TealData, TealDataMethods}, TypeWalker, TealDerive,UserData,TypeName};
 //!#[derive(Clone,Copy,TealDerive)]
 //!struct Example {}
 //!impl TealData for Example {
 //!}
 //!fn main() -> Result<()> {
 //!    let file_contents = TypeWalker::new()
-//!        .proccess_type::<Example>()
+//!        .process_type::<Example>(Direction::ToLua)
 //!        .generate_global("test")
 //!        .expect("oh no :(");
 //!    //save the file
@@ -46,24 +46,23 @@
 //!
 //!There is a third method I want tealr to help with. In this mode, it will compile a teal project, pack it into 1 file and embed it into the project.
 
+///traits and types for rlua.
+pub mod rlu;
+
+mod teal_multivalue;
+mod type_representation;
+mod type_walker;
+
 pub use rlua::UserData;
-pub use teal_data::{TealData, TypeRepresentation, TypedFunction};
-pub use teal_data_methods::TealDataMethods;
 pub use teal_multivalue::{TealMultiValue, TealType};
-pub use type_walker::TypeWalker;
-pub use user_data_wrapper::UserDataWrapper;
+pub use type_representation::{Direction, TypeBody, TypeName};
+pub use type_walker::{TypeGenerator, TypeWalker};
 
 #[cfg(feature = "derive")]
-pub use tealr_derive::{TealDerive, TypeRepresentation, UserData};
+pub use tealr_derive::{TealDerive, TypeName, UserData};
 
 #[cfg(feature = "compile")]
 pub use tealr_derive::compile_inline_teal;
 
 #[cfg(feature = "embed_compiler")]
 pub use tealr_derive::embed_compiler;
-
-mod teal_data;
-mod teal_data_methods;
-mod teal_multivalue;
-mod type_walker;
-mod user_data_wrapper;
