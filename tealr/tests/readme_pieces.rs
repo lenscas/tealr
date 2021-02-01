@@ -38,7 +38,7 @@ fn pieces() -> Result<(), rlua::Error> {
         //compile inline teal
         let _code = compile_inline_teal!("local x : number = 5 return x");
         //embed teal
-        let compiler = embed_compiler!("v0.9.0");
+        let compiler = embed_compiler!("v0.10.0");
         let _res = rlua::Lua::new().context(|ctx| {
             let code = compiler("example/basic_teal_file");
             let res: u8 = ctx.load(&code).set_name("embedded_compiler")?.eval()?;

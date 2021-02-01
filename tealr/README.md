@@ -39,7 +39,7 @@ let code = compile_inline_teal!("local x : number = 5 return x");
 
 ## Embed the teal compiler, run teal files as if they where lua
 ```rust
-let compiler = embed_compiler!("v0.9.0");
+let compiler = embed_compiler!("v0.10.0");
 let res = rlua::Lua::new().context(|ctx| {
     let code = compiler("example/basic_teal_file");
     let res: u8 = ctx.load(&code).set_name("embedded_compiler")?.eval()?;
