@@ -3,13 +3,16 @@
 All notable changes to this project are documented in this file.
 
 ## Overview
+- [`0.4.0`](#040)
 - [`0.3.0`](#030)
 - [`0.2.0`](#020)
 - [`0.1.1`](#011)
 - [`0.1.0`](#010)
 - [`0.0.1`](#001)
 
-## upcomming
+## upcoming
+
+## 0.4.0
 - **BREAKING** mark the generated record types as UserData, this is automatically done when using the derives, limiting the generated types to teal 0.10.0 and higher
 
 - **BREAKING** add an abstraction layer between generating types and TealData. This is to support rlua::ToLua and rlua::FromLua
