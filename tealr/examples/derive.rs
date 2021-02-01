@@ -1,4 +1,4 @@
-use rlua::{Lua, Result, UserDataMethods};
+use rlua::{Lua, Result};
 use tealr::{
     rlu::{TealData, TealDataMethods},
     TypeName, TypeWalker, UserData,

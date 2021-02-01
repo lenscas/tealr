@@ -1,4 +1,3 @@
-use rlua::UserDataMethods;
 use tealr::{
     rlu::{TealData, TealDataMethods, TypedFunction},
     TypeName, UserData,
