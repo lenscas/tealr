@@ -2,9 +2,10 @@ use std::marker::PhantomData;
 
 use rlua::{Context, FromLuaMulti, MetaMethod, Result, ToLuaMulti, UserData, UserDataMethods};
 
-use crate::{teal_data_methods::TealDataMethods, teal_multivalue::TealMultiValue};
+use super::TealDataMethods;
+use crate::TealMultiValue;
 
-///Used to turn [UserDataMethods](rlua::UserDataMethods) into [TealDataMethods](crate::TealDataMethods).
+///Used to turn [UserDataMethods](rlua::UserDataMethods) into [TealDataMethods](crate::rlu::TealDataMethods).
 ///
 ///This allows you to easily implement [UserData](rlua::UserData) by wrapping the [UserDataMethods](rlua::UserDataMethods) in this struct
 ///and then passing it to the TealData implementation
@@ -25,11 +26,16 @@ where
     ///wraps it.
     ///```
     ///# use rlua::{Lua, Result, UserData, UserDataMethods};
-    ///# use tealr::{TealData, TealDataMethods, TypeWalker, UserDataWrapper, TypeRepresentation, TealDerive};
-    ///#[derive(TealDerive)]
-    ///struct Example {}
-    ///impl TealData for Example {
+    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker,  TypeName,};
+    /// struct Example {}
+    /// impl TealData for Example {}
+    /// impl UserData for Example {
+    ///     fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
+    ///         let mut x = UserDataWrapper::from_user_data_methods(methods);
+    ///         <Self as TealData>::add_methods(&mut x);
+    ///     }
     ///}
+    ///
     ///```
     pub fn from_user_data_methods(cont: &'a mut Container) -> Self {
         Self {

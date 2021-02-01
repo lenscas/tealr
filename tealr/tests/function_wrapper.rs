@@ -1,19 +1,23 @@
-use rlua::UserDataMethods;
-use tealr::{TealData, TealDataMethods, TypeRepresentation, TypedFunction, UserData};
+use tealr::{
+    rlu::{TealData, TealDataMethods, TypedFunction},
+    TypeName, UserData,
+};
 #[test]
 fn generate_correct_type() {
     assert_eq!(
-        TypedFunction::<String, String>::get_type_name(),
+        TypedFunction::<String, String>::get_type_name(tealr::Direction::FromLua),
         "function(string):(string)"
     );
     assert_eq!(
-        TypedFunction::<TypedFunction::<(i8, String), (String, u8)>, f32>::get_type_name(),
+        TypedFunction::<TypedFunction::<(i8, String), (String, u8)>, f32>::get_type_name(
+            tealr::Direction::FromLua
+        ),
         "function(function(number,string):(string,number)):(number)"
     );
 }
 #[test]
 fn try_to_use() -> rlua::Result<()> {
-    #[derive(Clone, UserData, TypeRepresentation)]
+    #[derive(Clone, UserData, TypeName)]
     struct Test {}
     impl TealData for Test {
         fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
@@ -48,7 +52,7 @@ return test:test_function_as_parameter(add)
 
 #[test]
 fn pass_back() -> rlua::Result<()> {
-    #[derive(Clone, UserData, TypeRepresentation)]
+    #[derive(Clone, UserData, TypeName)]
     struct Test {}
     impl TealData for Test {
         fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {

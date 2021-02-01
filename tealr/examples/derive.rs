@@ -1,16 +1,19 @@
-use rlua::{Lua, Result, UserDataMethods};
-use tealr::{TealData, TealDataMethods, TypeRepresentation, TypeWalker, UserData};
+use rlua::{Lua, Result};
+use tealr::{
+    rlu::{TealData, TealDataMethods},
+    TypeName, TypeWalker, UserData,
+};
 //this example shows how the new traits allow you to generate the .d.tl file
 //and shows how to use them to share data with lua
 //It also shows how to generate the file
 //NOTE: All it does it generate the contents of the file. Storing it is left to the user.
 
 //First, create the struct you want to export to lua.
-//instead of both deriving UserData and TypeRepresentation you can also
+//instead of both deriving UserData and TypeName you can also
 //derive TealDerive, which does both. However you will still need to import
-//UserData and TypeRepresentation
+//UserData and TypeName
 //The clone is only needed because one of the example functions has it as a parameter
-#[derive(Clone, UserData, TypeRepresentation)]
+#[derive(Clone, UserData, TypeName)]
 struct Example {}
 
 //now, implement TealData. This tells rlua what methods are available and tealr what the types are
@@ -31,7 +34,7 @@ fn main() -> Result<()> {
     let file_contents = TypeWalker::new() //creates the generator
         //tells it that we want to generate Example
         //add more calls to process_type to generate more types in the same file
-        .proccess_type::<Example>()
+        .process_type::<Example>(tealr::Direction::ToLua)
         //generate the file
         .generate_global("test")
         //the name parameter for TealDataMethods::{add_method,add_method_mut,add_function,add_function_mut}

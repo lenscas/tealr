@@ -1,8 +1,16 @@
 {
     "cSpell.words": [
-        "tealr",
+        "Typewalker",
+        "bstr",
+        "concat",
+        "eval",
+        "multivalue",
         "rlua",
+        "str's",
+        "struct",
+        "tealr",
         "tempdir",
-        "tempfile"
+        "tempfile",
+        "userdata"
     ]
 }
