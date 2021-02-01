@@ -10,7 +10,13 @@ All notable changes to this project are documented in this file.
 - [`0.0.1`](#001)
 
 ## upcomming
-- **BREAKING** mark the generated record types as UserData. This sets the minimal compatible teal version to 0.10.0
+- **BREAKING** mark the generated record types as UserData, this is automatically done when using the derives, limiting the generated types to teal 0.10.0 and higher
+
+- **BREAKING** add an abstraction layer between generating types and TealData. This is to support rlua::ToLua and rlua::FromLua
+
+- **BREAKING** When generating types make a distinction if it is a lua value to rust, or rust to lua. This is to support rlua::ToLua and rlua::FromLua
+
+- **BREAKING** Rename `TypeRepresentation` to `TypeName` to better reflect what it about.
 ## 0.3.0
 - Macro to compile inline teal code at the same time as your rust code
 - Macro to embed the teal compiler into your application. Allowing you to execute external teal files as normal lua files.
