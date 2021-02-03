@@ -14,7 +14,8 @@ version = "0.4.0"
 [features]
 compile = ["tempfile"]
 derive = []
-embed_compiler = ["tempfile", "ureq", "zip"]
+embed_compiler_from_download = ["tempfile", "zip", "ureq"]
+embed_compiler_from_local = ["tempfile", "zip"]
 
 [dependencies]
 proc-macro2 = "1"
