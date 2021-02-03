@@ -11,7 +11,10 @@ extern crate syn;
 #[macro_use]
 extern crate quote;
 
-#[cfg(feature = "embed_compiler")]
+#[cfg(any(
+    feature = "embed_compiler_from_local",
+    feature = "embed_compiler_from_download"
+))]
 mod embed_compiler;
 
 use std::{
@@ -22,7 +25,10 @@ use std::{
     process::Command,
 };
 
-#[cfg(feature = "embed_compiler")]
+#[cfg(any(
+    feature = "embed_compiler_from_local",
+    feature = "embed_compiler_from_download"
+))]
 use embed_compiler::EmbedOptions;
 use proc_macro::TokenStream;
 use syn::{parse::Parse, parse_macro_input, LitStr, Token};
@@ -228,7 +234,10 @@ pub fn compile_inline_teal(input: TokenStream) -> TokenStream {
 /// //This tries to find the teal compiler on its own
 /// let compiler = embed_compiler!(Local());
 ///```
-#[cfg(feature = "embed_compiler")]
+#[cfg(any(
+    feature = "embed_compiler_from_local",
+    feature = "embed_compiler_from_download"
+))]
 #[proc_macro]
 pub fn embed_compiler(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as EmbedOptions);

@@ -84,5 +84,8 @@ pub use tealr_derive::{TealDerive, TypeName, UserData};
 #[cfg(feature = "compile")]
 pub use tealr_derive::compile_inline_teal;
 
-#[cfg(feature = "embed_compiler")]
+#[cfg(any(
+    feature = "embed_compiler_from_local",
+    feature = "embed_compiler_from_download"
+))]
 pub use tealr_derive::embed_compiler;

@@ -1,14 +1,32 @@
+#[cfg(any(feature = "embed_compiler_from_download"))]
 pub mod download_compiler;
+
+#[cfg(any(
+    feature = "embed_compiler_from_local",
+    feature = "embed_compiler_from_download"
+))]
 pub mod load_from_disk;
+
+#[cfg(all(
+    not(feature = "embed_compiler_from_download"),
+    feature = "embed_compiler_from_local"
+))]
+pub mod download_compiler_mock;
 
 use load_from_disk::discover_tl_tl;
 use proc_macro2::Group;
 use syn::{parse::Parse, Ident, LitStr};
 
-use self::{
-    download_compiler::{download_teal_from_github, download_teal_from_luarocks},
-    load_from_disk::get_local_teal,
-};
+#[cfg(feature = "embed_compiler_from_download")]
+use self::download_compiler::{download_teal_from_github, download_teal_from_luarocks};
+
+#[cfg(all(
+    not(feature = "embed_compiler_from_download"),
+    feature = "embed_compiler_from_local"
+))]
+use self::download_compiler_mock::{download_teal_from_github, download_teal_from_luarocks};
+
+use self::load_from_disk::get_local_teal;
 
 #[derive(Debug)]
 pub(crate) enum DownloadSource {

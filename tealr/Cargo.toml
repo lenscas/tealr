@@ -12,11 +12,12 @@ version = "0.4.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
-default = ["derive", "compile", "embed_compiler"]
+default = ["derive", "compile", "embed_compiler_from_download"]
 
 compile = ["tealr_derive/compile"]
 derive = ["tealr_derive/derive"]
-embed_compiler = ["tealr_derive/embed_compiler"]
+embed_compiler_from_download = ["tealr_derive/embed_compiler_from_download"]
+embed_compiler_from_local = ["tealr_derive/embed_compiler_from_local"]
 
 [dependencies]
 bstr = {version = "0.2", default_features = false}
