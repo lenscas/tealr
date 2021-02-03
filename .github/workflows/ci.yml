@@ -2,8 +2,7 @@ name: Tests
 on:
   pull_request:
     paths:
-      - 'tealr/src/**.rs'
-      - 'tealr_derive/src/**.r'
+      - "**/*.rs"
       - 'Cargo.toml'
       - 'tealr/Cargo.lock'
       - 'tealr_derive/Cargo.toml'
