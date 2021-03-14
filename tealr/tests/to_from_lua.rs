@@ -51,5 +51,5 @@ fn generate_correct_type() {
         .generate_global("Example")
         .expect("oh no :(");
 
-    assert_eq!(file_contents, "global record Example\n\trecord Holder\n\t\tuserdata\n\t\t-- pure Methods\n\t\tget_value: function(Holder):(string)\n\t\t-- Pure functions\n\t\tTestBackAndForth: function(number):(string)\n\n\tend\nend\nreturn Example")
+    assert_eq!(file_contents, "global record Example\n\trecord Holder\n\t\tuserdata\n\t\t-- pure Methods\n\t\tget_value: function(Holder):(string)\n\t\t-- Pure functions\n\t\tTestBackAndForth: function(integer):(string)\n\n\tend\nend\nreturn Example")
 }

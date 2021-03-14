@@ -12,7 +12,7 @@ fn generate_correct_type() {
         TypedFunction::<TypedFunction::<(i8, String), (String, u8)>, f32>::get_type_name(
             tealr::Direction::FromLua
         ),
-        "function(function(number,string):(string,number)):(number)"
+        "function(function(integer,string):(string,integer)):(number)"
     );
 }
 #[test]
@@ -30,12 +30,12 @@ fn try_to_use() -> rlua::Result<()> {
     let code = tealr::compile_inline_teal!(
         "
 global record Test 
-    test_function_as_parameter:function(Test,function(number,number):number):number
+    test_function_as_parameter:function(Test,function(integer,integer):integer):integer
 end
 
 global test: Test
 
-function add(a:number,b:number):number
+function add(a:integer,b:integer):integer
     return a + b
 end
 return test:test_function_as_parameter(add)
@@ -65,12 +65,12 @@ fn pass_back() -> rlua::Result<()> {
     let code = tealr::compile_inline_teal!(
         "
 global record Test 
-    test_function_as_parameter:function(Test,function(number,number):number):(function(number,number):number)
+    test_function_as_parameter:function(Test,function(integer,integer):integer):(function(integer,integer):integer)
 end
 
 global test: Test
 
-function add(a:number,b:number):number
+function add(a:integer,b:integer):integer
     return a + b
 end
 return test:test_function_as_parameter(add)(10,20)
