@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 name = "tealr"
 readme = "README.md"
 repository = "https://github.com/lenscas/tealr/"
-version = "0.4.1"
+version = "0.5.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
@@ -22,4 +22,4 @@ embed_compiler_from_local = ["tealr_derive/embed_compiler_from_local"]
 [dependencies]
 bstr = {version = "0.2", default_features = false}
 rlua = "0.17"
-tealr_derive = {version = "0.4.0", optional = true, path = "../tealr_derive"}
+tealr_derive = {version = "0.5.0", optional = true, path = "../tealr_derive"}
