@@ -16,7 +16,7 @@ impl TealType {
     ///```
     ///# use tealr::{Direction,TealType};
     ///let numeric_i8 = TealType::from::<i8>(Direction::ToLua);
-    ///let numeric_float = TealType::from::<f32>(Direction::ToLua);
+    ///let numeric_float = TealType::from::<i16>(Direction::ToLua);
     /// //both i8 and f32 become a "number" in lua/teal. As such, their TealTypes are equal.
     ///assert_eq!(numeric_i8,numeric_float)
     ///```

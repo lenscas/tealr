@@ -11,6 +11,8 @@ All notable changes to this project are documented in this file.
 - [`0.0.1`](#001)
 
 ## upcoming
+- **BREAKING** Update minimum supported tl version to `0.13.1`
+- Add support for `integer` type
 
 ## 0.4.0
 - **BREAKING** mark the generated record types as UserData, this is automatically done when using the derives, limiting the generated types to teal 0.10.0 and higher

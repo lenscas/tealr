@@ -49,7 +49,8 @@ use crate::TypeGenerator;
 
 impl_type_name!("boolean" bool);
 impl_type_name!("string" String,std::ffi::CString,bstr::BString,&str,&std::ffi::CStr,&bstr::BStr);
-impl_type_name!("number" i8,u8,u16,i16,u32,i32,u64,i64,u128,i128,isize,usize,f32,f64);
+impl_type_name!("number" f32,f64);
+impl_type_name!("integer" i8,u8,u16,i16,u32,i32,u64,i64,u128,i128,isize,usize);
 
 impl<'lua> TypeName for rlua::Value<'lua> {
     fn get_type_name(_: Direction) -> Cow<'static, str> {

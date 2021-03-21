@@ -2,7 +2,7 @@ use tealr::embed_compiler;
 
 #[test]
 fn legacy_syntax() -> rlua::Result<()> {
-    let compiler = embed_compiler!("v0.9.0");
+    let compiler = embed_compiler!("v0.13.1");
     let res = rlua::Lua::new().context(|ctx| {
         let code = compiler("tests/test_embedded_compiler");
         let res: u8 = ctx
@@ -16,7 +16,7 @@ fn legacy_syntax() -> rlua::Result<()> {
 }
 #[test]
 fn new_syntax_github() -> rlua::Result<()> {
-    let compiler = embed_compiler!(GitHub(version = "v0.9.0"));
+    let compiler = embed_compiler!(GitHub(version = "v0.13.1"));
     let res = rlua::Lua::new().context(|ctx| {
         let code = compiler("tests/test_embedded_compiler");
         let res: u8 = ctx
@@ -31,7 +31,7 @@ fn new_syntax_github() -> rlua::Result<()> {
 
 #[test]
 fn new_version_luarocks() -> rlua::Result<()> {
-    let compiler = embed_compiler!(Luarocks(version = "v0.9.0"));
+    let compiler = embed_compiler!(Luarocks(version = "v0.13.1"));
     let res = rlua::Lua::new().context(|ctx| {
         let code = compiler("tests/test_embedded_compiler");
         let res: u8 = ctx
