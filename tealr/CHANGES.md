@@ -11,6 +11,7 @@ All notable changes to this project are documented in this file.
 - [`0.0.1`](#001)
 
 ## upcoming
+- Add support for `metaMethods`
 - **BREAKING** Update minimum supported tl version to `0.13.1`
 - Add support for `integer` type
 
