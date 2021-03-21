@@ -7,18 +7,48 @@ use crate::{
     Direction, TealMultiValue, TealType, TypeBody, TypeName,
 };
 
+pub(crate) fn get_meta_name(name: rlua::MetaMethod) -> &'static str {
+    match name {
+        MetaMethod::Add => "__add",
+        MetaMethod::Sub => "__su",
+        MetaMethod::Mul => "__mul",
+        MetaMethod::Div => "__div",
+        MetaMethod::Mod => "__mod",
+        MetaMethod::Pow => "__pow",
+        MetaMethod::Unm => "__unm",
+        MetaMethod::IDiv => "__idiv",
+        MetaMethod::BAnd => "__band",
+        MetaMethod::BOr => "__bor",
+        MetaMethod::BXor => "__bxor",
+        MetaMethod::BNot => "__bnot",
+        MetaMethod::Shl => "__shl",
+        MetaMethod::Shr => "__shr",
+        MetaMethod::Concat => "__concat",
+        MetaMethod::Len => "__len",
+        MetaMethod::Eq => "__eq",
+        MetaMethod::Lt => "__lt",
+        MetaMethod::Le => "__le",
+        MetaMethod::Index => "__index",
+        MetaMethod::NewIndex => "__newindex",
+        MetaMethod::Call => "__call",
+        MetaMethod::ToString => "__tostring",
+        MetaMethod::Pairs => "__pairs",
+    }
+}
+
 ///Contains the data needed to write down the type of a function
 pub struct ExportedFunction {
     name: Vec<u8>,
     params: Vec<TealType>,
     returns: Vec<TealType>,
+    is_meta_method: bool,
 }
 impl ExportedFunction {
     ///Creates an ExportedFunction with the given name, Parameters and return value
     ///```no_run
     ///# use tealr::ExportedFunction;
     ///# use std::borrow::Cow;
-    ///ExportedFunction::new::<(String,String),String>(Cow::from("concat"));
+    ///ExportedFunction::new::<(String,String),String>(Cow::from("concat"),false);
     ///```
     pub fn new<
         'lua,
@@ -26,11 +56,13 @@ impl ExportedFunction {
         Response: FromLuaMulti<'lua> + TealMultiValue,
     >(
         name: Cow<'static, str>,
+        is_meta_method: bool,
     ) -> Self {
         Self {
             name: name.as_bytes().to_owned(),
             params: Params::get_types(Direction::FromLua),
             returns: Response::get_types(Direction::ToLua),
+            is_meta_method,
         }
     }
     fn generate(
@@ -52,7 +84,12 @@ impl ExportedFunction {
             .join(", ");
 
         Ok(format!(
-            "{}: function({}):({})",
+            "{}{}: function({}):({})",
+            if self.is_meta_method {
+                "metamethod "
+            } else {
+                ""
+            },
             String::from_utf8(self.name)?,
             params,
             returns
@@ -76,6 +113,14 @@ pub struct TypeGenerator {
     pub functions: Vec<ExportedFunction>,
     ///exported functions that mutate something
     pub mut_functions: Vec<ExportedFunction>,
+    ///exported meta_methods
+    pub meta_method: Vec<ExportedFunction>,
+    ///exported meta_methods that mutate something
+    pub meta_method_mut: Vec<ExportedFunction>,
+    ///exported meta functions
+    pub meta_function: Vec<ExportedFunction>,
+    ///exported meta functions that mutate something
+    pub meta_function_mut: Vec<ExportedFunction>,
 }
 
 impl TypeGenerator {
@@ -88,6 +133,10 @@ impl TypeGenerator {
             mut_methods: Default::default(),
             functions: Default::default(),
             mut_functions: Default::default(),
+            meta_method: Default::default(),
+            meta_method_mut: Default::default(),
+            meta_function: Default::default(),
+            meta_function_mut: Default::default(),
         }
     }
     fn get_method_data<
@@ -97,11 +146,13 @@ impl TypeGenerator {
         S: ?Sized + AsRef<[u8]>,
     >(
         name: &S,
+        is_meta_method: bool,
     ) -> ExportedFunction {
         ExportedFunction {
             name: name.as_ref().to_vec(),
             params: A::get_types(Direction::FromLua),
             returns: R::get_types(Direction::ToLua),
+            is_meta_method,
         }
     }
     fn generate(self) -> std::result::Result<String, FromUtf8Error> {
@@ -138,16 +189,56 @@ impl TypeGenerator {
             .map(|f| f.generate(None))
             .collect::<std::result::Result<_, _>>()?;
 
-        let fields = Self::combine_function_names(fields, "fields");
-        let methods = Self::combine_function_names(methods, "pure Methods");
-        let methods_mut = Self::combine_function_names(methods_mut, "Mutating Methods");
+        let meta_methods: Vec<_> = self
+            .meta_method
+            .into_iter()
+            .map(|f| f.generate(Some(type_name.clone())))
+            .collect::<std::result::Result<_, _>>()?;
+
+        let meta_methods_mut: Vec<_> = self
+            .meta_method_mut
+            .into_iter()
+            .map(|f| f.generate(Some(type_name.clone())))
+            .collect::<std::result::Result<_, _>>()?;
+
+        let meta_function: Vec<_> = self
+            .meta_function
+            .into_iter()
+            .map(|f| f.generate(None))
+            .collect::<std::result::Result<_, _>>()?;
+        let meta_function_mut: Vec<_> = self
+            .meta_function_mut
+            .into_iter()
+            .map(|f| f.generate(None))
+            .collect::<std::result::Result<_, _>>()?;
+
+        let fields = Self::combine_function_names(fields, "Fields");
+        let methods = Self::combine_function_names(methods, "Pure methods");
+        let methods_mut = Self::combine_function_names(methods_mut, "Mutating methods");
         let functions = Self::combine_function_names(functions, "Pure functions");
-        let functions_mut = Self::combine_function_names(functions_mut, "Mutating Functions");
+        let functions_mut = Self::combine_function_names(functions_mut, "Mutating functions");
+        let meta_methods = Self::combine_function_names(meta_methods, "Meta methods");
+        let meta_methods_mut =
+            Self::combine_function_names(meta_methods_mut, "Mutating MetaMethods");
+
+        let meta_functions = Self::combine_function_names(meta_function, "Meta functions");
+        let meta_functions_mut =
+            Self::combine_function_names(meta_function_mut, "Mutating meta functions");
 
         let userdata_string = if self.is_user_data { "userdata" } else { "" };
         Ok(format!(
-            "\trecord {}\n\t\t{}\n{}{}{}{}{}\n\tend",
-            self.type_name, userdata_string, fields, methods, methods_mut, functions, functions_mut
+            "\trecord {}\n\t\t{}\n{}{}{}{}{}{}{}{}{}\n\tend",
+            self.type_name,
+            userdata_string,
+            fields,
+            methods,
+            methods_mut,
+            functions,
+            functions_mut,
+            meta_methods,
+            meta_methods_mut,
+            meta_functions,
+            meta_functions_mut
         ))
     }
     fn combine_function_names(function_list: Vec<String>, top_doc: &str) -> String {
@@ -175,7 +266,8 @@ where
         R: ToLuaMulti<'lua> + TealMultiValue,
         M: 'static + Send + Fn(Context<'lua>, &T, A) -> Result<R>,
     {
-        self.methods.push(Self::get_method_data::<A, R, _>(name))
+        self.methods
+            .push(Self::get_method_data::<A, R, _>(name, false))
     }
 
     fn add_method_mut<S, A, R, M>(&mut self, name: &S, _: M)
@@ -186,7 +278,7 @@ where
         M: 'static + Send + FnMut(Context<'lua>, &mut T, A) -> Result<R>,
     {
         self.mut_methods
-            .push(Self::get_method_data::<A, R, _>(name))
+            .push(Self::get_method_data::<A, R, _>(name, false))
     }
 
     fn add_function<S, A, R, F>(&mut self, name: &S, _: F)
@@ -196,7 +288,8 @@ where
         R: ToLuaMulti<'lua> + TealMultiValue,
         F: 'static + Send + Fn(Context<'lua>, A) -> Result<R>,
     {
-        self.functions.push(Self::get_method_data::<A, R, _>(name))
+        self.functions
+            .push(Self::get_method_data::<A, R, _>(name, false))
     }
 
     fn add_function_mut<S, A, R, F>(&mut self, name: &S, _: F)
@@ -207,39 +300,47 @@ where
         F: 'static + Send + FnMut(Context<'lua>, A) -> Result<R>,
     {
         self.mut_functions
-            .push(Self::get_method_data::<A, R, _>(name))
+            .push(Self::get_method_data::<A, R, _>(name, false))
     }
 
-    fn add_meta_method<A, R, M>(&mut self, _: MetaMethod, _: M)
+    fn add_meta_method<A, R, M>(&mut self, name: MetaMethod, _: M)
     where
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         M: 'static + Send + Fn(Context<'lua>, &T, A) -> Result<R>,
     {
+        self.meta_method
+            .push(Self::get_method_data::<A, R, _>(get_meta_name(name), true))
     }
 
-    fn add_meta_method_mut<A, R, M>(&mut self, _: MetaMethod, _: M)
+    fn add_meta_method_mut<A, R, M>(&mut self, name: MetaMethod, _: M)
     where
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         M: 'static + Send + FnMut(Context<'lua>, &mut T, A) -> Result<R>,
     {
+        self.meta_method_mut
+            .push(Self::get_method_data::<A, R, _>(get_meta_name(name), true))
     }
 
-    fn add_meta_function<A, R, F>(&mut self, _: MetaMethod, _: F)
+    fn add_meta_function<A, R, F>(&mut self, name: MetaMethod, _: F)
     where
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         F: 'static + Send + Fn(Context<'lua>, A) -> Result<R>,
     {
+        self.meta_function
+            .push(Self::get_method_data::<A, R, _>(get_meta_name(name), true))
     }
 
-    fn add_meta_function_mut<A, R, F>(&mut self, _: MetaMethod, _: F)
+    fn add_meta_function_mut<A, R, F>(&mut self, name: MetaMethod, _: F)
     where
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         F: 'static + Send + FnMut(Context<'lua>, A) -> Result<R>,
     {
+        self.meta_function_mut
+            .push(Self::get_method_data::<A, R, _>(get_meta_name(name), true))
     }
 }
 
