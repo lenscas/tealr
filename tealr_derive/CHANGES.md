@@ -3,11 +3,13 @@
 All notable changes to this project are documented in this file.
 
 ## Overview
+- [`0.5.0`](#050)
 - [`0.4.0`](#040)
 - [`0.2.0`](#020)
 - [`0.1.1`](#011)
 
 ## upcoming
+## 0.5.0
 
 ## 0.4.0
 - Make the UserData derive macro a bit more hygienic
