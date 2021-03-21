@@ -3,6 +3,7 @@
         "Luarocks",
         "Typewalker",
         "bstr",
+        "chara",
         "concat",
         "eval",
         "multivalue",
