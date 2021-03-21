@@ -107,7 +107,10 @@ fn get_version(version: String) -> String {
         }
     });
     if !is_valid_version {
-        panic!("Given version is not valid. Versions should look like v{{number}}.{{number}}.{{number}}.")
+        panic!(
+            "{}",
+            "Given version is not valid. Versions should look like v{integer}.{integer}.{integer}."
+        )
     }
     version
 }
