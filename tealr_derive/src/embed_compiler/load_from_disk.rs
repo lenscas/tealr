@@ -1,31 +1,38 @@
-use std::{fs::read_to_string, process::Command};
-pub(crate) fn discover_tl_tl() -> String {
-    let command = Command::new("luarocks")
-        .arg("which")
-        .arg("tl.tl")
-        .output()
-        .unwrap_or_else(|e| {
-            panic!(
-                "Could not execute `luarocks which tl.tl` to discover location of tl.tl. Error:\n{}",
-                e
-            )
-        });
+fn run_find_command(is_local: bool) -> String {
+    let mut command = Command::new("luarocks");
+    command.arg("which").arg("tl.tl");
+    if is_local {
+        command.arg("--local");
+    }
+    let command = command.output().unwrap_or_else(|e| {
+        panic!(
+            "Could not execute `luarocks which tl.tl` to discover location of tl.tl. Error:\n{}",
+            e
+        )
+    });
     let stdout = String::from_utf8(command.stdout).unwrap();
     if !command.status.success() {
-        panic!(
-            "`luarocks which tl.tl` did not exit successfully. Status code : {}\n StdErr :\n{}]\n\nstdOut:\n{}",
-            command.status,
-            String::from_utf8(command.stderr).unwrap(),
-            stdout
-        );
+        if is_local {
+            return run_find_command(true);
+        } else {
+            panic!(
+                "`luarocks which tl.tl` did not exit successfully. Status code : {}\n StdErr :\n{}]\n\nstdOut:\n{}",
+                command.status,
+                String::from_utf8(command.stderr).unwrap(),
+                stdout
+            );
+        }
     }
-    let location = stdout
+    stdout
         .split(|v| v == '\n')
         .next()
         .expect("Did not get the expected output from luarocks")
-        .to_string();
+        .to_string()
+}
 
-    location
+use std::{fs::read_to_string, process::Command};
+pub(crate) fn discover_tl_tl() -> String {
+    run_find_command(true)
 }
 pub(crate) fn get_local_teal(path: String) -> String {
     let build_dir = tempfile::tempdir().expect("Could not get temp dir to build teal");
