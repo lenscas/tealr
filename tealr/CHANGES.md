@@ -3,6 +3,7 @@
 All notable changes to this project are documented in this file.
 
 ## Overview
+- [`0.5.1`](#051)
 - [`0.5.0`](#050)
 - [`0.4.0`](#040)
 - [`0.3.0`](#030)
@@ -12,6 +13,9 @@ All notable changes to this project are documented in this file.
 - [`0.0.1`](#001)
 
 ## upcoming
+
+## 0.5.1
+- Fix embed_compiler(Local()) not finding teal if it was installed using --local
 ## 0.5.0
 - Add support for `metaMethods`
 - **BREAKING** Update minimum supported tl version to `0.13.1`
