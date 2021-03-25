@@ -23,20 +23,24 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
     steps:
     - uses: actions/checkout@master
     - uses: hecrj/setup-rust-action@v1.3.4 
       with:
         rust-version: stable
-    - uses: leafo/gh-actions-lua@v8.0.0
+    - uses: actions/setup-python@v1
+    - uses: BSFishy/pip-action@v1
       with:
-        luaVersion: "5.3"
-    - uses: leafo/gh-actions-luarocks@v4.0.0
-    - name:  Install dependencies
-      run: luarocks install tl
-    - name: run tests
-      run: cargo test
+          packages: hererocks
+    - name: Install lua and luarocks
+      run: python -m hererocks -l 5.3 -rlatest .luaenv
+    - name: Setup luarocks and run tests
+      run: |
+        . ./.luaenv/bin/activate
+        luarocks install tl
+        . ./.luaenv/bin/activate
+        cargo test
   clippy:
     runs-on: ubuntu-latest
     steps:
