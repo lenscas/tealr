@@ -1,6 +1,6 @@
 use tealr::{
-    rlu::{TealData, TealDataMethods, TypedFunction},
-    TypeName, UserData,
+    mlu::{TealData, TealDataMethods, TypedFunction},
+    MluaUserData, TypeName,
 };
 #[test]
 fn generate_correct_type() {
@@ -16,8 +16,8 @@ fn generate_correct_type() {
     );
 }
 #[test]
-fn try_to_use() -> rlua::Result<()> {
-    #[derive(Clone, UserData, TypeName)]
+fn try_to_use() -> mlua::Result<()> {
+    #[derive(Clone, MluaUserData, TypeName)]
     struct Test {}
     impl TealData for Test {
         fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
@@ -29,7 +29,7 @@ fn try_to_use() -> rlua::Result<()> {
     }
     let code = tealr::compile_inline_teal!(
         "
-global record Test 
+global record Test
     test_function_as_parameter:function(Test,function(integer,integer):integer):integer
 end
 
@@ -41,18 +41,17 @@ end
 return test:test_function_as_parameter(add)
 "
     );
-    let res: u8 = rlua::Lua::new().context(|ctx| {
-        let globals = ctx.globals();
-        globals.set("test", Test {})?;
-        ctx.load(code).eval()
-    })?;
+    let lua = mlua::Lua::new();
+    let globals = lua.globals();
+    globals.set("test", Test {})?;
+    let res: i32 = lua.load(code).eval()?;
     assert_eq!(res, 30);
     Ok(())
 }
 
 #[test]
-fn pass_back() -> rlua::Result<()> {
-    #[derive(Clone, UserData, TypeName)]
+fn pass_back() -> mlua::Result<()> {
+    #[derive(Clone, MluaUserData, TypeName)]
     struct Test {}
     impl TealData for Test {
         fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
@@ -64,7 +63,7 @@ fn pass_back() -> rlua::Result<()> {
     }
     let code = tealr::compile_inline_teal!(
         "
-global record Test 
+global record Test
     test_function_as_parameter:function(Test,function(integer,integer):integer):(function(integer,integer):integer)
 end
 
@@ -76,11 +75,11 @@ end
 return test:test_function_as_parameter(add)(10,20)
 "
     );
-    let res: u8 = rlua::Lua::new().context(|ctx| {
-        let globals = ctx.globals();
-        globals.set("test", Test {})?;
-        ctx.load(code).eval()
-    })?;
+
+    let lua = mlua::Lua::new();
+    let globals = lua.globals();
+    globals.set("test", Test {})?;
+    let res: i32 = lua.load(code).eval()?;
     assert_eq!(res, 30);
     Ok(())
 }

@@ -1,5 +1,5 @@
 use rlua::{FromLua, ToLua};
-use tealr::{rlu::TealData, Direction, TypeName, TypeWalker, UserData};
+use tealr::{rlu::TealData, Direction, RluaUserData, TypeName, TypeWalker};
 
 #[derive(Clone, Copy)]
 pub struct TestFromAndBack {
@@ -33,7 +33,7 @@ impl TypeName for TestFromAndBack {
     }
 }
 
-#[derive(UserData, TypeName)]
+#[derive(RluaUserData, TypeName)]
 struct Holder {
     value: TestFromAndBack,
 }

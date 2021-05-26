@@ -1,7 +1,7 @@
 use std::{
     fs::{read_to_string, File},
     io::{Read, Write},
-    path::PathBuf,
+    path::Path,
     process::Command,
 };
 
@@ -72,7 +72,7 @@ fn get_file_from_zip(zip: &mut ZipArchive<File>, name: String) -> ZipFile {
     zip.by_name(&name)
         .unwrap_or_else(|v| panic!("Could not get `{}` out of zip file. Error:\n{}", name, v))
 }
-fn write_read_to_file<T: Read>(mut reader: T, file_path: &PathBuf, buf: &mut Vec<u8>) {
+fn write_read_to_file<T: Read>(mut reader: T, file_path: &Path, buf: &mut Vec<u8>) {
     buf.clear();
     reader
         .read_to_end(buf)

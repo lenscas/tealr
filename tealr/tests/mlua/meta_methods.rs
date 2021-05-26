@@ -1,15 +1,15 @@
-use rlua::MetaMethod;
+use mlua::MetaMethod;
 use tealr::{
-    rlu::{TealData, TealDataMethods},
-    TypeName, TypeWalker, UserData,
+    mlu::{TealData, TealDataMethods},
+    MluaUserData, TypeName, TypeWalker,
 };
 
-#[derive(Clone, UserData, TypeName)]
+#[derive(Clone, MluaUserData, TypeName)]
 struct Example {
     add: i8,
 }
 
-//now, implement TealData. This tells rlua what methods are available and tealr what the types are
+//now, implement TealData. This tells Mlua what methods are available and tealr what the types are
 impl TealData for Example {
     //implement your methods/functions
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {

@@ -8,8 +8,8 @@ pub use self::{
     user_data_wrapper::UserDataWrapper,
 };
 
-pub(crate) fn get_meta_name(name: rlua::MetaMethod) -> &'static str {
-    use rlua::MetaMethod;
+pub(crate) fn get_meta_name(name: mlua::MetaMethod) -> &'static str {
+    use mlua::MetaMethod;
     match name {
         MetaMethod::Add => "__add",
         MetaMethod::Sub => "__su",

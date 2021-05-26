@@ -51,8 +51,11 @@ macro_rules! impl_teal_multi_value {
             #[allow(unused_mut)]
             #[allow(non_snake_case)]
             fn get_types(dir:Direction) ->  Vec<TealType>{
-                let mut types = Vec::new();
-                $(types.push(TealType::from::<$names>(dir));)*
+                let types = vec![
+                    $(TealType::from::<$names>(dir),)*
+                ];
+                // let mut types = Vec::new();
+                // $(types.push(TealType::from::<$names>(dir));)*
                 types
             }
         }

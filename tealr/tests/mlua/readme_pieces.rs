@@ -1,7 +1,7 @@
 use tealr::{
     compile_inline_teal, embed_compiler,
-    rlu::{TealData, TealDataMethods},
-    TypeName, TypeWalker, UserData,
+    mlu::{TealData, TealDataMethods},
+    MluaUserData, TypeName, TypeWalker,
 };
 
 #[test]
@@ -9,10 +9,10 @@ fn test() {
     pieces().unwrap();
 }
 
-#[derive(Clone, UserData, TypeName)]
+#[derive(Clone, MluaUserData, TypeName)]
 struct Example {}
 
-//now, implement TealData. This tells rlua what methods are available and tealr what the types are
+//now, implement TealData. This tells mlua what methods are available and tealr what the types are
 impl TealData for Example {
     //implement your methods/functions
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
@@ -25,7 +25,7 @@ impl TealData for Example {
     }
 }
 
-fn pieces() -> Result<(), rlua::Error> {
+fn pieces() -> Result<(), mlua::Error> {
     //the functionality of these pieces of code are already being tested at other places
     //This is just to make sure the examples in the readme keep working
     if false {
@@ -39,11 +39,10 @@ fn pieces() -> Result<(), rlua::Error> {
         let _code = compile_inline_teal!("local x : number = 5 return x");
         //embed teal
         let compiler = embed_compiler!("v0.10.0");
-        let _res = rlua::Lua::new().context(|ctx| {
-            let code = compiler("example/basic_teal_file");
-            let res: u8 = ctx.load(&code).set_name("embedded_compiler")?.eval()?;
-            Ok(res)
-        })?;
+
+        let lua = mlua::Lua::new();
+        let code = compiler("example/mlua/basic_teal_file");
+        let _: u8 = lua.load(&code).set_name("embedded_compiler")?.eval()?;
     }
 
     Ok(())

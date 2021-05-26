@@ -48,10 +48,11 @@ use std::{
 use crate::TypeGenerator;
 
 impl_type_name!("boolean" bool);
-impl_type_name!("string" String,std::ffi::CString,bstr::BString,&str,&std::ffi::CStr,&bstr::BStr);
+impl_type_name!("string" String,std::ffi::CString,bstr::BString ,&str,&std::ffi::CStr,&bstr::BStr);
 impl_type_name!("number" f32,f64);
 impl_type_name!("integer" i8,u8,u16,i16,u32,i32,u64,i64,u128,i128,isize,usize);
 
+#[cfg(feature = "rlua")]
 impl<'lua> TypeName for rlua::Value<'lua> {
     fn get_type_name(_: Direction) -> Cow<'static, str> {
         Cow::from("any")
@@ -60,7 +61,7 @@ impl<'lua> TypeName for rlua::Value<'lua> {
         false
     }
 }
-
+#[cfg(feature = "rlua")]
 impl<'lua> TypeName for rlua::Table<'lua> {
     fn get_type_name(_: Direction) -> Cow<'static, str> {
         Cow::from("{any:any}")
@@ -69,6 +70,7 @@ impl<'lua> TypeName for rlua::Table<'lua> {
         false
     }
 }
+#[cfg(feature = "rlua")]
 impl<'lua> TypeName for rlua::String<'lua> {
     fn get_type_name(_: Direction) -> Cow<'static, str> {
         Cow::from("string")
@@ -77,6 +79,7 @@ impl<'lua> TypeName for rlua::String<'lua> {
         false
     }
 }
+#[cfg(feature = "rlua")]
 impl<'lua> TypeName for rlua::Function<'lua> {
     fn get_type_name(_: Direction) -> Cow<'static, str> {
         Cow::from("function(...:any):any...")

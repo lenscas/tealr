@@ -15,7 +15,7 @@ fn main() -> Result<()> {
 function add(param1 :number, param2:number):number
 return param1 + param2
 end
-local concat = require('examples/basic_type').concat
+local concat = require('examples/rlua/basic_type').concat
 print(concat('a','b'))
 return add(1,2)
         "
