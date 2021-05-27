@@ -35,5 +35,6 @@ pub(crate) fn get_meta_name(name: mlua::MetaMethod) -> &'static str {
         MetaMethod::Call => "__call",
         MetaMethod::ToString => "__tostring",
         MetaMethod::Pairs => "__pairs",
+        MetaMethod::Close => "__close",
     }
 }
