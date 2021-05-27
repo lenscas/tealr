@@ -20,87 +20,87 @@ embed_compiler_from_download = ["tealr_derive/embed_compiler_from_download"]
 embed_compiler_from_local = ["tealr_derive/embed_compiler_from_local"]
 
 [dependencies]
-bstr = {version = "0.2", default_features = false,features=["std"]}
-rlua = {version="0.17",optional=true}
-mlua = {version="0.5",optional=true, features=["send","lua53"]}
+bstr = {version = "0.2", default_features = false, features = ["std"]}
+mlua = {version = "0.5", optional = true, features = ["send"]}
+rlua = {version = "0.17", optional = true}
 tealr_derive = {version = "0.5.0", optional = true, path = "../tealr_derive"}
 
 # Rlua tests
 [[test]]
-path="tests/rlua/embed_teal.rs"
-name="rlua_embed_teal"
+name = "rlua_embed_teal"
+path = "tests/rlua/embed_teal.rs"
 required-features = ["rlua"]
 [[test]]
-path="tests/rlua/function_wrapper.rs"
-name="rlua_function_wrapper"
+name = "rlua_function_wrapper"
+path = "tests/rlua/function_wrapper.rs"
 required-features = ["rlua"]
 [[test]]
-path="tests/rlua/readme_pieces.rs"
-name="rlua_readme_pieces"
+name = "rlua_readme_pieces"
+path = "tests/rlua/readme_pieces.rs"
 required-features = ["rlua"]
 [[test]]
-path="tests/rlua/to_from_lua.rs"
-name="rlua_to_from_lua"
+name = "rlua_to_from_lua"
+path = "tests/rlua/to_from_lua.rs"
 required-features = ["rlua"]
 [[test]]
-path="tests/rlua/meta_methods.rs"
-name="rlua_meta_methods"
+name = "rlua_meta_methods"
+path = "tests/rlua/meta_methods.rs"
 required-features = ["rlua"]
 
 #Mlua tests
 [[test]]
-path="tests/mlua/embed_teal.rs"
-name="mlua_embed_teal"
+name = "mlua_embed_teal"
+path = "tests/mlua/embed_teal.rs"
 required-features = ["mlua"]
 [[test]]
-path="tests/mlua/function_wrapper.rs"
-name="mlua_function_wrapper"
+name = "mlua_function_wrapper"
+path = "tests/mlua/function_wrapper.rs"
 required-features = ["mlua"]
 [[test]]
-path="tests/mlua/readme_pieces.rs"
-name="mlua_readme_pieces"
+name = "mlua_readme_pieces"
+path = "tests/mlua/readme_pieces.rs"
 required-features = ["mlua"]
 [[test]]
-path="tests/mlua/to_from_lua.rs"
-name="mlua_to_from_lua"
+name = "mlua_to_from_lua"
+path = "tests/mlua/to_from_lua.rs"
 required-features = ["mlua"]
 [[test]]
-path="tests/mlua/meta_methods.rs"
-name="mlua_meta_methods"
+name = "mlua_meta_methods"
+path = "tests/mlua/meta_methods.rs"
 required-features = ["mlua"]
 
 # Examples using rlua
 [[example]]
-name="rlua_compile_inline_teal"
-path="examples/rlua/compile_inline_teal.rs"
+name = "rlua_compile_inline_teal"
+path = "examples/rlua/compile_inline_teal.rs"
 required-features = ["rlua"]
 [[example]]
-name="rlua_derive"
-path="examples/rlua/derive.rs"
+name = "rlua_derive"
+path = "examples/rlua/derive.rs"
 required-features = ["rlua"]
 [[example]]
-name="rlua_embed_teal"
-path="examples/rlua/embed_teal.rs"
+name = "rlua_embed_teal"
+path = "examples/rlua/embed_teal.rs"
 required-features = ["rlua"]
 [[example]]
-name="rlua_manual"
-path="examples/rlua/manual.rs"
+name = "rlua_manual"
+path = "examples/rlua/manual.rs"
 required-features = ["rlua"]
 
 #examples using mlua
 [[example]]
-name="mlua_compile_inline_teal"
-path="examples/mlua/compile_inline_teal.rs"
+name = "mlua_compile_inline_teal"
+path = "examples/mlua/compile_inline_teal.rs"
 required-features = ["mlua"]
 [[example]]
-name="mlua_derive"
-path="examples/mlua/derive.rs"
+name = "mlua_derive"
+path = "examples/mlua/derive.rs"
 required-features = ["mlua"]
 [[example]]
-name="mlua_embed_teal"
-path="examples/mlua/embed_teal.rs"
+name = "mlua_embed_teal"
+path = "examples/mlua/embed_teal.rs"
 required-features = ["mlua"]
 [[example]]
-name="mlua_manual"
-path="examples/mlua/manual.rs"
+name = "mlua_manual"
+path = "examples/mlua/manual.rs"
 required-features = ["mlua"]
