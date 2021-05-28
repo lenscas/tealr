@@ -104,3 +104,6 @@ required-features = ["mlua"]
 name = "mlua_manual"
 path = "examples/mlua/manual.rs"
 required-features = ["mlua"]
+
+[package.metadata.docs.rs]
+all-features = true
