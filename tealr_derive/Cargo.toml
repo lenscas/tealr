@@ -9,7 +9,7 @@ keywords = ["derive", "macro", "teal", "lua", "tealr"]
 license = "MIT OR Apache-2.0"
 name = "tealr_derive"
 repository = "https://github.com/lenscas/tealr/"
-version = "0.5.1"
+version = "0.6.0-preview1"
 
 [features]
 compile = ["tempfile"]

@@ -23,7 +23,7 @@ embed_compiler_from_local = ["tealr_derive/embed_compiler_from_local"]
 bstr = {version = "0.2", default_features = false, features = ["std"]}
 mlua = {version = "0.5", optional = true, features = ["send", "lua54"]}
 rlua = {version = "0.17", optional = true}
-tealr_derive = {version = "0.5.0", optional = true, path = "../tealr_derive"}
+tealr_derive = {version = "0.6.0-preview1", optional = true, path = "../tealr_derive"}
 
 # Rlua tests
 [[test]]
