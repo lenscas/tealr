@@ -18,6 +18,7 @@ compile = ["tealr_derive/compile"]
 derive = ["tealr_derive/derive"]
 embed_compiler_from_download = ["tealr_derive/embed_compiler_from_download"]
 embed_compiler_from_local = ["tealr_derive/embed_compiler_from_local"]
+passing_features_to_dependencies_from_cli_is_broken_do_not_enable_this_feature_for_redacted_sake = ["mlua/vendored"]
 
 [dependencies]
 bstr = {version = "0.2", default_features = false, features = ["std"]}
@@ -107,4 +108,3 @@ required-features = ["mlua"]
 
 [package.metadata.docs.rs]
 all-features = true
-features = ["mlua/vendored"]
