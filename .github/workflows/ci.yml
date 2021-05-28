@@ -24,6 +24,9 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest]
+        tests : 
+          - "cargo test --features mlua --features mlua/vendored"
+          - "cargo test --features rlua"
     steps:
     - uses: actions/checkout@master
     - uses: hecrj/setup-rust-action@v1.3.4 
@@ -35,8 +38,10 @@ jobs:
     - uses: leafo/gh-actions-luarocks@v4.0.0
     - name:  Install dependencies
       run: luarocks install tl
+    - name: cd to tealr
+      run: cd tealr
     - name: run tests
-      run: cargo test
+      run: ${{matrix.tests}}
   clippy:
     runs-on: ubuntu-latest
     steps:

@@ -6,6 +6,7 @@
         "chara",
         "concat",
         "eval",
+        "mlua",
         "multivalue",
         "rlua",
         "str's",
