@@ -25,9 +25,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macOS-latest]
         tests : 
-          - "cargo test --tests --examples --features mlua --features mlua/vendored"
-          - "cargo test --tests --examples --features rlua"
-          - "cargo test --all-features --features mlua/vendored"
+          - "cargo test --features mlua --features mlua/vendored"
+          - "cargo test--features rlua"
     steps:
     - uses: actions/checkout@master
     - uses: hecrj/setup-rust-action@v1.3.4 
