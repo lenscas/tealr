@@ -22,7 +22,8 @@ impl TypeWalker {
         self
     }
     ///generates the `.d.tl` file. It outputs the string, its up to you to store it.
-    ///```
+    #[cfg_attr(feature = "rlua", doc = " ```")]
+    #[cfg_attr(not(feature = "rlua"), doc = " ```ignore")]
     ///# use rlua::{Lua, Result, UserDataMethods};
     ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker, RluaUserData,TypeName};
     ///#[derive(RluaUserData,TypeName)]
@@ -58,7 +59,8 @@ impl TypeWalker {
         ))
     }
     ///Same as calling [Typewalker::generate(outer_name,true)](crate::TypeWalker::generate).
-    ///```
+    #[cfg_attr(feature = "rlua", doc = " ```")]
+    #[cfg_attr(not(feature = "rlua"), doc = " ```ignore")]
     ///# use rlua::{Lua, Result, UserDataMethods};
     ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker, RluaUserData,TypeName};
     ///#[derive(RluaUserData,TypeName)]
@@ -78,7 +80,8 @@ impl TypeWalker {
         self.generate(outer_name, true)
     }
     ///Same as calling [Typewalker::generate(outer_name,false)](crate::TypeWalker::generate).
-    ///```
+    #[cfg_attr(feature = "rlua", doc = " ```")]
+    #[cfg_attr(not(feature = "rlua"), doc = " ```ignore")]
     ///# use rlua::{Lua, Result, UserDataMethods};
     ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker, RluaUserData,TypeName};
     ///#[derive(RluaUserData,TypeName)]

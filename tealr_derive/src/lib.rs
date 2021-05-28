@@ -110,7 +110,7 @@ pub fn type_representation_derive(input: TokenStream) -> TokenStream {
 fn impl_type_representation_derive(ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
     let name = &ast.ident;
     let gen = quote! {
-        impl TypeName for #name {
+        impl ::tealr::TypeName for #name {
             fn get_type_name(_: ::tealr::Direction) -> ::std::borrow::Cow<'static, str> {
                 ::std::borrow::Cow::from(stringify!(#name))
             }
