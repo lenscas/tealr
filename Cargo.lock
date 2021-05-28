@@ -634,7 +634,7 @@ dependencies = [
 
 [[package]]
 name = "tealr"
-version = "0.6.0-preview2"
+version = "0.6.0-preview3"
 dependencies = [
  "bstr",
  "mlua",
