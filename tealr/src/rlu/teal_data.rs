@@ -45,6 +45,7 @@ where
     Params: ToLuaMulti<'lua> + TealMultiValue,
     Response: FromLuaMulti<'lua> + TealMultiValue,
 {
+    #[allow(clippy::wrong_self_convention)]
     fn to_lua(self, _: Context<'lua>) -> rlua::Result<Value<'lua>> {
         Ok(Value::Function(self.inner_function))
     }

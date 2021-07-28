@@ -53,6 +53,36 @@ impl_type_name!("number" f32,f64);
 impl_type_name!("integer" i8,u8,u16,i16,u32,i32,u64,i64,u128,i128,isize,usize);
 
 #[cfg(feature = "rlua")]
+impl<'lua> TypeName for rlua::Thread<'lua> {
+    fn get_type_name(_: Direction) -> Cow<'static, str> {
+        Cow::from("thread")
+    }
+    fn is_external() -> bool {
+        false
+    }
+}
+
+#[cfg(feature = "mlua")]
+impl<'lua> TypeName for mlua::Thread<'lua> {
+    fn get_type_name(_: Direction) -> Cow<'static, str> {
+        Cow::from("thread")
+    }
+    fn is_external() -> bool {
+        false
+    }
+}
+
+#[cfg(feature = "mlua_async")]
+impl<'lua, R> TypeName for mlua::AsyncThread<'lua, R> {
+    fn get_type_name(_: Direction) -> Cow<'static, str> {
+        Cow::from("thread")
+    }
+    fn is_external() -> bool {
+        false
+    }
+}
+
+#[cfg(feature = "rlua")]
 impl<'lua> TypeName for rlua::Value<'lua> {
     fn get_type_name(_: Direction) -> Cow<'static, str> {
         Cow::from("any")

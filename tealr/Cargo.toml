@@ -12,18 +12,35 @@ version = "0.6.0-preview3"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
+
 default = ["derive", "compile", "embed_compiler_from_download"]
 
 compile = ["tealr_derive/compile"]
 derive = ["tealr_derive/derive"]
 embed_compiler_from_download = ["tealr_derive/embed_compiler_from_download"]
 embed_compiler_from_local = ["tealr_derive/embed_compiler_from_local"]
-passing_features_to_dependencies_from_cli_is_broken_do_not_enable_this_feature_for_redacted_sake = ["mlua/vendored"]
+
+# mlua specific features
+mlua_async = ["mlua/async"]
+mlua_lua51 = ["mlua/lua51"]
+mlua_lua52 = ["mlua/lua52"]
+mlua_lua53 = ["mlua/lua53"]
+mlua_lua54 = ["mlua/lua54"]
+mlua_luajit = ["mlua/luajit"]
+mlua_macros = ["mlua/macros"]
+mlua_module = ["mlua/module"]
+mlua_send = ["mlua/send"]
+mlua_serialize = ["mlua/serialize"]
+mlua_vendored = ["mlua/vendored"]
+
+#rlua specific features
+rlua_builtin-lua = ["rlua/builtin-lua"]
+rlua_system-lua = ["rlua/system-lua"]
 
 [dependencies]
 bstr = {version = "0.2", default_features = false, features = ["std"]}
-mlua = {version = "0.5", optional = true, features = ["send", "lua54"]}
-rlua = {version = "0.17", optional = true}
+mlua = {version = "0.6.2", optional = true, default_features = false}
+rlua = {version = "0.17", optional = true, default_features = false}
 tealr_derive = {version = "0.6.0-preview1", optional = true, path = "../tealr_derive"}
 
 # Rlua tests
@@ -52,23 +69,28 @@ required-features = ["rlua"]
 [[test]]
 name = "mlua_embed_teal"
 path = "tests/mlua/embed_teal.rs"
-required-features = ["mlua"]
+required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
+
+[[test]]
+name = "mlua_async"
+path = "tests/mlua/async.rs"
+required-features = ["mlua", "mlua_lua54", "mlua_vendored", "mlua_async"]
 [[test]]
 name = "mlua_function_wrapper"
 path = "tests/mlua/function_wrapper.rs"
-required-features = ["mlua"]
+required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
 [[test]]
 name = "mlua_readme_pieces"
 path = "tests/mlua/readme_pieces.rs"
-required-features = ["mlua"]
+required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
 [[test]]
 name = "mlua_to_from_lua"
 path = "tests/mlua/to_from_lua.rs"
-required-features = ["mlua"]
+required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
 [[test]]
 name = "mlua_meta_methods"
 path = "tests/mlua/meta_methods.rs"
-required-features = ["mlua"]
+required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
 
 # Examples using rlua
 [[example]]
@@ -92,19 +114,19 @@ required-features = ["rlua"]
 [[example]]
 name = "mlua_compile_inline_teal"
 path = "examples/mlua/compile_inline_teal.rs"
-required-features = ["mlua"]
+required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
 [[example]]
 name = "mlua_derive"
 path = "examples/mlua/derive.rs"
-required-features = ["mlua"]
+required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
 [[example]]
 name = "mlua_embed_teal"
 path = "examples/mlua/embed_teal.rs"
-required-features = ["mlua"]
+required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
 [[example]]
 name = "mlua_manual"
 path = "examples/mlua/manual.rs"
-required-features = ["mlua"]
+required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
 
 [package.metadata.docs.rs]
-all-features = true
+features = ["mlua", "rlua", "mlua_lua53", "mlua_vendored", "mlua_async", "mlua_serialize", "rlua_builtin-lua"]

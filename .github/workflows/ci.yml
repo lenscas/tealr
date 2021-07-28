@@ -25,7 +25,10 @@ jobs:
       matrix:
         os: [ubuntu-latest, macOS-latest]
         tests : 
-          - "cargo test --features mlua --features passing_features_to_dependencies_from_cli_is_broken_do_not_enable_this_feature_for_redacted_sake"
+          - "cargo test --features mlua,mlua_vendored,mlua_53,mlua_async,mlua_send"
+          - "cargo test --features mlua,mlua_vendored,mlua_54,mlua_async,mlua_send"
+          - "cargo test --features mlua,mlua_vendored,mlua_53,mlua_async --no-run"
+          - "cargo test --features mlua,mlua_vendored,mlua_54,mlua_async --no-run"
           - "cargo test --features rlua"
     steps:
     - uses: actions/checkout@master

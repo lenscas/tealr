@@ -20,6 +20,7 @@ impl<'lua> FromLua<'lua> for TestFromAndBack {
 }
 
 impl<'lua> ToLua<'lua> for TestFromAndBack {
+    #[allow(clippy::wrong_self_convention)]
     fn to_lua(self, lua: &'lua mlua::Lua) -> mlua::Result<mlua::Value<'lua>> {
         self.value.to_string().to_lua(lua)
     }
