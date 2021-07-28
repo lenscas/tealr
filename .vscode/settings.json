@@ -4,6 +4,7 @@
         "Typewalker",
         "bstr",
         "chara",
+        "clippy",
         "concat",
         "eval",
         "mlua",

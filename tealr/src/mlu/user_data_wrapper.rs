@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use mlua::{FromLuaMulti, Lua, MetaMethod, Result, ToLuaMulti, UserData, UserDataMethods};
 
-use super::TealDataMethods;
+use super::{MaybeSend, TealDataMethods};
 use crate::TealMultiValue;
 
 ///Used to turn [UserDataMethods](mlua::UserDataMethods) into [TealDataMethods](crate::mlu::TealDataMethods).
@@ -56,7 +56,7 @@ where
         S: ?Sized + AsRef<[u8]>,
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
-        M: 'static + Send + Fn(&'lua Lua, &T, A) -> Result<R>,
+        M: 'static + MaybeSend + Fn(&'lua Lua, &T, A) -> Result<R>,
     {
         self.cont.add_method(name, method)
     }
@@ -66,7 +66,7 @@ where
         S: ?Sized + AsRef<[u8]>,
         A: FromLuaMulti<'lua>,
         R: ToLuaMulti<'lua>,
-        M: 'static + Send + FnMut(&'lua Lua, &mut T, A) -> Result<R>,
+        M: 'static + MaybeSend + FnMut(&'lua Lua, &mut T, A) -> Result<R>,
     {
         self.cont.add_method_mut(name, method)
     }
@@ -76,7 +76,7 @@ where
         S: ?Sized + AsRef<[u8]>,
         A: FromLuaMulti<'lua>,
         R: ToLuaMulti<'lua>,
-        F: 'static + Send + Fn(&'lua Lua, A) -> Result<R>,
+        F: 'static + MaybeSend + Fn(&'lua Lua, A) -> Result<R>,
     {
         self.cont.add_function(name, function)
     }
@@ -86,7 +86,7 @@ where
         S: ?Sized + AsRef<[u8]>,
         A: FromLuaMulti<'lua>,
         R: ToLuaMulti<'lua>,
-        F: 'static + Send + FnMut(&'lua Lua, A) -> Result<R>,
+        F: 'static + MaybeSend + FnMut(&'lua Lua, A) -> Result<R>,
     {
         self.cont.add_function_mut(name, function)
     }
@@ -95,7 +95,7 @@ where
     where
         A: FromLuaMulti<'lua>,
         R: ToLuaMulti<'lua>,
-        M: 'static + Send + Fn(&'lua Lua, &T, A) -> Result<R>,
+        M: 'static + MaybeSend + Fn(&'lua Lua, &T, A) -> Result<R>,
     {
         self.cont.add_meta_method(meta, method)
     }
@@ -104,7 +104,7 @@ where
     where
         A: FromLuaMulti<'lua>,
         R: ToLuaMulti<'lua>,
-        M: 'static + Send + FnMut(&'lua Lua, &mut T, A) -> Result<R>,
+        M: 'static + MaybeSend + FnMut(&'lua Lua, &mut T, A) -> Result<R>,
     {
         self.cont.add_meta_method_mut(meta, method)
     }
@@ -113,7 +113,7 @@ where
     where
         A: FromLuaMulti<'lua>,
         R: ToLuaMulti<'lua>,
-        F: 'static + Send + Fn(&'lua Lua, A) -> Result<R>,
+        F: 'static + MaybeSend + Fn(&'lua Lua, A) -> Result<R>,
     {
         self.cont.add_meta_function(meta, function)
     }
@@ -122,8 +122,35 @@ where
     where
         A: FromLuaMulti<'lua>,
         R: ToLuaMulti<'lua>,
-        F: 'static + Send + FnMut(&'lua Lua, A) -> Result<R>,
+        F: 'static + MaybeSend + FnMut(&'lua Lua, A) -> Result<R>,
     {
         self.cont.add_meta_function_mut(meta, function)
+    }
+
+    #[cfg(feature = "mlua_async")]
+    #[inline(always)]
+    fn add_async_method<S: ?Sized, A, R, M, MR>(&mut self, name: &S, method: M)
+    where
+        T: Clone,
+        S: AsRef<[u8]>,
+        A: FromLuaMulti<'lua> + TealMultiValue,
+        R: ToLuaMulti<'lua> + TealMultiValue,
+        M: 'static + MaybeSend + Fn(&'lua Lua, T, A) -> MR,
+        MR: 'lua + std::future::Future<Output = Result<R>>,
+    {
+        self.cont.add_async_method(name, method)
+    }
+
+    #[cfg(feature = "mlua_async")]
+    #[inline(always)]
+    fn add_async_function<S: ?Sized, A, R, F, FR>(&mut self, name: &S, function: F)
+    where
+        S: AsRef<[u8]>,
+        A: FromLuaMulti<'lua> + TealMultiValue,
+        R: ToLuaMulti<'lua> + TealMultiValue,
+        F: 'static + MaybeSend + Fn(&'lua Lua, A) -> FR,
+        FR: 'lua + std::future::Future<Output = Result<R>>,
+    {
+        self.cont.add_async_function(name, function)
     }
 }

@@ -1,6 +1,7 @@
 pub(crate) mod teal_data;
 pub(crate) mod teal_data_methods;
 pub(crate) mod user_data_wrapper;
+pub use rlua;
 
 pub use self::{
     teal_data::{TealData, TypedFunction},
