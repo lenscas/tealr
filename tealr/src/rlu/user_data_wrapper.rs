@@ -16,7 +16,8 @@ where
     T: UserData,
 {
     cont: &'a mut Container,
-    _t: &'lua PhantomData<T>,
+    _t: std::marker::PhantomData<(&'a (), T)>,
+    _x: &'lua std::marker::PhantomData<()>,
 }
 impl<'a, 'lua, Container, T> UserDataWrapper<'a, 'lua, Container, T>
 where
@@ -40,7 +41,8 @@ where
     pub fn from_user_data_methods(cont: &'a mut Container) -> Self {
         Self {
             cont,
-            _t: &PhantomData,
+            _t: std::marker::PhantomData,
+            _x: &std::marker::PhantomData,
         }
     }
 }

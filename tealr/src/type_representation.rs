@@ -91,6 +91,17 @@ impl<'lua> TypeName for rlua::Value<'lua> {
         false
     }
 }
+
+#[cfg(feature = "mlua")]
+impl<'lua> TypeName for mlua::Value<'lua> {
+    fn get_type_name(_: Direction) -> Cow<'static, str> {
+        Cow::from("any")
+    }
+    fn is_external() -> bool {
+        false
+    }
+}
+
 #[cfg(feature = "rlua")]
 impl<'lua> TypeName for rlua::Table<'lua> {
     fn get_type_name(_: Direction) -> Cow<'static, str> {
@@ -100,6 +111,17 @@ impl<'lua> TypeName for rlua::Table<'lua> {
         false
     }
 }
+
+#[cfg(feature = "mlua")]
+impl<'lua> TypeName for mlua::Table<'lua> {
+    fn get_type_name(_: Direction) -> Cow<'static, str> {
+        Cow::from("{any:any}")
+    }
+    fn is_external() -> bool {
+        false
+    }
+}
+
 #[cfg(feature = "rlua")]
 impl<'lua> TypeName for rlua::String<'lua> {
     fn get_type_name(_: Direction) -> Cow<'static, str> {
@@ -109,8 +131,29 @@ impl<'lua> TypeName for rlua::String<'lua> {
         false
     }
 }
+
+#[cfg(feature = "mlua")]
+impl<'lua> TypeName for mlua::String<'lua> {
+    fn get_type_name(_: Direction) -> Cow<'static, str> {
+        Cow::from("string")
+    }
+    fn is_external() -> bool {
+        false
+    }
+}
+
 #[cfg(feature = "rlua")]
 impl<'lua> TypeName for rlua::Function<'lua> {
+    fn get_type_name(_: Direction) -> Cow<'static, str> {
+        Cow::from("function(...:any):any...")
+    }
+    fn is_external() -> bool {
+        false
+    }
+}
+
+#[cfg(feature = "mlua")]
+impl<'lua> TypeName for mlua::Function<'lua> {
     fn get_type_name(_: Direction) -> Cow<'static, str> {
         Cow::from("function(...:any):any...")
     }
