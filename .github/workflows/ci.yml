@@ -29,7 +29,7 @@ jobs:
           - "cargo test --features mlua,mlua_vendored,mlua_lua54,mlua_async,mlua_send"
           - "cargo test --features mlua,mlua_vendored,mlua_lua53,mlua_async --no-run"
           - "cargo test --features mlua,mlua_vendored,mlua_lua54,mlua_async --no-run"
-          - "cargo test --features rlua"
+          - "cargo test --features rlua,rlua_builtin-lua"
     steps:
     - uses: actions/checkout@master
     - uses: hecrj/setup-rust-action@v1.3.4 
