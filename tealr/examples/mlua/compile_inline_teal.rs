@@ -2,9 +2,10 @@
 //This is useful if you want to write a bit of teal/lua code directly in your application that gets passed to RLua.
 //NOTE: At this point it requires you to have teal installed and accessible as `tl` at compile time.
 
-use mlua::{Lua, Result};
-
-use tealr::compile_inline_teal;
+use tealr::{
+    compile_inline_teal,
+    mlu::mlua::{Lua, Result},
+};
 
 //This example using `compile_inline_teal` which takes in some teal code and compiles it.
 fn main() -> Result<()> {

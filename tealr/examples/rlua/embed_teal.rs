@@ -3,7 +3,7 @@
 use tealr::embed_compiler;
 
 fn main() -> rlua::Result<()> {
-    let compiler = embed_compiler!("v0.9.0");
+    let compiler = embed_compiler!("v0.13.1");
     let res = rlua::Lua::new().context(|ctx| {
         let code = compiler("examples/basic_teal_file");
         let res: u8 = ctx.load(&code).set_name("embedded_compiler")?.eval()?;

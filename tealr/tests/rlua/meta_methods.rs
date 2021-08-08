@@ -1,6 +1,5 @@
-use rlua::MetaMethod;
 use tealr::{
-    rlu::{TealData, TealDataMethods},
+    rlu::{rlua::MetaMethod, TealData, TealDataMethods},
     RluaUserData, TypeName, TypeWalker,
 };
 
