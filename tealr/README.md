@@ -88,10 +88,9 @@ This makes it possible to easily load it into the lua vm thus allowing it to run
 {
     use tealr::embed_compiler;
     let compiler = embed_compiler!("v0.13.1");
-    let res = rlua::Lua::new().context(|ctx| {
+    let res : u8 = rlua::Lua::new().context(|ctx| {
         let code = compiler("example/basic_teal_file");
-        let res: u8 = ctx.load(&code).set_name("embedded_compiler")?.eval()?;
-        Ok(res)
+        ctx.load(&code).set_name("embedded_compiler")?.eval()
     })?;
 };
 
