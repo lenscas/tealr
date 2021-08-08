@@ -93,7 +93,6 @@ This makes it possible to easily load it into the lua vm thus allowing it to run
         let res: u8 = ctx.load(&code).set_name("embedded_compiler")?.eval()?;
         Ok(res)
     })?;
-    return Ok::<(), Box<dyn std::error::Error>>(());
 };
 
 #[cfg(feature = "mlua")]
@@ -103,9 +102,8 @@ This makes it possible to easily load it into the lua vm thus allowing it to run
     let lua = mlua::Lua::new();
     let code = compiler("example/basic_teal_file");
     let res: u8 = lua.load(&code).set_name("embedded_compiler")?.eval()?;
-
-    return Ok::<(), Box<dyn std::error::Error>>(());
 };
+Ok::<(), Box<dyn std::error::Error>>(())
 ```
 There are a few sources tealr can use to get the compiler. If no source is specified it defaults to github releases.
 Other sources can be specified as follows:
