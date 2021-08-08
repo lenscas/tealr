@@ -50,7 +50,7 @@ fn impl_rlua_user_data_derive(ast: &syn::DeriveInput) -> proc_macro2::TokenStrea
     let name = &ast.ident;
     let gen = quote! {
         impl rlua::UserData for #name {
-            fn add_methods<'lua, T: ::rlua::UserDataMethods<'lua, Self>>(methods: &mut T) {
+            fn add_methods<'lua, T: ::tealr::rlu::rlua::UserDataMethods<'lua, Self>>(methods: &mut T) {
                 let mut x = ::tealr::rlu::UserDataWrapper::from_user_data_methods(methods);
                 <Self as ::tealr::rlu::TealData>::add_methods(&mut x);
             }
@@ -82,7 +82,7 @@ fn impl_mlua_user_data_derive(ast: &syn::DeriveInput) -> proc_macro2::TokenStrea
     let name = &ast.ident;
     let gen = quote! {
         impl mlua::UserData for #name {
-            fn add_methods<'lua, T: ::mlua::UserDataMethods<'lua, Self>>(methods: &mut T) {
+            fn add_methods<'lua, T: ::tealr::mlu::mlua::UserDataMethods<'lua, Self>>(methods: &mut T) {
                 let mut x = ::tealr::mlu::UserDataWrapper::from_user_data_methods(methods);
                 <Self as ::tealr::mlu::TealData>::add_methods(&mut x);
             }

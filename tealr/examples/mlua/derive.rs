@@ -1,6 +1,8 @@
-use mlua::{Lua, Result};
 use tealr::{
-    mlu::{TealData, TealDataMethods},
+    mlu::{
+        mlua::{Lua, Result},
+        TealData, TealDataMethods,
+    },
     MluaUserData, TypeName, TypeWalker,
 };
 //this example shows how the new traits allow you to generate the .d.tl file

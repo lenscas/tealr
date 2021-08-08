@@ -1,6 +1,8 @@
-use rlua::{Lua, Result, UserData, UserDataMethods};
 use tealr::{
-    rlu::{TealData, TealDataMethods, UserDataWrapper},
+    rlu::{
+        rlua::{Lua, Result, UserData, UserDataMethods},
+        TealData, TealDataMethods, UserDataWrapper,
+    },
     Direction, TypeBody, TypeName, TypeWalker,
 };
 //This example shows how to manually implement UserData using TealData

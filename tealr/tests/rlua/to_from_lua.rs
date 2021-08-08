@@ -1,5 +1,10 @@
-use rlua::{FromLua, ToLua};
-use tealr::{rlu::TealData, Direction, RluaUserData, TypeName, TypeWalker};
+use tealr::{
+    rlu::{
+        rlua::{FromLua, ToLua},
+        TealData,
+    },
+    Direction, RluaUserData, TypeName, TypeWalker,
+};
 
 #[derive(Clone, Copy)]
 pub struct TestFromAndBack {
