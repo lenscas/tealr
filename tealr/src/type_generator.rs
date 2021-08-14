@@ -67,39 +67,11 @@ impl TypeGenerator {
             meta_function_mut: Default::default(),
         }
     }
-    #[cfg(feature = "rlua")]
-    pub(crate) fn get_method_data_rlua<
-        'lua,
-        A: TealMultiValue,
-        R: ToLuaMultiR<'lua> + TealMultiValue,
-        S: ?Sized + AsRef<[u8]>,
-    >(
+    fn get_method_data<A: TealMultiValue, R: TealMultiValue, S: ?Sized + AsRef<[u8]>>(
         name: &S,
         is_meta_method: bool,
     ) -> ExportedFunction {
-        ExportedFunction {
-            name: name.as_ref().to_vec(),
-            params: A::get_types(Direction::FromLua),
-            returns: R::get_types(Direction::ToLua),
-            is_meta_method,
-        }
-    }
-    #[cfg(feature = "mlua")]
-    fn get_method_data_mlua<
-        'lua,
-        A: TealMultiValue,
-        R: ToLuaMultiM<'lua> + TealMultiValue,
-        S: ?Sized + AsRef<[u8]>,
-    >(
-        name: &S,
-        is_meta_method: bool,
-    ) -> ExportedFunction {
-        ExportedFunction {
-            name: name.as_ref().to_vec(),
-            params: A::get_types(Direction::FromLua),
-            returns: R::get_types(Direction::ToLua),
-            is_meta_method,
-        }
+        ExportedFunction::new::<A, R>(name.as_ref().to_vec(), is_meta_method)
     }
     pub(crate) fn generate(self) -> std::result::Result<String, FromUtf8Error> {
         //let head = format!("local record {}", self.type_name);
@@ -213,7 +185,7 @@ where
         M: 'static + Send + Fn(Context<'lua>, &T, A) -> ResultR<R>,
     {
         self.methods
-            .push(Self::get_method_data_rlua::<A, R, _>(name, false))
+            .push(Self::get_method_data::<A, R, _>(name, false))
     }
 
     fn add_method_mut<S, A, R, M>(&mut self, name: &S, _: M)
@@ -224,7 +196,7 @@ where
         M: 'static + Send + FnMut(Context<'lua>, &mut T, A) -> ResultR<R>,
     {
         self.mut_methods
-            .push(Self::get_method_data_rlua::<A, R, _>(name, false))
+            .push(Self::get_method_data::<A, R, _>(name, false))
     }
 
     fn add_function<S, A, R, F>(&mut self, name: &S, _: F)
@@ -235,7 +207,7 @@ where
         F: 'static + Send + Fn(Context<'lua>, A) -> ResultR<R>,
     {
         self.functions
-            .push(Self::get_method_data_rlua::<A, R, _>(name, false))
+            .push(Self::get_method_data::<A, R, _>(name, false))
     }
 
     fn add_function_mut<S, A, R, F>(&mut self, name: &S, _: F)
@@ -246,7 +218,7 @@ where
         F: 'static + Send + FnMut(Context<'lua>, A) -> ResultR<R>,
     {
         self.mut_functions
-            .push(Self::get_method_data_rlua::<A, R, _>(name, false))
+            .push(Self::get_method_data::<A, R, _>(name, false))
     }
 
     fn add_meta_method<A, R, M>(&mut self, name: MetaMethodR, _: M)
@@ -255,7 +227,7 @@ where
         R: ToLuaMultiR<'lua> + TealMultiValue,
         M: 'static + Send + Fn(Context<'lua>, &T, A) -> ResultR<R>,
     {
-        self.meta_method.push(Self::get_method_data_rlua::<A, R, _>(
+        self.meta_method.push(Self::get_method_data::<A, R, _>(
             get_meta_name_rlua(name),
             true,
         ))
@@ -267,11 +239,10 @@ where
         R: ToLuaMultiR<'lua> + TealMultiValue,
         M: 'static + Send + FnMut(Context<'lua>, &mut T, A) -> ResultR<R>,
     {
-        self.meta_method_mut
-            .push(Self::get_method_data_rlua::<A, R, _>(
-                get_meta_name_rlua(name),
-                true,
-            ))
+        self.meta_method_mut.push(Self::get_method_data::<A, R, _>(
+            get_meta_name_rlua(name),
+            true,
+        ))
     }
 
     fn add_meta_function<A, R, F>(&mut self, name: MetaMethodR, _: F)
@@ -280,11 +251,10 @@ where
         R: ToLuaMultiR<'lua> + TealMultiValue,
         F: 'static + Send + Fn(Context<'lua>, A) -> ResultR<R>,
     {
-        self.meta_function
-            .push(Self::get_method_data_rlua::<A, R, _>(
-                get_meta_name_rlua(name),
-                true,
-            ))
+        self.meta_function.push(Self::get_method_data::<A, R, _>(
+            get_meta_name_rlua(name),
+            true,
+        ))
     }
 
     fn add_meta_function_mut<A, R, F>(&mut self, name: MetaMethodR, _: F)
@@ -294,7 +264,7 @@ where
         F: 'static + Send + FnMut(Context<'lua>, A) -> ResultR<R>,
     {
         self.meta_function_mut
-            .push(Self::get_method_data_rlua::<A, R, _>(
+            .push(Self::get_method_data::<A, R, _>(
                 get_meta_name_rlua(name),
                 true,
             ))
@@ -314,7 +284,7 @@ where
         M: 'static + MaybeSend + Fn(&'lua Lua, &T, A) -> ResultM<R>,
     {
         self.methods
-            .push(Self::get_method_data_mlua::<A, R, _>(name, false))
+            .push(Self::get_method_data::<A, R, _>(name, false))
     }
 
     fn add_method_mut<S, A, R, M>(&mut self, name: &S, _: M)
@@ -325,7 +295,7 @@ where
         M: 'static + MaybeSend + FnMut(&'lua Lua, &mut T, A) -> ResultM<R>,
     {
         self.mut_methods
-            .push(Self::get_method_data_mlua::<A, R, _>(name, false))
+            .push(Self::get_method_data::<A, R, _>(name, false))
     }
 
     fn add_function<S, A, R, F>(&mut self, name: &S, _: F)
@@ -336,7 +306,7 @@ where
         F: 'static + MaybeSend + Fn(&'lua Lua, A) -> ResultM<R>,
     {
         self.functions
-            .push(Self::get_method_data_mlua::<A, R, _>(name, false))
+            .push(Self::get_method_data::<A, R, _>(name, false))
     }
 
     fn add_function_mut<S, A, R, F>(&mut self, name: &S, _: F)
@@ -347,7 +317,7 @@ where
         F: 'static + MaybeSend + FnMut(&'lua Lua, A) -> ResultM<R>,
     {
         self.mut_functions
-            .push(Self::get_method_data_mlua::<A, R, _>(name, false))
+            .push(Self::get_method_data::<A, R, _>(name, false))
     }
 
     fn add_meta_method<A, R, M>(&mut self, name: MetaMethodM, _: M)
@@ -356,7 +326,7 @@ where
         R: ToLuaMultiM<'lua> + TealMultiValue,
         M: 'static + MaybeSend + Fn(&'lua Lua, &T, A) -> ResultM<R>,
     {
-        self.meta_method.push(Self::get_method_data_mlua::<A, R, _>(
+        self.meta_method.push(Self::get_method_data::<A, R, _>(
             &get_meta_name_mlua(name).as_bytes(),
             true,
         ))
@@ -368,11 +338,10 @@ where
         R: ToLuaMultiM<'lua> + TealMultiValue,
         M: 'static + MaybeSend + FnMut(&'lua Lua, &mut T, A) -> ResultM<R>,
     {
-        self.meta_method_mut
-            .push(Self::get_method_data_mlua::<A, R, _>(
-                &get_meta_name_mlua(name).as_bytes(),
-                true,
-            ))
+        self.meta_method_mut.push(Self::get_method_data::<A, R, _>(
+            &get_meta_name_mlua(name).as_bytes(),
+            true,
+        ))
     }
 
     fn add_meta_function<A, R, F>(&mut self, name: MetaMethodM, _: F)
@@ -381,11 +350,10 @@ where
         R: ToLuaMultiM<'lua> + TealMultiValue,
         F: 'static + MaybeSend + Fn(&'lua Lua, A) -> ResultM<R>,
     {
-        self.meta_function
-            .push(Self::get_method_data_mlua::<A, R, _>(
-                get_meta_name_mlua(name).as_bytes(),
-                true,
-            ))
+        self.meta_function.push(Self::get_method_data::<A, R, _>(
+            get_meta_name_mlua(name).as_bytes(),
+            true,
+        ))
     }
 
     fn add_meta_function_mut<A, R, F>(&mut self, name: MetaMethodM, _: F)
@@ -395,7 +363,7 @@ where
         F: 'static + MaybeSend + FnMut(&'lua Lua, A) -> ResultM<R>,
     {
         self.meta_function_mut
-            .push(Self::get_method_data_mlua::<A, R, _>(
+            .push(Self::get_method_data::<A, R, _>(
                 &get_meta_name_mlua(name).as_bytes(),
                 true,
             ))
@@ -411,7 +379,7 @@ where
         MR: 'lua + std::future::Future<Output = ResultM<R>>,
     {
         self.methods
-            .push(Self::get_method_data_mlua::<A, R, _>(name, false))
+            .push(Self::get_method_data::<A, R, _>(name, false))
     }
 
     #[cfg(feature = "mlua_async")]
@@ -424,6 +392,6 @@ where
         FR: 'lua + std::future::Future<Output = ResultM<R>>,
     {
         self.functions
-            .push(Self::get_method_data_mlua::<A, R, _>(name, false))
+            .push(Self::get_method_data::<A, R, _>(name, false))
     }
 }

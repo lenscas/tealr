@@ -1,16 +1,21 @@
 use std::borrow::Cow;
 
-use crate::{Direction, TypeName};
+use crate::{type_representation::KindOfType, Direction, TypeName};
 
 ///Represents a type
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct TealType {
     pub(crate) name: Cow<'static, str>,
-    pub(crate) is_external: bool,
+    pub(crate) type_kind: KindOfType,
+    pub(crate) generics: Vec<TealType>,
 }
 impl TealType {
-    fn new(name: Cow<'static, str>, is_external: bool) -> Self {
-        Self { name, is_external }
+    fn new(name: Cow<'static, str>, type_kind: KindOfType, generics: Vec<TealType>) -> Self {
+        Self {
+            name,
+            type_kind,
+            generics,
+        }
     }
     ///generates a [TealType](crate::TealType) based on a type implementing [TealData](crate::rlu::TealData).
     ///```
@@ -21,7 +26,9 @@ impl TealType {
     ///assert_eq!(numeric_i8,numeric_float)
     ///```
     pub fn from<A: TypeName>(dir: Direction) -> Self {
-        Self::new(A::get_type_name(dir), A::is_external())
+        let mut generics = Vec::new();
+        A::collect_children(&mut generics);
+        Self::new(A::get_type_name(dir), A::get_type_kind(), generics)
     }
 }
 

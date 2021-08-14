@@ -18,7 +18,7 @@ mod type_walker;
 pub use exported_function::ExportedFunction;
 pub use teal_multivalue::{TealMultiValue, TealType};
 pub use type_generator::TypeGenerator;
-pub use type_representation::{Direction, TypeBody, TypeName};
+pub use type_representation::{Direction, KindOfType, TypeBody, TypeName};
 pub use type_walker::TypeWalker;
 
 #[cfg(feature = "derive")]
