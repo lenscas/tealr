@@ -67,6 +67,7 @@ impl TypeGenerator {
             meta_function_mut: Default::default(),
         }
     }
+    #[cfg(any(feature = "rlua", feature = "mlua"))]
     fn get_method_data<A: TealMultiValue, R: TealMultiValue, S: ?Sized + AsRef<[u8]>>(
         name: &S,
         is_meta_method: bool,

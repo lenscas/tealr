@@ -4,7 +4,7 @@ use crate::TealType;
 
 #[cfg(any(feature = "rlua", feature = "mlua"))]
 use crate::{Direction, TealMultiValue};
-
+#[cfg(any(feature = "rlua", feature = "mlua"))]
 fn get_all_generics(children: impl Iterator<Item = TealType>) -> HashSet<TealType> {
     let mut generics = HashSet::new();
     for teal_type in children {
@@ -31,6 +31,7 @@ impl ExportedFunction {
     ///# use tealr::ExportedFunction;
     ///ExportedFunction::new::<(String,String),String>(b"concat".to_vec(),false);
     ///```
+    #[cfg(any(feature = "rlua", feature = "mlua"))]
     pub fn new<Params: TealMultiValue, Response: TealMultiValue>(
         name: Vec<u8>,
         is_meta_method: bool,
