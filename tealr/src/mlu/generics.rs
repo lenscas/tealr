@@ -8,7 +8,6 @@
 ///tealr::create_generic_mlua!(YourPrivateType);
 ///```
 #[macro_export]
-#[macro_export]
 macro_rules! create_generic_mlua {
     ($visibility:vis $type_name:ident) => {
         #[derive(Clone,Debug)]
