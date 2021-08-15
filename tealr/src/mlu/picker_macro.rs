@@ -8,9 +8,9 @@
 ///
 ///# Example
 ///```no_run
-///# use tealr::create_union_rlua;
-///create_union_mlua(pub enum YourPublicType = String | f64 | bool);
-///create_union_mlua(pub enum YourType = String | f64 | bool);
+///# use tealr::create_union_mlua;
+///create_union_mlua!(pub enum YourPublicType = String | f64 | bool);
+///create_union_mlua!(pub enum YourType = String | f64 | bool);
 ///```
 #[macro_export]
 macro_rules! create_union_mlua {
