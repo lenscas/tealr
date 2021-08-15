@@ -39,5 +39,5 @@ fn make_inline_type() {
         .generate_global("test")
         .expect("oh no :(");
 
-    assert_eq!("", file_contents);
+    assert_eq!(file_contents,"global record test\n\t-- Example\n\n\t\t-- Pure methods\n\t\texample_method: function(Example, integer):(integer)\n\t\t-- Mutating methods\n\t\texample_method_mut: function(Example, integer, string):(string)\n\t\t-- Pure functions\n\t\texample_function: function({string}):({string}, integer)\n\t\t-- Mutating functions\n\t\texample_function_mut: function(boolean, Example):(boolean, Example)\n\n\n\trecord Example\n\t\tuserdata\n\t\t-- Pure methods\n\t\texample_method: function(Example, integer):(integer)\n\t\t-- Mutating methods\n\t\texample_method_mut: function(Example, integer, string):(string)\n\t\t-- Pure functions\n\t\texample_function: function({string}):({string}, integer)\n\t\t-- Mutating functions\n\t\texample_function_mut: function(boolean, Example):(boolean, Example)\n\n\tend\nend\nreturn test");
 }
