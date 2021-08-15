@@ -28,6 +28,8 @@ use crate::TealMultiValue;
 
 ///This struct collects all the information needed to create the .d.tl file for your type.
 pub struct TypeGenerator {
+    ///Represents if the type should be inlined or not.
+    pub should_be_inlined: bool,
     ///Represents if the type is UserData
     pub is_user_data: bool,
     ///The name of the type in teal
@@ -52,8 +54,9 @@ pub struct TypeGenerator {
     pub meta_function_mut: Vec<ExportedFunction>,
 }
 impl TypeGenerator {
-    pub(crate) fn new<A: TypeName>(dir: Direction) -> Self {
+    pub(crate) fn new<A: TypeName>(dir: Direction, should_be_inlined: bool) -> Self {
         Self {
+            should_be_inlined,
             is_user_data: false,
             type_name: A::get_type_name(dir),
             fields: Default::default(),
@@ -145,10 +148,17 @@ impl TypeGenerator {
             Self::combine_function_names(meta_function_mut, "Mutating meta functions");
 
         let userdata_string = if self.is_user_data { "userdata" } else { "" };
+        let (type_header, type_end) = if self.should_be_inlined {
+            (format!("\t-- {}\n", self.type_name), "")
+        } else {
+            (
+                format!("\trecord {}\n\t\t{}", self.type_name, userdata_string),
+                "\tend",
+            )
+        };
         Ok(format!(
-            "\trecord {}\n\t\t{}\n{}{}{}{}{}{}{}{}{}\n\tend",
-            self.type_name,
-            userdata_string,
+            "{}\n{}{}{}{}{}{}{}{}{}\n{}",
+            type_header,
             fields,
             methods,
             methods_mut,
@@ -157,7 +167,8 @@ impl TypeGenerator {
             meta_methods,
             meta_methods_mut,
             meta_functions,
-            meta_functions_mut
+            meta_functions_mut,
+            type_end
         ))
     }
     fn combine_function_names(function_list: Vec<String>, top_doc: &str) -> String {
