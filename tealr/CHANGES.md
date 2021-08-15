@@ -14,6 +14,10 @@ All notable changes to this project are documented in this file.
 - [`0.0.1`](#001)
 
 ## upcoming
+- Generics!
+- **BREAKING** `TypeName::is_external` got replaced by `TypeName::get_type_kind`
+- `TypeName::collect_children` got added with a default implementation. It is HIGHLY encouraged to implement this if your type is generic.
+- `create_generic_rlua!` and `create_generic_mlua!` got added. These macros help to create placeholder types that act as generics
 
 ## 0.6.0-preview1
 - Add basic support for Mlua
