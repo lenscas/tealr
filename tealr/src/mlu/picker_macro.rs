@@ -71,4 +71,3 @@ macro_rules! create_union_mlua {
         }
     };
 }
-type_picker_mlua!(pub enum X = String);

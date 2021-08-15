@@ -71,4 +71,3 @@ macro_rules! create_union_rlua {
         }
     };
 }
-create_union_rlua!(pub enum X = String | i64);
