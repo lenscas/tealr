@@ -53,6 +53,10 @@ name = "rlua_generics"
 path = "tests/rlua/generics.rs"
 required-features = ["rlua"]
 [[test]]
+name = "rlua_type_picker"
+path = "tests/rlua/type_picker.rs"
+required-features = ["rlua"]
+[[test]]
 name = "rlua_function_wrapper"
 path = "tests/rlua/function_wrapper.rs"
 required-features = ["rlua"]
@@ -77,6 +81,10 @@ required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
 [[test]]
 name = "mlua_generics"
 path = "tests/mlua/generics.rs"
+required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
+[[test]]
+name = "mlua_type_picker"
+path = "tests/mlua/type_picker.rs"
 required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
 [[test]]
 name = "mlua_async"
