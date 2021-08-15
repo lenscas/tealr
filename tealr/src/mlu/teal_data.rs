@@ -68,6 +68,13 @@ where
             .join(",");
         Cow::Owned(format!("function({}):({})", params, output))
     }
+
+    fn collect_children(generics: &mut Vec<crate::TealType>) {
+        let params = Params::get_types(Direction::FromLua)
+            .into_iter()
+            .chain(Response::get_types(Direction::ToLua));
+        generics.extend(params);
+    }
 }
 impl<'lua, Params, Response> TypedFunction<'lua, Params, Response>
 where

@@ -16,8 +16,8 @@ where
     T: UserData,
 {
     cont: &'a mut Container,
-    _t: std::marker::PhantomData<(&'a (), T)>,
-    _x: &'lua std::marker::PhantomData<()>,
+    _t: PhantomData<(&'a (), T)>,
+    _x: &'lua PhantomData<()>,
 }
 impl<'a, 'lua, Container, T> UserDataWrapper<'a, 'lua, Container, T>
 where

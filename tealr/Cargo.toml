@@ -49,6 +49,10 @@ name = "rlua_embed_teal"
 path = "tests/rlua/embed_teal.rs"
 required-features = ["rlua"]
 [[test]]
+name = "rlua_generics"
+path = "tests/rlua/generics.rs"
+required-features = ["rlua"]
+[[test]]
 name = "rlua_function_wrapper"
 path = "tests/rlua/function_wrapper.rs"
 required-features = ["rlua"]
@@ -70,7 +74,10 @@ required-features = ["rlua"]
 name = "mlua_embed_teal"
 path = "tests/mlua/embed_teal.rs"
 required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
-
+[[test]]
+name = "mlua_generics"
+path = "tests/mlua/generics.rs"
+required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
 [[test]]
 name = "mlua_async"
 path = "tests/mlua/async.rs"

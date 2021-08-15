@@ -1,3 +1,5 @@
+///this module holds some pre made types that can be used to create generics.
+pub mod generics;
 pub(crate) mod teal_data;
 pub(crate) mod teal_data_methods;
 pub(crate) mod user_data_wrapper;
