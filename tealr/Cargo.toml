@@ -79,6 +79,11 @@ name = "mlua_embed_teal"
 path = "tests/mlua/embed_teal.rs"
 required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
 [[test]]
+name = "mlua_inlined_type"
+path = "tests/mlua/inlined_type.rs"
+required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
+
+[[test]]
 name = "mlua_generics"
 path = "tests/mlua/generics.rs"
 required-features = ["mlua", "mlua_lua54", "mlua_vendored"]

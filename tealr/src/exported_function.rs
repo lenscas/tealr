@@ -44,7 +44,6 @@ impl ExportedFunction {
                 .into_iter()
                 .chain(returns.clone().into_iter()),
         );
-        let generics = dbg!(generics);
         Self {
             name,
             params,

@@ -13,11 +13,20 @@ impl TypeWalker {
     pub fn new() -> Self {
         Default::default()
     }
+    ///Process a type such that the body will be added directly into the module instead of becoming a child record.
+    ///
+    ///When embedding teal/lua there is probably not really a reason to do so.
+    ///However, it ***IS*** needed for the struct that gets exposed directly to teal when using mlua to make a lua/teal library.
+    pub fn process_type_inline<A: 'static + TypeName + TypeBody>(mut self, dir: Direction) -> Self {
+        let mut new_type = TypeGenerator::new::<A>(dir, true);
+        <A as TypeBody>::get_type_body(dir, &mut new_type);
+        self.given_types.push(new_type);
+        self
+    }
     ///prepares a type to have a `.d.tl` file generated, and adds it to the list of types to generate.
     pub fn process_type<A: 'static + TypeName + TypeBody>(mut self, dir: Direction) -> Self {
-        let mut new_type = TypeGenerator::new::<A>(dir);
+        let mut new_type = TypeGenerator::new::<A>(dir, false);
         <A as TypeBody>::get_type_body(dir, &mut new_type);
-        //<A as TealData>::add_methods(&mut new_type);
         self.given_types.push(new_type);
         self
     }
