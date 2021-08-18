@@ -109,7 +109,9 @@ where
     Response: ToLuaMulti<'callback> + TealMultiValue,
 {
     ///make a typed function directly from a Rust one.
-    pub fn from_rust<Func: 'static + Fn(&'callback Lua, Params) -> mlua::Result<Response>>(
+    pub fn from_rust<
+        Func: 'static + crate::mlu::MaybeSend + Fn(&'callback Lua, Params) -> mlua::Result<Response>,
+    >(
         func: Func,
         lua: &'lua Lua,
     ) -> mlua::Result<Self> {
@@ -121,7 +123,7 @@ where
     }
     ///make a typed function directly from a Rust one.
     pub fn from_rust_mut<
-        Func: 'static + FnMut(&'callback Lua, Params) -> mlua::Result<Response>,
+        Func: 'static + crate::mlu::MaybeSend + FnMut(&'callback Lua, Params) -> mlua::Result<Response>,
     >(
         func: Func,
         lua: &'lua Lua,
