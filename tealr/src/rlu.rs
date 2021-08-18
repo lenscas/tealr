@@ -3,14 +3,14 @@ pub mod generics;
 mod picker_macro;
 pub(crate) mod teal_data;
 pub(crate) mod teal_data_methods;
+mod typed_function;
 pub(crate) mod user_data_wrapper;
 use std::borrow::Cow;
 
 pub use rlua;
 
 pub use self::{
-    teal_data::{TealData, TypedFunction},
-    teal_data_methods::TealDataMethods,
+    teal_data::TealData, teal_data_methods::TealDataMethods, typed_function::TypedFunction,
     user_data_wrapper::UserDataWrapper,
 };
 
