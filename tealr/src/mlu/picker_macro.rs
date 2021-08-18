@@ -14,7 +14,8 @@
 ///```
 #[macro_export]
 macro_rules! create_union_mlua {
-    ($visibility:vis enum $type_name:ident = $($sub_types:ident) | +) => {
+    ($visibility:vis $(Derives($($derives:ident), +))? enum $type_name:ident = $($sub_types:ident) | +) => {
+        #[derive(Clone,$($($derives ,)*)*)]
         #[allow(non_camel_case_types)]
         $visibility enum $type_name {
             $($sub_types($sub_types) ,)*
@@ -34,7 +35,7 @@ macro_rules! create_union_mlua {
                     Err(x) => return Err(x)
                 };)*
                 Err($crate::mlu::mlua::Error::FromLuaConversionError{
-                    to: stringify!($($sub_types | ) *),
+                    to: stringify!( $($sub_types)|* ),
                     from: value.type_name(),
                     message: None
                 })
