@@ -3,6 +3,9 @@
 All notable changes to this project are documented in this file.
 
 ## Overview
+
+- [`0.7.0`](#070)
+- [`0.6.0`](#060)
 - [`0.6.0-preview1`](#060-preview1)
 - [`0.5.1`](#051)
 - [`0.5.0`](#050)
@@ -14,11 +17,18 @@ All notable changes to this project are documented in this file.
 - [`0.0.1`](#001)
 
 ## upcoming
-- Generics!
+
+## 0.7.0
+- Add generic methods/functions
 - **BREAKING** `TypeName::is_external` got replaced by `TypeName::get_type_kind`
 - `TypeName::collect_children` got added with a default implementation. It is HIGHLY encouraged to implement this if your type is generic.
 - `create_generic_rlua!` and `create_generic_mlua!` got added. These macros help to create placeholder types that act as generics
+- `create_union_rlua!` and `create_union_mlua!` got added. These macros help to create types that act as a union to teal.
+- `TypeWalker::process_type_inline` got added. This acts similar to `Typewalker::process_type` but doesn't put the type in its own child record. Useful when making a module with `mlua`
 
+## 0.6.0
+- reexport mlua/rlua
+- add reexport of the features that rlua/mlua expose
 ## 0.6.0-preview1
 - Add basic support for Mlua
 - Make derive macros bit more hygienic (last time I missed some)
