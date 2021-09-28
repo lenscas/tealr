@@ -1,4 +1,4 @@
-use std::{borrow::Cow, string::FromUtf8Error};
+use std::{borrow::Cow, collections::HashMap, string::FromUtf8Error};
 
 #[cfg(feature = "rlua")]
 use crate::rlu::{
@@ -21,7 +21,10 @@ use mlua::{
     ToLuaMulti as ToLuaMultiM, UserData as UserDataM,
 };
 
-use crate::{Direction, ExportedFunction, TypeName};
+use crate::{
+    documentation_collector::HelpMethodGenerator, Direction, DocumentationCollector,
+    ExportedFunction, TypeName,
+};
 
 #[cfg(any(feature = "rlua", feature = "mlua"))]
 use crate::TealMultiValue;
@@ -52,6 +55,10 @@ pub struct TypeGenerator {
     pub meta_function: Vec<ExportedFunction>,
     ///exported meta functions that mutate something
     pub meta_function_mut: Vec<ExportedFunction>,
+    ///registered documentation
+    pub documentation: HashMap<String, String>,
+    ///if this type needs to get a `.help()` function
+    pub should_generate_help_method: bool,
 }
 impl TypeGenerator {
     pub(crate) fn new<A: TypeName>(dir: Direction, should_be_inlined: bool) -> Self {
@@ -68,6 +75,8 @@ impl TypeGenerator {
             meta_method_mut: Default::default(),
             meta_function: Default::default(),
             meta_function_mut: Default::default(),
+            documentation: Default::default(),
+            should_generate_help_method: true,
         }
     }
     #[cfg(any(feature = "rlua", feature = "mlua"))]
@@ -87,51 +96,52 @@ impl TypeGenerator {
             .map(|(name, lua_type)| format!("{} : {}", name, lua_type))
             .collect();
 
+        let documentation = &self.documentation;
         let methods: Vec<_> = self
             .methods
             .into_iter()
-            .map(|v| v.generate(Some(type_name.clone())))
+            .map(|v| v.generate(Some(type_name.clone()), documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let methods_mut: Vec<_> = self
             .mut_methods
             .into_iter()
-            .map(|v| v.generate(Some(type_name.clone())))
+            .map(|v| v.generate(Some(type_name.clone()), documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let functions: Vec<_> = self
             .functions
             .into_iter()
-            .map(|f| f.generate(None))
+            .map(|f| f.generate(None, documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let functions_mut: Vec<_> = self
             .mut_functions
             .into_iter()
-            .map(|f| f.generate(None))
+            .map(|f| f.generate(None, documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let meta_methods: Vec<_> = self
             .meta_method
             .into_iter()
-            .map(|f| f.generate(Some(type_name.clone())))
+            .map(|f| f.generate(Some(type_name.clone()), documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let meta_methods_mut: Vec<_> = self
             .meta_method_mut
             .into_iter()
-            .map(|f| f.generate(Some(type_name.clone())))
+            .map(|f| f.generate(Some(type_name.clone()), documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let meta_function: Vec<_> = self
             .meta_function
             .into_iter()
-            .map(|f| f.generate(None))
+            .map(|f| f.generate(None, documentation))
             .collect::<std::result::Result<_, _>>()?;
         let meta_function_mut: Vec<_> = self
             .meta_function_mut
             .into_iter()
-            .map(|f| f.generate(None))
+            .map(|f| f.generate(None, documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let fields = Self::combine_function_names(fields, "Fields");
@@ -149,13 +159,24 @@ impl TypeGenerator {
 
         let userdata_string = if self.is_user_data { "userdata" } else { "" };
         let (type_header, type_end) = if self.should_be_inlined {
-            (format!("\t-- {}\n", self.type_name), "")
+            (format!("-- {}\n", self.type_name), "")
         } else {
             (
-                format!("\trecord {}\n\t\t{}", self.type_name, userdata_string),
+                format!(
+                    "record {}\n{}",
+                    self.type_name,
+                    userdata_string
+                        .lines()
+                        .map(|v| format!("\t{}\n", v))
+                        .collect::<String>()
+                ),
                 "\tend",
             )
         };
+        let type_header = type_header
+            .lines()
+            .map(|v| format!("\t{}\n", v))
+            .collect::<String>();
         Ok(format!(
             "{}\n{}{}{}{}{}{}{}{}{}\n{}",
             type_header,
@@ -177,7 +198,15 @@ impl TypeGenerator {
         } else {
             let combined = function_list
                 .into_iter()
-                .map(|v| String::from("\t\t") + &v)
+                .map(|v| {
+                    v.lines()
+                        .map(|v| String::from("\t\t") + v)
+                        .map(|mut v| {
+                            v.push('\n');
+                            v
+                        })
+                        .collect::<String>()
+                })
                 .collect::<Vec<_>>()
                 .join("\n");
             format!("\t\t-- {}\n{}\n", top_doc, combined)
@@ -405,5 +434,23 @@ where
     {
         self.functions
             .push(Self::get_method_data::<A, R, _>(name, false))
+    }
+}
+
+impl DocumentationCollector for TypeGenerator {
+    fn document_function(&mut self, name: impl Into<String>, documentation: impl Into<String>) {
+        self.documentation.insert(name.into(), documentation.into());
+    }
+
+    fn should_generate_help_method(&mut self, should_generate: bool) {
+        self.should_generate_help_method = should_generate;
+    }
+}
+impl HelpMethodGenerator for TypeGenerator {
+    fn generate_help(&mut self) {
+        self.functions
+            .push(Self::get_method_data::<Option<String>, String, _>(
+                "help", false,
+            ))
     }
 }

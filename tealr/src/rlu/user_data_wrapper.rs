@@ -1,9 +1,9 @@
-use std::marker::PhantomData;
+use std::{collections::HashMap, marker::PhantomData};
 
 use rlua::{Context, FromLuaMulti, MetaMethod, Result, ToLuaMulti, UserData, UserDataMethods};
 
 use super::TealDataMethods;
-use crate::TealMultiValue;
+use crate::{documentation_collector::HelpMethodGenerator, DocumentationCollector, TealMultiValue};
 
 ///Used to turn [UserDataMethods](rlua::UserDataMethods) into [TealDataMethods](crate::rlu::TealDataMethods).
 ///
@@ -18,6 +18,8 @@ where
     cont: &'a mut Container,
     _t: PhantomData<(&'a (), T)>,
     _x: &'lua PhantomData<()>,
+    documentation: HashMap<String, String>,
+    should_generate_help: bool,
 }
 impl<'a, 'lua, Container, T> UserDataWrapper<'a, 'lua, Container, T>
 where
@@ -43,6 +45,8 @@ where
             cont,
             _t: std::marker::PhantomData,
             _x: &std::marker::PhantomData,
+            documentation: Default::default(),
+            should_generate_help: true,
         }
     }
 }
@@ -127,5 +131,46 @@ where
         F: 'static + Send + FnMut(Context<'lua>, A) -> Result<R>,
     {
         self.cont.add_meta_function_mut(meta, function)
+    }
+}
+impl<'a, 'lua, Container, T> DocumentationCollector for UserDataWrapper<'a, 'lua, Container, T>
+where
+    Container: UserDataMethods<'lua, T> + 'a,
+    T: UserData,
+{
+    fn document_function(&mut self, name: impl Into<String>, documentation: impl Into<String>) {
+        self.documentation.insert(name.into(), documentation.into());
+    }
+
+    fn should_generate_help_method(&mut self, should_generate: bool) {
+        self.should_generate_help = should_generate;
+    }
+}
+impl<'a, 'lua, Container, T> HelpMethodGenerator for UserDataWrapper<'a, 'lua, Container, T>
+where
+    Container: UserDataMethods<'lua, T> + 'a,
+    T: UserData,
+{
+    fn generate_help(&mut self) {
+        if !self.should_generate_help {
+            return;
+        }
+        let help = self.documentation.clone();
+        self.add_function("help", move |_, key: Option<String>| {
+            Ok(match key {
+                Some(x) => help.get(&x).map(ToOwned::to_owned).unwrap_or_else(|| {
+                    "The given key is not found. Use `.help()` to list available keys.".into()
+                }),
+                None => {
+                    format!(
+                        "Available keys:\n{}",
+                        help.keys()
+                            .map(ToOwned::to_owned)
+                            .collect::<Vec<_>>()
+                            .join("\n")
+                    )
+                }
+            })
+        })
     }
 }

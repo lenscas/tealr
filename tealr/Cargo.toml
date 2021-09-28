@@ -13,7 +13,7 @@ version = "0.7.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
 
-default = ["derive", "compile", "embed_compiler_from_download"]
+default = ["derive", "compile", "embed_compiler_from_download", "rlua", "rlua_builtin-lua"]
 
 compile = ["tealr_derive/compile"]
 derive = ["tealr_derive/derive"]
@@ -129,6 +129,10 @@ required-features = ["rlua"]
 name = "rlua_manual"
 path = "examples/rlua/manual.rs"
 required-features = ["rlua"]
+[[example]]
+name = "rlua_manual_documentation"
+path = "examples/rlua/manual_documentation.rs"
+required-features = ["rlua"]
 
 #examples using mlua
 [[example]]
@@ -146,6 +150,11 @@ required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
 [[example]]
 name = "mlua_manual"
 path = "examples/mlua/manual.rs"
+required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
+
+[[example]]
+name = "mlua_manual_documentation"
+path = "examples/mlua/manual_documentation.rs"
 required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
 
 [package.metadata.docs.rs]
