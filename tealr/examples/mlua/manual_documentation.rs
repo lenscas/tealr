@@ -3,7 +3,7 @@ use tealr::{
         mlua::{Lua, Result, UserData, UserDataMethods},
         TealData, TealDataMethods, UserDataWrapper,
     },
-    Direction, DocumentationCollector, TypeBody, TypeName, TypeWalker,
+    Direction, TypeBody, TypeName, TypeWalker,
 };
 //This example shows how to manually implement UserData using TealData
 //As you can see the amount of code is small and easy copy/paste able.
@@ -18,18 +18,15 @@ struct Example {}
 impl TealData for Example {
     //implement your methods/functions
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
+        methods.document("This is an example method.");
+        methods.document("It just shows you how documentation gets added");
         methods.add_method("example_method", |_, _, x: i8| Ok(x));
         methods.add_method_mut("example_method_mut", |_, _, x: (i8, String)| Ok(x.1));
         methods.add_function("example_function", |_, x: Vec<String>| Ok((x, 8)));
         methods.add_function_mut("example_function_mut", |_, x: (bool, Option<Example>)| {
             Ok(x)
-        })
-    }
-    fn add_documentation<T: DocumentationCollector>(collector: &mut T) {
-        collector.document_function(
-            "example_method",
-            "This is an example method.\nIt just shows you how documentation gets added",
-        );
+        });
+        methods.generate_help();
     }
 }
 
@@ -43,14 +40,14 @@ impl TypeName for Example {
 impl UserData for Example {
     fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
         let mut wrapper = UserDataWrapper::from_user_data_methods(methods);
-        <Self as TealData>::add_methods_and_documentation(&mut wrapper);
+        <Self as TealData>::add_methods(&mut wrapper);
     }
 }
 
 impl TypeBody for Example {
     fn get_type_body(_: tealr::Direction, gen: &mut tealr::TypeGenerator) {
         gen.is_user_data = true;
-        <Self as TealData>::add_methods_and_documentation(gen);
+        <Self as TealData>::add_methods(gen);
     }
 }
 fn main() -> Result<()> {

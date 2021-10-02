@@ -1,7 +1,6 @@
 #![warn(missing_docs)]
 #![doc = include_str!("../README.md")]
 
-mod documentation_collector;
 ///traits and types specific to rlua
 #[cfg(feature = "rlua")]
 pub mod rlu;
@@ -16,7 +15,6 @@ mod type_generator;
 mod type_representation;
 mod type_walker;
 
-pub use documentation_collector::DocumentationCollector;
 pub use exported_function::ExportedFunction;
 pub use teal_multivalue::{TealMultiValue, TealType};
 #[cfg(feature = "derive")]

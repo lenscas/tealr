@@ -31,7 +31,7 @@ fn test_limited() {
         .generate_global("test")
         .expect("oh no :(");
 
-    assert_eq!(file_contents, "global record test\n\trecord Example\n\t\tuserdata\n\t\t-- Pure methods\n\t\tlimited_callback: function(Example, function(string | number | boolean):(string | number | boolean)):(string | number | boolean)\n\t\tlimited_array: function(Example, {string | number | boolean}):({string | number | boolean})\n\t\tlimited_simple: function(Example, string | number | boolean):(string | number | boolean)\n\n\tend\nend\nreturn test");
+    assert_eq!(file_contents, "global record test\n\trecord Example\n\t\tuserdata\n\n\t\t-- Pure methods\n\t\tlimited_callback: function(Example, function(string | number | boolean):(string | number | boolean)):(string | number | boolean)\n\n\t\tlimited_array: function(Example, {string | number | boolean}):({string | number | boolean})\n\n\t\tlimited_simple: function(Example, string | number | boolean):(string | number | boolean)\n\n\n\tend\nend\nreturn test");
     let res: bool = rlua::Lua::new()
         .context(|ctx| {
             let globals = ctx.globals();

@@ -60,5 +60,5 @@ fn make_generic() {
         .generate_global("test")
         .expect("oh no :(");
 
-    assert_eq!(file_contents, "global record test\n\trecord Example\n\t\tuserdata\n\t\t-- Pure methods\n\t\tgeneric_function_callback: function<X>(Example, function(X):(X)):(X)\n\t\tgeneric_array: function<X>(Example, {X}):({X})\n\t\tgeneric_hashmap: function<X>(Example, {string:X}):({string:X}, integer)\n\t\tjust_generics: function<X>(Example, X):(X)\n\t\tnon_generic_container: function(Example, {string}):({string})\n\n\tend\nend\nreturn test");
+    assert_eq!(file_contents, "global record test\n\trecord Example\n\t\tuserdata\n\n\t\t-- Pure methods\n\t\tgeneric_function_callback: function<X>(Example, function(X):(X)):(X)\n\n\t\tgeneric_array: function<X>(Example, {X}):({X})\n\n\t\tgeneric_hashmap: function<X>(Example, {string:X}):({string:X}, integer)\n\n\t\tjust_generics: function<X>(Example, X):(X)\n\n\t\tnon_generic_container: function(Example, {string}):({string})\n\n\n\tend\nend\nreturn test");
 }

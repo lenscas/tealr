@@ -21,10 +21,7 @@ use mlua::{
     ToLuaMulti as ToLuaMultiM, UserData as UserDataM,
 };
 
-use crate::{
-    documentation_collector::HelpMethodGenerator, Direction, DocumentationCollector,
-    ExportedFunction, TypeName,
-};
+use crate::{exported_function::ExportedFunction, Direction, TypeName};
 
 #[cfg(any(feature = "rlua", feature = "mlua"))]
 use crate::TealMultiValue;
@@ -56,7 +53,8 @@ pub struct TypeGenerator {
     ///exported meta functions that mutate something
     pub meta_function_mut: Vec<ExportedFunction>,
     ///registered documentation
-    pub documentation: HashMap<String, String>,
+    pub documentation: HashMap<Vec<u8>, String>,
+    next_docs: Option<String>,
     ///if this type needs to get a `.help()` function
     pub should_generate_help_method: bool,
 }
@@ -77,6 +75,7 @@ impl TypeGenerator {
             meta_function_mut: Default::default(),
             documentation: Default::default(),
             should_generate_help_method: true,
+            next_docs: Default::default(),
         }
     }
     #[cfg(any(feature = "rlua", feature = "mlua"))]
@@ -213,6 +212,15 @@ impl TypeGenerator {
         }
     }
 }
+
+impl TypeGenerator {
+    fn copy_docs(&mut self, to: &[u8]) {
+        if let Some(x) = self.next_docs.take() {
+            self.documentation.insert(to.to_owned(), x);
+        }
+    }
+}
+
 #[cfg(feature = "rlua")]
 impl<'lua, T> TealDataMethodsR<'lua, T> for TypeGenerator
 where
@@ -225,6 +233,7 @@ where
         R: ToLuaMultiR<'lua> + TealMultiValue,
         M: 'static + Send + Fn(Context<'lua>, &T, A) -> ResultR<R>,
     {
+        self.copy_docs(name.as_ref());
         self.methods
             .push(Self::get_method_data::<A, R, _>(name, false))
     }
@@ -236,6 +245,7 @@ where
         R: ToLuaMultiR<'lua> + TealMultiValue,
         M: 'static + Send + FnMut(Context<'lua>, &mut T, A) -> ResultR<R>,
     {
+        self.copy_docs(name.as_ref());
         self.mut_methods
             .push(Self::get_method_data::<A, R, _>(name, false))
     }
@@ -247,6 +257,7 @@ where
         R: ToLuaMultiR<'lua> + TealMultiValue,
         F: 'static + Send + Fn(Context<'lua>, A) -> ResultR<R>,
     {
+        self.copy_docs(name.as_ref());
         self.functions
             .push(Self::get_method_data::<A, R, _>(name, false))
     }
@@ -258,6 +269,7 @@ where
         R: ToLuaMultiR<'lua> + TealMultiValue,
         F: 'static + Send + FnMut(Context<'lua>, A) -> ResultR<R>,
     {
+        self.copy_docs(name.as_ref());
         self.mut_functions
             .push(Self::get_method_data::<A, R, _>(name, false))
     }
@@ -268,6 +280,7 @@ where
         R: ToLuaMultiR<'lua> + TealMultiValue,
         M: 'static + Send + Fn(Context<'lua>, &T, A) -> ResultR<R>,
     {
+        self.copy_docs(get_meta_name_rlua(name).as_bytes());
         self.meta_method.push(Self::get_method_data::<A, R, _>(
             get_meta_name_rlua(name),
             true,
@@ -280,6 +293,7 @@ where
         R: ToLuaMultiR<'lua> + TealMultiValue,
         M: 'static + Send + FnMut(Context<'lua>, &mut T, A) -> ResultR<R>,
     {
+        self.copy_docs(get_meta_name_rlua(name).as_bytes());
         self.meta_method_mut.push(Self::get_method_data::<A, R, _>(
             get_meta_name_rlua(name),
             true,
@@ -292,6 +306,7 @@ where
         R: ToLuaMultiR<'lua> + TealMultiValue,
         F: 'static + Send + Fn(Context<'lua>, A) -> ResultR<R>,
     {
+        self.copy_docs(get_meta_name_rlua(name).as_bytes());
         self.meta_function.push(Self::get_method_data::<A, R, _>(
             get_meta_name_rlua(name),
             true,
@@ -304,10 +319,26 @@ where
         R: ToLuaMultiR<'lua> + TealMultiValue,
         F: 'static + Send + FnMut(Context<'lua>, A) -> ResultR<R>,
     {
+        self.copy_docs(get_meta_name_rlua(name).as_bytes());
         self.meta_function_mut
             .push(Self::get_method_data::<A, R, _>(
                 get_meta_name_rlua(name),
                 true,
+            ))
+    }
+    fn document(&mut self, documentation: &str) {
+        match &mut self.next_docs {
+            Some(x) => {
+                x.push('\n');
+                x.push_str(documentation)
+            }
+            None => self.next_docs = Some(documentation.to_owned()),
+        };
+    }
+    fn generate_help(&mut self) {
+        self.functions
+            .push(Self::get_method_data::<Option<String>, String, _>(
+                "help", false,
             ))
     }
 }
@@ -324,6 +355,7 @@ where
         R: ToLuaMultiM<'lua> + TealMultiValue,
         M: 'static + MaybeSend + Fn(&'lua Lua, &T, A) -> ResultM<R>,
     {
+        self.copy_docs(name.as_ref());
         self.methods
             .push(Self::get_method_data::<A, R, _>(name, false))
     }
@@ -335,6 +367,7 @@ where
         R: ToLuaMultiM<'lua> + TealMultiValue,
         M: 'static + MaybeSend + FnMut(&'lua Lua, &mut T, A) -> ResultM<R>,
     {
+        self.copy_docs(name.as_ref());
         self.mut_methods
             .push(Self::get_method_data::<A, R, _>(name, false))
     }
@@ -346,6 +379,7 @@ where
         R: ToLuaMultiM<'lua> + TealMultiValue,
         F: 'static + MaybeSend + Fn(&'lua Lua, A) -> ResultM<R>,
     {
+        self.copy_docs(name.as_ref());
         self.functions
             .push(Self::get_method_data::<A, R, _>(name, false))
     }
@@ -357,6 +391,7 @@ where
         R: ToLuaMultiM<'lua> + TealMultiValue,
         F: 'static + MaybeSend + FnMut(&'lua Lua, A) -> ResultM<R>,
     {
+        self.copy_docs(name.as_ref());
         self.mut_functions
             .push(Self::get_method_data::<A, R, _>(name, false))
     }
@@ -367,6 +402,7 @@ where
         R: ToLuaMultiM<'lua> + TealMultiValue,
         M: 'static + MaybeSend + Fn(&'lua Lua, &T, A) -> ResultM<R>,
     {
+        self.copy_docs(name.name().as_bytes());
         self.meta_method.push(Self::get_method_data::<A, R, _>(
             &get_meta_name_mlua(name).as_bytes(),
             true,
@@ -379,6 +415,7 @@ where
         R: ToLuaMultiM<'lua> + TealMultiValue,
         M: 'static + MaybeSend + FnMut(&'lua Lua, &mut T, A) -> ResultM<R>,
     {
+        self.copy_docs(name.name().as_bytes());
         self.meta_method_mut.push(Self::get_method_data::<A, R, _>(
             &get_meta_name_mlua(name).as_bytes(),
             true,
@@ -391,6 +428,7 @@ where
         R: ToLuaMultiM<'lua> + TealMultiValue,
         F: 'static + MaybeSend + Fn(&'lua Lua, A) -> ResultM<R>,
     {
+        self.copy_docs(name.name().as_bytes());
         self.meta_function.push(Self::get_method_data::<A, R, _>(
             get_meta_name_mlua(name).as_bytes(),
             true,
@@ -403,6 +441,7 @@ where
         R: ToLuaMultiM<'lua> + TealMultiValue,
         F: 'static + MaybeSend + FnMut(&'lua Lua, A) -> ResultM<R>,
     {
+        self.copy_docs(name.name().as_bytes());
         self.meta_function_mut
             .push(Self::get_method_data::<A, R, _>(
                 &get_meta_name_mlua(name).as_bytes(),
@@ -419,6 +458,7 @@ where
         M: 'static + MaybeSend + Fn(&'lua Lua, T, A) -> MR,
         MR: 'lua + std::future::Future<Output = ResultM<R>>,
     {
+        self.copy_docs(name.as_ref());
         self.methods
             .push(Self::get_method_data::<A, R, _>(name, false))
     }
@@ -432,21 +472,20 @@ where
         F: 'static + MaybeSend + Fn(&'lua Lua, A) -> FR,
         FR: 'lua + std::future::Future<Output = ResultM<R>>,
     {
+        self.copy_docs(name.as_ref());
         self.functions
             .push(Self::get_method_data::<A, R, _>(name, false))
     }
-}
 
-impl DocumentationCollector for TypeGenerator {
-    fn document_function(&mut self, name: impl Into<String>, documentation: impl Into<String>) {
-        self.documentation.insert(name.into(), documentation.into());
+    fn document(&mut self, documentation: &str) {
+        match &mut self.next_docs {
+            Some(x) => {
+                x.push('\n');
+                x.push_str(documentation)
+            }
+            None => self.next_docs = Some(documentation.to_owned()),
+        };
     }
-
-    fn should_generate_help_method(&mut self, should_generate: bool) {
-        self.should_generate_help_method = should_generate;
-    }
-}
-impl HelpMethodGenerator for TypeGenerator {
     fn generate_help(&mut self) {
         self.functions
             .push(Self::get_method_data::<Option<String>, String, _>(

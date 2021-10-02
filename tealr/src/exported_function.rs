@@ -59,7 +59,7 @@ impl ExportedFunction {
     pub(crate) fn generate(
         self,
         self_type: Option<Cow<'static, str>>,
-        documentation: &HashMap<String, String>,
+        documentation: &HashMap<Vec<u8>, String>,
     ) -> std::result::Result<String, FromUtf8Error> {
         let params = self_type
             .iter()
@@ -74,11 +74,13 @@ impl ExportedFunction {
             .map(|v| v.name.to_owned())
             .collect::<Vec<_>>()
             .join(", ");
-        let name = String::from_utf8(self.name)?;
-        let documentation = match documentation.get(&name) {
+        let documentation = match documentation.get(&self.name) {
             None => "".to_string(),
             Some(x) => x.lines().map(|v| format!("--{}\n", v)).collect(),
         };
+
+        let name = String::from_utf8(self.name)?;
+
         Ok(format!(
             "{}{}{}: function{}({}):({})",
             documentation,
