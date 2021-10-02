@@ -1,4 +1,4 @@
-use std::{borrow::Cow, string::FromUtf8Error};
+use std::{borrow::Cow, collections::HashMap, string::FromUtf8Error};
 
 #[cfg(feature = "rlua")]
 use crate::rlu::{
@@ -21,7 +21,7 @@ use mlua::{
     ToLuaMulti as ToLuaMultiM, UserData as UserDataM,
 };
 
-use crate::{Direction, ExportedFunction, TypeName};
+use crate::{exported_function::ExportedFunction, Direction, TypeName};
 
 #[cfg(any(feature = "rlua", feature = "mlua"))]
 use crate::TealMultiValue;
@@ -52,6 +52,11 @@ pub struct TypeGenerator {
     pub meta_function: Vec<ExportedFunction>,
     ///exported meta functions that mutate something
     pub meta_function_mut: Vec<ExportedFunction>,
+    ///registered documentation
+    pub documentation: HashMap<Vec<u8>, String>,
+    next_docs: Option<String>,
+    ///if this type needs to get a `.help()` function
+    pub should_generate_help_method: bool,
 }
 impl TypeGenerator {
     pub(crate) fn new<A: TypeName>(dir: Direction, should_be_inlined: bool) -> Self {
@@ -68,6 +73,9 @@ impl TypeGenerator {
             meta_method_mut: Default::default(),
             meta_function: Default::default(),
             meta_function_mut: Default::default(),
+            documentation: Default::default(),
+            should_generate_help_method: true,
+            next_docs: Default::default(),
         }
     }
     #[cfg(any(feature = "rlua", feature = "mlua"))]
@@ -87,51 +95,52 @@ impl TypeGenerator {
             .map(|(name, lua_type)| format!("{} : {}", name, lua_type))
             .collect();
 
+        let documentation = &self.documentation;
         let methods: Vec<_> = self
             .methods
             .into_iter()
-            .map(|v| v.generate(Some(type_name.clone())))
+            .map(|v| v.generate(Some(type_name.clone()), documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let methods_mut: Vec<_> = self
             .mut_methods
             .into_iter()
-            .map(|v| v.generate(Some(type_name.clone())))
+            .map(|v| v.generate(Some(type_name.clone()), documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let functions: Vec<_> = self
             .functions
             .into_iter()
-            .map(|f| f.generate(None))
+            .map(|f| f.generate(None, documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let functions_mut: Vec<_> = self
             .mut_functions
             .into_iter()
-            .map(|f| f.generate(None))
+            .map(|f| f.generate(None, documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let meta_methods: Vec<_> = self
             .meta_method
             .into_iter()
-            .map(|f| f.generate(Some(type_name.clone())))
+            .map(|f| f.generate(Some(type_name.clone()), documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let meta_methods_mut: Vec<_> = self
             .meta_method_mut
             .into_iter()
-            .map(|f| f.generate(Some(type_name.clone())))
+            .map(|f| f.generate(Some(type_name.clone()), documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let meta_function: Vec<_> = self
             .meta_function
             .into_iter()
-            .map(|f| f.generate(None))
+            .map(|f| f.generate(None, documentation))
             .collect::<std::result::Result<_, _>>()?;
         let meta_function_mut: Vec<_> = self
             .meta_function_mut
             .into_iter()
-            .map(|f| f.generate(None))
+            .map(|f| f.generate(None, documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let fields = Self::combine_function_names(fields, "Fields");
@@ -149,13 +158,24 @@ impl TypeGenerator {
 
         let userdata_string = if self.is_user_data { "userdata" } else { "" };
         let (type_header, type_end) = if self.should_be_inlined {
-            (format!("\t-- {}\n", self.type_name), "")
+            (format!("-- {}\n", self.type_name), "")
         } else {
             (
-                format!("\trecord {}\n\t\t{}", self.type_name, userdata_string),
+                format!(
+                    "record {}\n{}",
+                    self.type_name,
+                    userdata_string
+                        .lines()
+                        .map(|v| format!("\t{}\n", v))
+                        .collect::<String>()
+                ),
                 "\tend",
             )
         };
+        let type_header = type_header
+            .lines()
+            .map(|v| format!("\t{}\n", v))
+            .collect::<String>();
         Ok(format!(
             "{}\n{}{}{}{}{}{}{}{}{}\n{}",
             type_header,
@@ -177,13 +197,30 @@ impl TypeGenerator {
         } else {
             let combined = function_list
                 .into_iter()
-                .map(|v| String::from("\t\t") + &v)
+                .map(|v| {
+                    v.lines()
+                        .map(|v| String::from("\t\t") + v)
+                        .map(|mut v| {
+                            v.push('\n');
+                            v
+                        })
+                        .collect::<String>()
+                })
                 .collect::<Vec<_>>()
                 .join("\n");
             format!("\t\t-- {}\n{}\n", top_doc, combined)
         }
     }
 }
+
+impl TypeGenerator {
+    fn copy_docs(&mut self, to: &[u8]) {
+        if let Some(x) = self.next_docs.take() {
+            self.documentation.insert(to.to_owned(), x);
+        }
+    }
+}
+
 #[cfg(feature = "rlua")]
 impl<'lua, T> TealDataMethodsR<'lua, T> for TypeGenerator
 where
@@ -196,6 +233,7 @@ where
         R: ToLuaMultiR<'lua> + TealMultiValue,
         M: 'static + Send + Fn(Context<'lua>, &T, A) -> ResultR<R>,
     {
+        self.copy_docs(name.as_ref());
         self.methods
             .push(Self::get_method_data::<A, R, _>(name, false))
     }
@@ -207,6 +245,7 @@ where
         R: ToLuaMultiR<'lua> + TealMultiValue,
         M: 'static + Send + FnMut(Context<'lua>, &mut T, A) -> ResultR<R>,
     {
+        self.copy_docs(name.as_ref());
         self.mut_methods
             .push(Self::get_method_data::<A, R, _>(name, false))
     }
@@ -218,6 +257,7 @@ where
         R: ToLuaMultiR<'lua> + TealMultiValue,
         F: 'static + Send + Fn(Context<'lua>, A) -> ResultR<R>,
     {
+        self.copy_docs(name.as_ref());
         self.functions
             .push(Self::get_method_data::<A, R, _>(name, false))
     }
@@ -229,6 +269,7 @@ where
         R: ToLuaMultiR<'lua> + TealMultiValue,
         F: 'static + Send + FnMut(Context<'lua>, A) -> ResultR<R>,
     {
+        self.copy_docs(name.as_ref());
         self.mut_functions
             .push(Self::get_method_data::<A, R, _>(name, false))
     }
@@ -239,6 +280,7 @@ where
         R: ToLuaMultiR<'lua> + TealMultiValue,
         M: 'static + Send + Fn(Context<'lua>, &T, A) -> ResultR<R>,
     {
+        self.copy_docs(get_meta_name_rlua(name).as_bytes());
         self.meta_method.push(Self::get_method_data::<A, R, _>(
             get_meta_name_rlua(name),
             true,
@@ -251,6 +293,7 @@ where
         R: ToLuaMultiR<'lua> + TealMultiValue,
         M: 'static + Send + FnMut(Context<'lua>, &mut T, A) -> ResultR<R>,
     {
+        self.copy_docs(get_meta_name_rlua(name).as_bytes());
         self.meta_method_mut.push(Self::get_method_data::<A, R, _>(
             get_meta_name_rlua(name),
             true,
@@ -263,6 +306,7 @@ where
         R: ToLuaMultiR<'lua> + TealMultiValue,
         F: 'static + Send + Fn(Context<'lua>, A) -> ResultR<R>,
     {
+        self.copy_docs(get_meta_name_rlua(name).as_bytes());
         self.meta_function.push(Self::get_method_data::<A, R, _>(
             get_meta_name_rlua(name),
             true,
@@ -275,10 +319,26 @@ where
         R: ToLuaMultiR<'lua> + TealMultiValue,
         F: 'static + Send + FnMut(Context<'lua>, A) -> ResultR<R>,
     {
+        self.copy_docs(get_meta_name_rlua(name).as_bytes());
         self.meta_function_mut
             .push(Self::get_method_data::<A, R, _>(
                 get_meta_name_rlua(name),
                 true,
+            ))
+    }
+    fn document(&mut self, documentation: &str) {
+        match &mut self.next_docs {
+            Some(x) => {
+                x.push('\n');
+                x.push_str(documentation)
+            }
+            None => self.next_docs = Some(documentation.to_owned()),
+        };
+    }
+    fn generate_help(&mut self) {
+        self.functions
+            .push(Self::get_method_data::<Option<String>, String, _>(
+                "help", false,
             ))
     }
 }
@@ -295,6 +355,7 @@ where
         R: ToLuaMultiM<'lua> + TealMultiValue,
         M: 'static + MaybeSend + Fn(&'lua Lua, &T, A) -> ResultM<R>,
     {
+        self.copy_docs(name.as_ref());
         self.methods
             .push(Self::get_method_data::<A, R, _>(name, false))
     }
@@ -306,6 +367,7 @@ where
         R: ToLuaMultiM<'lua> + TealMultiValue,
         M: 'static + MaybeSend + FnMut(&'lua Lua, &mut T, A) -> ResultM<R>,
     {
+        self.copy_docs(name.as_ref());
         self.mut_methods
             .push(Self::get_method_data::<A, R, _>(name, false))
     }
@@ -317,6 +379,7 @@ where
         R: ToLuaMultiM<'lua> + TealMultiValue,
         F: 'static + MaybeSend + Fn(&'lua Lua, A) -> ResultM<R>,
     {
+        self.copy_docs(name.as_ref());
         self.functions
             .push(Self::get_method_data::<A, R, _>(name, false))
     }
@@ -328,6 +391,7 @@ where
         R: ToLuaMultiM<'lua> + TealMultiValue,
         F: 'static + MaybeSend + FnMut(&'lua Lua, A) -> ResultM<R>,
     {
+        self.copy_docs(name.as_ref());
         self.mut_functions
             .push(Self::get_method_data::<A, R, _>(name, false))
     }
@@ -338,6 +402,7 @@ where
         R: ToLuaMultiM<'lua> + TealMultiValue,
         M: 'static + MaybeSend + Fn(&'lua Lua, &T, A) -> ResultM<R>,
     {
+        self.copy_docs(name.name().as_bytes());
         self.meta_method.push(Self::get_method_data::<A, R, _>(
             &get_meta_name_mlua(name).as_bytes(),
             true,
@@ -350,6 +415,7 @@ where
         R: ToLuaMultiM<'lua> + TealMultiValue,
         M: 'static + MaybeSend + FnMut(&'lua Lua, &mut T, A) -> ResultM<R>,
     {
+        self.copy_docs(name.name().as_bytes());
         self.meta_method_mut.push(Self::get_method_data::<A, R, _>(
             &get_meta_name_mlua(name).as_bytes(),
             true,
@@ -362,6 +428,7 @@ where
         R: ToLuaMultiM<'lua> + TealMultiValue,
         F: 'static + MaybeSend + Fn(&'lua Lua, A) -> ResultM<R>,
     {
+        self.copy_docs(name.name().as_bytes());
         self.meta_function.push(Self::get_method_data::<A, R, _>(
             get_meta_name_mlua(name).as_bytes(),
             true,
@@ -374,6 +441,7 @@ where
         R: ToLuaMultiM<'lua> + TealMultiValue,
         F: 'static + MaybeSend + FnMut(&'lua Lua, A) -> ResultM<R>,
     {
+        self.copy_docs(name.name().as_bytes());
         self.meta_function_mut
             .push(Self::get_method_data::<A, R, _>(
                 &get_meta_name_mlua(name).as_bytes(),
@@ -390,6 +458,7 @@ where
         M: 'static + MaybeSend + Fn(&'lua Lua, T, A) -> MR,
         MR: 'lua + std::future::Future<Output = ResultM<R>>,
     {
+        self.copy_docs(name.as_ref());
         self.methods
             .push(Self::get_method_data::<A, R, _>(name, false))
     }
@@ -403,7 +472,24 @@ where
         F: 'static + MaybeSend + Fn(&'lua Lua, A) -> FR,
         FR: 'lua + std::future::Future<Output = ResultM<R>>,
     {
+        self.copy_docs(name.as_ref());
         self.functions
             .push(Self::get_method_data::<A, R, _>(name, false))
+    }
+
+    fn document(&mut self, documentation: &str) {
+        match &mut self.next_docs {
+            Some(x) => {
+                x.push('\n');
+                x.push_str(documentation)
+            }
+            None => self.next_docs = Some(documentation.to_owned()),
+        };
+    }
+    fn generate_help(&mut self) {
+        self.functions
+            .push(Self::get_method_data::<Option<String>, String, _>(
+                "help", false,
+            ))
     }
 }

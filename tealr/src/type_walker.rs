@@ -43,6 +43,7 @@ impl TypeWalker {
     ///\trecord Example
     ///\t\tuserdata
     ///
+    ///
     ///\tend
     ///end
     ///return Examples"
@@ -80,6 +81,7 @@ impl TypeWalker {
     ///\trecord Example
     ///\t\tuserdata
     ///
+    ///
     ///\tend
     ///end
     ///return Examples"
@@ -100,6 +102,7 @@ impl TypeWalker {
     ///assert_eq!(generated_string,Ok(String::from("local record Examples
     ///\trecord Example
     ///\t\tuserdata
+    ///
     ///
     ///\tend
     ///end

@@ -47,6 +47,11 @@ jobs:
       run: ${{matrix.tests}}
   clippy:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tests :
+          - "cargo clippy --features mlua,mlua_vendored,mlua_lua53,mlua_async,mlua_send -- -D warnings"
+          - "cargo clippy --features rlua,rlua_builtin-lua -- -D warnings"
     steps:
     - uses: hecrj/setup-rust-action@v1.3.4 
       with:
@@ -54,4 +59,4 @@ jobs:
         components: clippy
     - uses: actions/checkout@master
     - name: Clippy
-      run: cargo clippy -- -D warnings
+      run: ${{matrix.tests}}

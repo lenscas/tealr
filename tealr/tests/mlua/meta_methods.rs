@@ -27,5 +27,5 @@ fn test() {
         .process_type::<Example>(tealr::Direction::ToLua)
         .generate_global("test")
         .expect("oh no :(");
-    assert_eq!(file_contents, "global record test\n\trecord Example\n\t\tuserdata\n\t\t-- Meta methods\n\t\tmetamethod __add: function(Example, integer):(Example)\n\n\tend\nend\nreturn test");
+    assert_eq!(file_contents, "global record test\n\trecord Example\n\t\tuserdata\n\n\t\t-- Meta methods\n\t\tmetamethod __add: function(Example, integer):(Example)\n\n\n\tend\nend\nreturn test");
 }

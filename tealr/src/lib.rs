@@ -17,12 +17,11 @@ mod type_walker;
 
 pub use exported_function::ExportedFunction;
 pub use teal_multivalue::{TealMultiValue, TealType};
+#[cfg(feature = "derive")]
+pub use tealr_derive::{MluaTealDerive, MluaUserData, RluaTealDerive, RluaUserData, TypeName};
 pub use type_generator::TypeGenerator;
 pub use type_representation::{Direction, KindOfType, TypeBody, TypeName};
 pub use type_walker::TypeWalker;
-
-#[cfg(feature = "derive")]
-pub use tealr_derive::{MluaTealDerive, MluaUserData, RluaTealDerive, RluaUserData, TypeName};
 
 #[cfg(feature = "compile")]
 pub use tealr_derive::compile_inline_teal;

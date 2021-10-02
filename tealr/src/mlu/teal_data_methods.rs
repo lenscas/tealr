@@ -89,4 +89,8 @@ pub trait TealDataMethods<'lua, T> {
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         F: 'static + MaybeSend + FnMut(&'lua Lua, A) -> Result<R>;
+    ///Adds documentation to the next method/function that gets added
+    fn document(&mut self, documentation: &str);
+    ///generates a `.help()` function on lua's/teals side, which can be used at run time to view the documentation.
+    fn generate_help(&mut self);
 }

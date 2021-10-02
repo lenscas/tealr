@@ -1,4 +1,8 @@
-use std::{borrow::Cow, collections::HashSet, string::FromUtf8Error};
+use std::{
+    borrow::Cow,
+    collections::{HashMap, HashSet},
+    string::FromUtf8Error,
+};
 
 use crate::TealType;
 
@@ -55,6 +59,7 @@ impl ExportedFunction {
     pub(crate) fn generate(
         self,
         self_type: Option<Cow<'static, str>>,
+        documentation: &HashMap<Vec<u8>, String>,
     ) -> std::result::Result<String, FromUtf8Error> {
         let params = self_type
             .iter()
@@ -69,15 +74,22 @@ impl ExportedFunction {
             .map(|v| v.name.to_owned())
             .collect::<Vec<_>>()
             .join(", ");
+        let documentation = match documentation.get(&self.name) {
+            None => "".to_string(),
+            Some(x) => x.lines().map(|v| format!("--{}\n", v)).collect(),
+        };
+
+        let name = String::from_utf8(self.name)?;
 
         Ok(format!(
-            "{}{}: function{}({}):({})",
+            "{}{}{}: function{}({}):({})",
+            documentation,
             if self.is_meta_method {
                 "metamethod "
             } else {
                 ""
             },
-            String::from_utf8(self.name)?,
+            name,
             if self.generics.is_empty() {
                 "".to_owned()
             } else {
