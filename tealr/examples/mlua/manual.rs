@@ -3,7 +3,7 @@ use tealr::{
         mlua::{Lua, Result, UserData, UserDataMethods},
         TealData, TealDataMethods, UserDataWrapper,
     },
-    Direction, TypeBody, TypeName, TypeWalker,
+    new_type, Direction, NamePart, TypeBody, TypeName, TypeWalker,
 };
 //This example shows how to manually implement UserData using TealData
 //As you can see the amount of code is small and easy copy/paste able.
@@ -29,8 +29,15 @@ impl TealData for Example {
 
 impl TypeName for Example {
     //how the type should be called in lua.
-    fn get_type_name(_: Direction) -> std::borrow::Cow<'static, str> {
-        "Example".into()
+    fn get_type_parts(_: Direction) -> std::borrow::Cow<'static, [NamePart]> {
+        //this
+        new_type!(Example)
+        //is the same as this:
+        // std::borrow::Cow::Borrowed(&[NamePart::Type(TealType {
+        // name: std::borrow::Cow::Borrowed("Example"),
+        // type_kind: tealr::KindOfType::External,
+        // generics: None,
+        // })])
     }
 }
 

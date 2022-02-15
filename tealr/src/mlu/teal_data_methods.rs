@@ -1,6 +1,6 @@
 use mlua::{FromLuaMulti, Lua, MetaMethod, Result, ToLuaMulti};
 
-use crate::TealMultiValue;
+use crate::{TealMultiValue, TypeName};
 
 use super::MaybeSend;
 
@@ -12,7 +12,7 @@ use super::MaybeSend;
 ///The only 2 differences are that [TealDataMethods](crate::mlu::TealDataMethods) has an extra type bound on `A` and `R`.
 ///These are to get the type names when generating the `.d.tl` file.
 
-pub trait TealDataMethods<'lua, T> {
+pub trait TealDataMethods<'lua, T: TypeName> {
     ///Exposes a method to lua
     fn add_method<S, A, R, M>(&mut self, name: &S, method: M)
     where
@@ -91,6 +91,8 @@ pub trait TealDataMethods<'lua, T> {
         F: 'static + MaybeSend + FnMut(&'lua Lua, A) -> Result<R>;
     ///Adds documentation to the next method/function that gets added
     fn document(&mut self, documentation: &str);
+    ///Adds documentation for this type itself. They will be written right above the record in the .d.tl file
+    fn document_type(&mut self, documentation: &str);
     ///generates a `.help()` function on lua's/teals side, which can be used at run time to view the documentation.
     fn generate_help(&mut self);
 }

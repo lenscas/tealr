@@ -19,8 +19,10 @@ pub use exported_function::ExportedFunction;
 pub use teal_multivalue::{TealMultiValue, TealType};
 #[cfg(feature = "derive")]
 pub use tealr_derive::{MluaTealDerive, MluaUserData, RluaTealDerive, RluaUserData, TypeName};
-pub use type_generator::TypeGenerator;
-pub use type_representation::{Direction, KindOfType, TypeBody, TypeName};
+pub use type_generator::{NameContainer, TypeGenerator};
+pub use type_representation::{
+    type_parts_to_str, Direction, KindOfType, NamePart, TypeBody, TypeName,
+};
 pub use type_walker::TypeWalker;
 
 #[cfg(feature = "compile")]

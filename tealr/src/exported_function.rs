@@ -4,7 +4,7 @@ use std::{
     string::FromUtf8Error,
 };
 
-use crate::TealType;
+use crate::{type_generator::NameContainer, TealType};
 
 #[cfg(any(feature = "rlua", feature = "mlua"))]
 use crate::{Direction, TealMultiValue};
@@ -12,7 +12,8 @@ use crate::{Direction, TealMultiValue};
 fn get_all_generics(children: impl Iterator<Item = TealType>) -> HashSet<TealType> {
     let mut generics = HashSet::new();
     for teal_type in children {
-        let child_generics = get_all_generics(teal_type.generics.clone().into_iter());
+        let child_generics =
+            get_all_generics(teal_type.generics.clone().unwrap_or_default().into_iter());
         generics.extend(child_generics);
         if teal_type.type_kind.is_generic() {
             generics.insert(teal_type);
@@ -22,12 +23,18 @@ fn get_all_generics(children: impl Iterator<Item = TealType>) -> HashSet<TealTyp
 }
 
 ///Contains the data needed to write down the type of a function
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct ExportedFunction {
-    pub(crate) name: Vec<u8>,
-    pub(crate) generics: HashSet<TealType>,
-    pub(crate) params: Vec<TealType>,
-    pub(crate) returns: Vec<TealType>,
-    pub(crate) is_meta_method: bool,
+    ///Name of the function
+    pub name: NameContainer,
+    ///Any generic type parameters that this function may have
+    pub generics: HashSet<TealType>,
+    ///The parameters of this function
+    pub params: Vec<TealType>,
+    ///What this function returns
+    pub returns: Vec<TealType>,
+    ///If this function is a meta_method
+    pub is_meta_method: bool,
 }
 impl ExportedFunction {
     ///Creates an ExportedFunction with the given name, Parameters and return value
@@ -49,7 +56,7 @@ impl ExportedFunction {
                 .chain(returns.clone().into_iter()),
         );
         Self {
-            name,
+            name: name.into(),
             params,
             returns,
             is_meta_method,
@@ -59,7 +66,7 @@ impl ExportedFunction {
     pub(crate) fn generate(
         self,
         self_type: Option<Cow<'static, str>>,
-        documentation: &HashMap<Vec<u8>, String>,
+        documentation: &HashMap<NameContainer, String>,
     ) -> std::result::Result<String, FromUtf8Error> {
         let params = self_type
             .iter()
@@ -79,7 +86,7 @@ impl ExportedFunction {
             Some(x) => x.lines().map(|v| format!("--{}\n", v)).collect(),
         };
 
-        let name = String::from_utf8(self.name)?;
+        let name = String::from_utf8(self.name.0)?;
 
         Ok(format!(
             "{}{}{}: function{}({}):({})",

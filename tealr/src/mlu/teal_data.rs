@@ -1,7 +1,9 @@
+use crate::TypeName;
+
 use super::TealDataMethods;
 
 ///This is the teal version of [UserData](mlua::UserData).
-pub trait TealData: Sized {
+pub trait TealData: Sized + TypeName {
     ///same as [UserData::add_methods](mlua::UserData::add_methods).
     ///Refer to its documentation on how to use it.
     ///

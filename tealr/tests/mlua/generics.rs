@@ -1,36 +1,13 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::collections::HashMap;
 
 use mlua::ToLua;
 use tealr::{
+    create_generic_mlua,
     mlu::{mlua::FromLua, TealData, TealDataMethods, TypedFunction},
     Direction, MluaUserData, TypeName, TypeWalker,
 };
 
-#[derive(Clone, PartialEq)]
-struct X<'lua>(mlua::Value<'lua>);
-impl<'lua> FromLua<'lua> for X<'lua> {
-    fn from_lua(
-        x: mlua::Value<'lua>,
-        _: &'lua mlua::Lua,
-    ) -> std::result::Result<Self, mlua::Error> {
-        Ok(X(x))
-    }
-}
-impl<'lua> ToLua<'lua> for X<'lua> {
-    fn to_lua(self, lua: &'lua mlua::Lua) -> mlua::Result<mlua::Value<'lua>> {
-        self.0.to_lua(lua)
-    }
-}
-impl<'lua> TypeName for X<'lua> {
-    fn get_type_name(_: tealr::Direction) -> Cow<'static, str> {
-        Cow::Borrowed("X")
-    }
-
-    fn get_type_kind() -> tealr::KindOfType {
-        tealr::KindOfType::Generic
-    }
-}
-
+create_generic_mlua!(X);
 #[derive(Clone, MluaUserData, TypeName)]
 struct Example {}
 

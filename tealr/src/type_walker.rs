@@ -3,7 +3,7 @@ use std::string::FromUtf8Error;
 use crate::{Direction, TypeBody, TypeGenerator, TypeName};
 
 ///This generates the .d.tl files
-#[derive(Default)]
+#[derive(Default, serde::Serialize, serde::Deserialize)]
 pub struct TypeWalker {
     given_types: Vec<TypeGenerator>,
 }
@@ -12,6 +12,10 @@ impl TypeWalker {
     ///creates the TypeWalker
     pub fn new() -> Self {
         Default::default()
+    }
+    ///gives an iterator back over every type
+    pub fn iter(&self) -> std::slice::Iter<'_, TypeGenerator> {
+        self.given_types.iter()
     }
     ///Process a type such that the body will be added directly into the module instead of becoming a child record.
     ///

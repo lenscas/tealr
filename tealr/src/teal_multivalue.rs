@@ -1,20 +1,23 @@
 use std::borrow::Cow;
 
-use crate::{type_representation::KindOfType, Direction, TypeName};
+use crate::{type_parts_to_str, type_representation::KindOfType, Direction, TypeName};
 
 ///Represents a type
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash, serde::Serialize, serde::Deserialize)]
 pub struct TealType {
-    pub(crate) name: Cow<'static, str>,
-    pub(crate) type_kind: KindOfType,
-    pub(crate) generics: Vec<TealType>,
+    ///Name of the type
+    pub name: Cow<'static, str>,
+    ///If the type is build in, a generic or from a library
+    pub type_kind: KindOfType,
+    ///any generics that this type has
+    pub generics: Option<Vec<TealType>>,
 }
 impl TealType {
     fn new(name: Cow<'static, str>, type_kind: KindOfType, generics: Vec<TealType>) -> Self {
         Self {
             name,
             type_kind,
-            generics,
+            generics: Some(generics),
         }
     }
     ///generates a [TealType](crate::TealType) based on a type implementing [TealData](crate::rlu::TealData).
@@ -28,7 +31,11 @@ impl TealType {
     pub fn from<A: TypeName>(dir: Direction) -> Self {
         let mut generics = Vec::new();
         A::collect_children(&mut generics);
-        Self::new(A::get_type_name(dir), A::get_type_kind(), generics)
+        Self::new(
+            type_parts_to_str(A::get_type_parts(dir)),
+            A::get_type_kind(),
+            generics,
+        )
     }
 }
 

@@ -1,8 +1,9 @@
 use std::{borrow::Cow, marker::PhantomData};
 
+use itertools::Itertools;
 use rlua::{Context, FromLua, FromLuaMulti, Function, ToLua, ToLuaMulti, Value};
 
-use crate::{Direction, TealMultiValue, TypeName};
+use crate::{Direction, NamePart, TealMultiValue, TypeName};
 
 ///A typed wrapper around [rlua::Function]
 #[derive(Debug)]
@@ -44,24 +45,28 @@ where
     Params: TealMultiValue,
     Response: TealMultiValue,
 {
-    fn get_type_name(_: Direction) -> Cow<'static, str> {
-        let params = Params::get_types(Direction::FromLua)
-            .into_iter()
-            .map(|v| v.name)
-            .collect::<Vec<_>>()
-            .join(",");
-        let output = Response::get_types(Direction::ToLua)
-            .into_iter()
-            .map(|v| v.name)
-            .collect::<Vec<_>>()
-            .join(",");
-        Cow::Owned(format!("function({}):({})", params, output))
+    fn get_type_parts(_: Direction) -> Cow<'static, [crate::NamePart]> {
+        let x = Params::get_types(Direction::FromLua);
+        let z = x.iter().map(|v| v.to_owned()).map(NamePart::Type);
+        let params = Itertools::intersperse(z, NamePart::Symbol(Cow::Borrowed(",")));
+        let x = Response::get_types(Direction::ToLua);
+        let z = x.iter().map(|v| v.to_owned()).map(NamePart::Type);
+        let returns = Itertools::intersperse(z, NamePart::Symbol(Cow::Borrowed(",")));
+        let mut v = vec!["function(".into()];
+        v.extend(params);
+        v.push("):(".into());
+        v.extend(returns);
+        v.push(")".into());
+        Cow::Owned(v)
     }
     fn collect_children(generics: &mut Vec<crate::TealType>) {
         let params = Params::get_types(Direction::FromLua)
             .into_iter()
             .chain(Response::get_types(Direction::ToLua));
         generics.extend(params);
+    }
+    fn get_type_kind() -> crate::KindOfType {
+        crate::KindOfType::Builtin
     }
 }
 impl<'lua, Params, Response> TypedFunction<'lua, Params, Response>

@@ -3,7 +3,7 @@ use tealr::{
         rlua::{FromLua, ToLua},
         TealData,
     },
-    Direction, RluaUserData, TypeName, TypeWalker,
+    Direction, NamePart, RluaUserData, TypeName, TypeWalker,
 };
 
 #[derive(Clone, Copy)]
@@ -31,10 +31,10 @@ impl<'lua> ToLua<'lua> for TestFromAndBack {
     }
 }
 impl TypeName for TestFromAndBack {
-    fn get_type_name(dir: Direction) -> std::borrow::Cow<'static, str> {
+    fn get_type_parts(dir: Direction) -> std::borrow::Cow<'static, [NamePart]> {
         match dir {
-            Direction::FromLua => i64::get_type_name(Direction::FromLua),
-            Direction::ToLua => String::get_type_name(Direction::ToLua),
+            Direction::FromLua => i64::get_type_parts(Direction::FromLua),
+            Direction::ToLua => String::get_type_parts(Direction::ToLua),
         }
     }
 }
