@@ -18,5 +18,5 @@
         "tempfile",
         "userdata"
     ],
-    "rust-analyzer.cargo.features": ["rlua","rlua_builtin-lua"]
+    "rust-analyzer.cargo.features": ["mlua","mlua_lua54","mlua_vendored","mlua_async"]
 }

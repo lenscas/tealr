@@ -245,8 +245,8 @@ impl_type_name_life_time!("thread" mlua::Thread<'lua>);
 
 #[cfg(feature = "mlua_async")]
 impl<'lua, R> TypeName for mlua::AsyncThread<'lua, R> {
-    fn get_type_name(_: Direction) -> Cow<'static, str> {
-        Cow::from(thread, BuiltIn)
+    fn get_type_parts(_: Direction) -> Cow<'static, [NamePart]> {
+        new_type!(thread, BuiltIn)
     }
     fn get_type_kind() -> KindOfType {
         KindOfType::Builtin
