@@ -114,7 +114,7 @@ impl ExportedFunction {
             Some(x) => x.lines().map(|v| format!("--{}\n", v)).collect(),
         };
         let metamethod = if self.is_meta_method {
-            "metamethod"
+            "metamethod "
         } else {
             ""
         };
