@@ -15,7 +15,7 @@ fn generate_correct_type() {
             TypedFunction::<(i8, String), (String, u8)>,
             f32,
         >::get_type_parts(tealr::Direction::FromLua)),
-        "function(function(integer,string):(string,integer)):(number)"
+        "function(function((integer),(string)):((string),(integer))):(number)"
     );
 }
 #[test]
