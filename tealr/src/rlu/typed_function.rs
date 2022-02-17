@@ -1,6 +1,5 @@
 use std::{borrow::Cow, marker::PhantomData};
 
-use itertools::Itertools;
 use rlua::{Context, FromLua, FromLuaMulti, Function, ToLua, ToLuaMulti, Value};
 
 use crate::{Direction, NamePart, TealMultiValue, TypeName};
@@ -46,12 +45,8 @@ where
     Response: TealMultiValue,
 {
     fn get_type_parts(_: Direction) -> Cow<'static, [crate::NamePart]> {
-        let x = Params::get_types(Direction::FromLua);
-        let z = x.iter().map(|v| v.to_owned()).map(NamePart::Type);
-        let params = Itertools::intersperse(z, NamePart::Symbol(Cow::Borrowed(",")));
-        let x = Response::get_types(Direction::ToLua);
-        let z = x.iter().map(|v| v.to_owned()).map(NamePart::Type);
-        let returns = Itertools::intersperse(z, NamePart::Symbol(Cow::Borrowed(",")));
+        let params = Params::get_types(Direction::FromLua);
+        let returns = Response::get_types(Direction::ToLua);
         let mut v = vec!["function(".into()];
         v.extend(params);
         v.push("):(".into());
@@ -62,7 +57,12 @@ where
     fn collect_children(generics: &mut Vec<crate::TealType>) {
         let params = Params::get_types(Direction::FromLua)
             .into_iter()
-            .chain(Response::get_types(Direction::ToLua));
+            .chain(Response::get_types(Direction::ToLua).into_iter())
+            .filter_map(|v| match v {
+                NamePart::Symbol(_) => None,
+                NamePart::Type(x) => Some(x),
+            });
+
         generics.extend(params);
     }
     fn get_type_kind() -> crate::KindOfType {

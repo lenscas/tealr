@@ -4,9 +4,7 @@ use bstr::ByteVec;
 use mlua::{FromLuaMulti, Lua, MetaMethod, Result, ToLuaMulti, UserData, UserDataMethods};
 
 use super::{MaybeSend, TealDataMethods};
-use crate::{
-    type_generator::get_method_data, type_parts_to_str, Direction, TealMultiValue, TypeName,
-};
+use crate::{type_generator::get_method_data, Direction, TealMultiValue, TypeName};
 
 ///Used to turn [UserDataMethods](mlua::UserDataMethods) into [TealDataMethods](crate::mlu::TealDataMethods).
 ///
@@ -77,12 +75,13 @@ where
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
     {
-        let type_def = get_method_data::<A, R, _>(to, false);
+        let type_def = get_method_data::<A, R, _>(
+            to,
+            false,
+            self_type.then(|| T::get_type_parts(Direction::FromLua)),
+        );
         let generated = type_def
-            .generate(
-                self_type.then(|| type_parts_to_str(T::get_type_parts(Direction::FromLua))),
-                &Default::default(),
-            )
+            .generate(&Default::default())
             .map(|v| "Signature: ".to_string() + &v)
             .unwrap_or_default();
         let docs = generated + "\n\ndocs:\n" + &self.next_docs.take().unwrap_or_default();

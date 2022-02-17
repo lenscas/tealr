@@ -55,7 +55,7 @@ macro_rules! create_union_mlua {
                 use $crate::TealMultiValue;
                 $(
                     v.extend(
-                        $sub_types::get_types(
+                        ($sub_types::get_types(
                             $crate::Direction::FromLua
                         )
                         .into_iter()
@@ -63,9 +63,18 @@ macro_rules! create_union_mlua {
                             $sub_types::get_types(
                                 $crate::Direction::ToLua
                             )
-                        )
+                        )).filter_map(|v| {
+                            if let $crate::NamePart::Type(x) = v {
+                                Some(x)
+                            } else {
+                                None
+                            }
+                        })
                     );
                 )*
+            }
+            fn get_type_kind() -> $crate::KindOfType {
+                $crate::KindOfType::Builtin
             }
         }
     };

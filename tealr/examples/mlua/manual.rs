@@ -18,7 +18,11 @@ struct Example {}
 impl TealData for Example {
     //implement your methods/functions
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
-        methods.add_method("example_method", |_, _, x: i8| Ok(x));
+        //methods.add_method("example_method", |_, _, x: i8| Ok(x));
+        methods.add_method(
+            "example_method2",
+            |_, _, x: tealr::mlu::TypedFunction<i32, i64>| Ok(x),
+        );
         methods.add_method_mut("example_method_mut", |_, _, x: (i8, String)| Ok(x.1));
         methods.add_function("example_function", |_, x: Vec<String>| Ok((x, 8)));
         methods.add_function_mut("example_function_mut", |_, x: (bool, Option<Example>)| {

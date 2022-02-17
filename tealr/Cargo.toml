@@ -2,7 +2,7 @@
 authors = ["Lenscas <lenscas@gmail.com>"]
 categories = ["development-tools::ffi"]
 description = "Traits and structs to generate teal type defintions."
-edition = "2018"
+edition = "2021"
 keywords = ["teal", "lua", "type", "generation", "type-generation"]
 license = "MIT OR Apache-2.0"
 name = "tealr"

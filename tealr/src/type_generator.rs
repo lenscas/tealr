@@ -75,8 +75,9 @@ impl From<Cow<'static, str>> for NameContainer {
 pub(crate) fn get_method_data<A: TealMultiValue, R: TealMultiValue, S: ?Sized + AsRef<[u8]>>(
     name: &S,
     is_meta_method: bool,
+    extra_self: Option<Cow<'static, [NamePart]>>,
 ) -> ExportedFunction {
-    ExportedFunction::new::<A, R>(name.as_ref().to_vec(), is_meta_method)
+    ExportedFunction::new::<A, R, _>(name, is_meta_method, extra_self)
 }
 
 ///This struct collects all the information needed to create the .d.tl file for your type.
@@ -150,48 +151,48 @@ impl TypeGenerator {
         let methods: Vec<_> = self
             .methods
             .into_iter()
-            .map(|v| v.generate(Some(type_name.clone()), documentation))
+            .map(|v| v.generate(documentation)) //v.generate(Some(type_name.clone()), documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let methods_mut: Vec<_> = self
             .mut_methods
             .into_iter()
-            .map(|v| v.generate(Some(type_name.clone()), documentation))
+            .map(|v| v.generate(documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let functions: Vec<_> = self
             .functions
             .into_iter()
-            .map(|f| f.generate(None, documentation))
+            .map(|f| f.generate(documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let functions_mut: Vec<_> = self
             .mut_functions
             .into_iter()
-            .map(|f| f.generate(None, documentation))
+            .map(|f| f.generate(documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let meta_methods: Vec<_> = self
             .meta_method
             .into_iter()
-            .map(|f| f.generate(Some(type_name.clone()), documentation))
+            .map(|f| f.generate(documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let meta_methods_mut: Vec<_> = self
             .meta_method_mut
             .into_iter()
-            .map(|f| f.generate(Some(type_name.clone()), documentation))
+            .map(|f| f.generate(documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let meta_function: Vec<_> = self
             .meta_function
             .into_iter()
-            .map(|f| f.generate(None, documentation))
+            .map(|f| f.generate(documentation))
             .collect::<std::result::Result<_, _>>()?;
         let meta_function_mut: Vec<_> = self
             .meta_function_mut
             .into_iter()
-            .map(|f| f.generate(None, documentation))
+            .map(|f| f.generate(documentation))
             .collect::<std::result::Result<_, _>>()?;
 
         let fields = Self::combine_function_names(fields, "Fields");
@@ -248,14 +249,15 @@ impl TypeGenerator {
             type_end
         ))
     }
-    fn combine_function_names(function_list: Vec<String>, top_doc: &str) -> String {
+    fn combine_function_names<T: AsRef<str>>(function_list: Vec<T>, top_doc: &str) -> String {
         if function_list.is_empty() {
             "".into()
         } else {
             let combined = function_list
                 .into_iter()
                 .map(|v| {
-                    v.lines()
+                    v.as_ref()
+                        .lines()
                         .map(|v| String::from("\t\t") + v)
                         .map(|mut v| {
                             v.push('\n');
@@ -281,7 +283,7 @@ impl TypeGenerator {
 #[cfg(feature = "rlua")]
 impl<'lua, T> TealDataMethodsR<'lua, T> for TypeGenerator
 where
-    T: 'static + TealDataR + UserDataR,
+    T: 'static + TealDataR + UserDataR + TypeName,
 {
     fn add_method<S, A, R, M>(&mut self, name: &S, _: M)
     where
@@ -291,7 +293,11 @@ where
         M: 'static + Send + Fn(Context<'lua>, &T, A) -> ResultR<R>,
     {
         self.copy_docs(name.as_ref());
-        self.methods.push(get_method_data::<A, R, _>(name, false))
+        self.methods.push(get_method_data::<A, R, _>(
+            name,
+            false,
+            Some(T::get_type_parts(Direction::FromLua)),
+        ))
     }
 
     fn add_method_mut<S, A, R, M>(&mut self, name: &S, _: M)
@@ -302,8 +308,11 @@ where
         M: 'static + Send + FnMut(Context<'lua>, &mut T, A) -> ResultR<R>,
     {
         self.copy_docs(name.as_ref());
-        self.mut_methods
-            .push(get_method_data::<A, R, _>(name, false))
+        self.mut_methods.push(get_method_data::<A, R, _>(
+            name,
+            false,
+            Some(T::get_type_parts(Direction::FromLua)),
+        ))
     }
 
     fn add_function<S, A, R, F>(&mut self, name: &S, _: F)
@@ -314,7 +323,8 @@ where
         F: 'static + Send + Fn(Context<'lua>, A) -> ResultR<R>,
     {
         self.copy_docs(name.as_ref());
-        self.functions.push(get_method_data::<A, R, _>(name, false))
+        self.functions
+            .push(get_method_data::<A, R, _>(name, false, None))
     }
 
     fn add_function_mut<S, A, R, F>(&mut self, name: &S, _: F)
@@ -326,7 +336,7 @@ where
     {
         self.copy_docs(name.as_ref());
         self.mut_functions
-            .push(get_method_data::<A, R, _>(name, false))
+            .push(get_method_data::<A, R, _>(name, false, None))
     }
 
     fn add_meta_method<A, R, M>(&mut self, name: MetaMethodR, _: M)
@@ -336,8 +346,11 @@ where
         M: 'static + Send + Fn(Context<'lua>, &T, A) -> ResultR<R>,
     {
         self.copy_docs(get_meta_name_rlua(name).as_bytes());
-        self.meta_method
-            .push(get_method_data::<A, R, _>(get_meta_name_rlua(name), true))
+        self.meta_method.push(get_method_data::<A, R, _>(
+            get_meta_name_rlua(name),
+            false,
+            Some(T::get_type_parts(Direction::FromLua)),
+        ))
     }
 
     fn add_meta_method_mut<A, R, M>(&mut self, name: MetaMethodR, _: M)
@@ -347,8 +360,11 @@ where
         M: 'static + Send + FnMut(Context<'lua>, &mut T, A) -> ResultR<R>,
     {
         self.copy_docs(get_meta_name_rlua(name).as_bytes());
-        self.meta_method_mut
-            .push(get_method_data::<A, R, _>(get_meta_name_rlua(name), true))
+        self.meta_method_mut.push(get_method_data::<A, R, _>(
+            get_meta_name_rlua(name),
+            false,
+            Some(T::get_type_parts(Direction::FromLua)),
+        ))
     }
 
     fn add_meta_function<A, R, F>(&mut self, name: MetaMethodR, _: F)
@@ -358,8 +374,11 @@ where
         F: 'static + Send + Fn(Context<'lua>, A) -> ResultR<R>,
     {
         self.copy_docs(get_meta_name_rlua(name).as_bytes());
-        self.meta_function
-            .push(get_method_data::<A, R, _>(get_meta_name_rlua(name), true))
+        self.meta_function.push(get_method_data::<A, R, _>(
+            get_meta_name_rlua(name),
+            false,
+            None,
+        ))
     }
 
     fn add_meta_function_mut<A, R, F>(&mut self, name: MetaMethodR, _: F)
@@ -369,8 +388,11 @@ where
         F: 'static + Send + FnMut(Context<'lua>, A) -> ResultR<R>,
     {
         self.copy_docs(get_meta_name_rlua(name).as_bytes());
-        self.meta_function_mut
-            .push(get_method_data::<A, R, _>(get_meta_name_rlua(name), true))
+        self.meta_function_mut.push(get_method_data::<A, R, _>(
+            get_meta_name_rlua(name),
+            false,
+            None,
+        ))
     }
     fn document(&mut self, documentation: &str) {
         match &mut self.next_docs {
@@ -383,14 +405,22 @@ where
     }
     fn generate_help(&mut self) {
         self.functions
-            .push(get_method_data::<Option<String>, String, _>("help", false))
+            .push(get_method_data::<Option<String>, String, _>(
+                "help", false, None,
+            ))
+    }
+
+    fn document_type(&mut self, documentation: &str) {
+        self.type_doc.push_str(documentation);
+        self.type_doc.push('\n');
+        self.type_doc.push('\n');
     }
 }
 
 #[cfg(feature = "mlua")]
 impl<'lua, T> TealDataMethodsM<'lua, T> for TypeGenerator
 where
-    T: 'static + TealDataM + UserDataM,
+    T: 'static + TealDataM + UserDataM + TypeName,
 {
     fn add_method<S, A, R, M>(&mut self, name: &S, _: M)
     where
@@ -400,7 +430,11 @@ where
         M: 'static + MaybeSend + Fn(&'lua Lua, &T, A) -> ResultM<R>,
     {
         self.copy_docs(name.as_ref());
-        self.methods.push(get_method_data::<A, R, _>(name, false))
+        self.methods.push(get_method_data::<A, R, _>(
+            name,
+            false,
+            Some(T::get_type_parts(Direction::FromLua)),
+        ))
     }
 
     fn add_method_mut<S, A, R, M>(&mut self, name: &S, _: M)
@@ -411,8 +445,11 @@ where
         M: 'static + MaybeSend + FnMut(&'lua Lua, &mut T, A) -> ResultM<R>,
     {
         self.copy_docs(name.as_ref());
-        self.mut_methods
-            .push(get_method_data::<A, R, _>(name, false))
+        self.mut_methods.push(get_method_data::<A, R, _>(
+            name,
+            false,
+            Some(T::get_type_parts(Direction::FromLua)),
+        ))
     }
 
     fn add_function<S, A, R, F>(&mut self, name: &S, _: F)
@@ -423,7 +460,8 @@ where
         F: 'static + MaybeSend + Fn(&'lua Lua, A) -> ResultM<R>,
     {
         self.copy_docs(name.as_ref());
-        self.functions.push(get_method_data::<A, R, _>(name, false))
+        self.functions
+            .push(get_method_data::<A, R, _>(name, false, None))
     }
 
     fn add_function_mut<S, A, R, F>(&mut self, name: &S, _: F)
@@ -435,7 +473,7 @@ where
     {
         self.copy_docs(name.as_ref());
         self.mut_functions
-            .push(get_method_data::<A, R, _>(name, false))
+            .push(get_method_data::<A, R, _>(name, false, None))
     }
 
     fn add_meta_method<A, R, M>(&mut self, name: MetaMethodM, _: M)
@@ -448,6 +486,7 @@ where
         self.meta_method.push(get_method_data::<A, R, _>(
             &get_meta_name_mlua(name).as_bytes(),
             true,
+            Some(T::get_type_parts(Direction::FromLua)),
         ))
     }
 
@@ -461,6 +500,7 @@ where
         self.meta_method_mut.push(get_method_data::<A, R, _>(
             &get_meta_name_mlua(name).as_bytes(),
             true,
+            Some(T::get_type_parts(Direction::FromLua)),
         ))
     }
 
@@ -474,6 +514,7 @@ where
         self.meta_function.push(get_method_data::<A, R, _>(
             get_meta_name_mlua(name).as_bytes(),
             true,
+            None,
         ))
     }
 
@@ -487,6 +528,7 @@ where
         self.meta_function_mut.push(get_method_data::<A, R, _>(
             &get_meta_name_mlua(name).as_bytes(),
             true,
+            None,
         ))
     }
     #[cfg(feature = "mlua_async")]
@@ -500,7 +542,11 @@ where
         MR: 'lua + std::future::Future<Output = ResultM<R>>,
     {
         self.copy_docs(name.as_ref());
-        self.methods.push(get_method_data::<A, R, _>(name, false))
+        self.methods.push(get_method_data::<A, R, _>(
+            name,
+            false,
+            Some(T::get_type_parts(Direction::FromLua)),
+        ))
     }
 
     #[cfg(feature = "mlua_async")]
@@ -513,7 +559,8 @@ where
         FR: 'lua + std::future::Future<Output = ResultM<R>>,
     {
         self.copy_docs(name.as_ref());
-        self.functions.push(get_method_data::<A, R, _>(name, false))
+        self.functions
+            .push(get_method_data::<A, R, _>(name, false, None))
     }
 
     fn document(&mut self, documentation: &str) {
@@ -528,7 +575,9 @@ where
     }
     fn generate_help(&mut self) {
         self.functions
-            .push(get_method_data::<Option<String>, String, _>("help", false))
+            .push(get_method_data::<Option<String>, String, _>(
+                "help", false, None,
+            ))
     }
 
     fn document_type(&mut self, documentation: &str) {

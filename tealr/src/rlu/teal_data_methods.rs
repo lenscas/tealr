@@ -67,6 +67,8 @@ pub trait TealDataMethods<'lua, T> {
         F: 'static + Send + FnMut(Context<'lua>, A) -> Result<R>;
     ///Adds documentation to the next method/function that gets added
     fn document(&mut self, documentation: &str);
+    ///Adds documentation for this type itself. They will be written right above the record in the .d.tl file
+    fn document_type(&mut self, documentation: &str);
     ///generates a `.help()` function on lua's/teals side, which can be used at run time to view the documentation.
     fn generate_help(&mut self);
 }
