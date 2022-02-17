@@ -1,18 +1,21 @@
 use tealr::{
     rlu::{TealData, TealDataMethods, TypedFunction},
-    RluaUserData, TypeName,
+    type_parts_to_str, RluaUserData, TypeName,
 };
 #[test]
 fn generate_correct_type() {
     assert_eq!(
-        TypedFunction::<String, String>::get_type_name(tealr::Direction::FromLua),
+        type_parts_to_str(TypedFunction::<String, String>::get_type_parts(
+            tealr::Direction::FromLua
+        )),
         "function(string):(string)"
     );
     assert_eq!(
-        TypedFunction::<TypedFunction::<(i8, String), (String, u8)>, f32>::get_type_name(
-            tealr::Direction::FromLua
-        ),
-        "function(function(integer,string):(string,integer)):(number)"
+        type_parts_to_str(TypedFunction::<
+            TypedFunction::<(i8, String), (String, u8)>,
+            f32,
+        >::get_type_parts(tealr::Direction::FromLua)),
+        "function(function((integer),(string)):((string),(integer))):(number)"
     );
 }
 #[test]

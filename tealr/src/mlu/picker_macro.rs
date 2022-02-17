@@ -42,22 +42,20 @@ macro_rules! create_union_mlua {
             }
         }
         impl $crate::TypeName for $type_name {
-            fn get_type_name(dir: $crate::Direction) -> std::borrow::Cow<'static, str> {
-                let mut full_name = String::new();
+            fn get_type_parts(dir: $crate::Direction) -> ::std::borrow::Cow<'static,[$crate::NamePart]> {
+                let mut name = Vec::new();
                 $(
-                    full_name.push_str(& $sub_types::get_type_name(dir));
-                    full_name.push_str(" | ");
+                    name.append(&mut $sub_types::get_type_parts(dir).to_vec());
+                    name.push(" | ".into());
                 )*
-                full_name.pop();
-                full_name.pop();
-                full_name.pop();
-                ::std::borrow::Cow::Owned(full_name)
+                name.pop();
+                std::borrow::Cow::Owned(name)
             }
             fn collect_children(v: &mut Vec<$crate::TealType>) {
                 use $crate::TealMultiValue;
                 $(
                     v.extend(
-                        $sub_types::get_types(
+                        ($sub_types::get_types(
                             $crate::Direction::FromLua
                         )
                         .into_iter()
@@ -65,9 +63,18 @@ macro_rules! create_union_mlua {
                             $sub_types::get_types(
                                 $crate::Direction::ToLua
                             )
-                        )
+                        )).filter_map(|v| {
+                            if let $crate::NamePart::Type(x) = v {
+                                Some(x)
+                            } else {
+                                None
+                            }
+                        })
                     );
                 )*
+            }
+            fn get_type_kind() -> $crate::KindOfType {
+                $crate::KindOfType::Builtin
             }
         }
     };

@@ -2,7 +2,7 @@
 authors = ["Lenscas <lenscas@gmail.com>"]
 categories = ["development-tools::ffi"]
 description = "Traits and structs to generate teal type defintions."
-edition = "2018"
+edition = "2021"
 keywords = ["teal", "lua", "type", "generation", "type-generation"]
 license = "MIT OR Apache-2.0"
 name = "tealr"
@@ -39,8 +39,10 @@ rlua_system-lua = ["rlua/system-lua"]
 
 [dependencies]
 bstr = {version = "0.2", default_features = false, features = ["std"]}
+itertools = "0.10.3"
 mlua = {version = "0.6.2", optional = true, default_features = false}
 rlua = {version = "0.17", optional = true, default_features = false}
+serde = {version = "1.0.136", features = ["derive"]}
 tealr_derive = {version = "0.6.0", optional = true, path = "../tealr_derive"}
 
 # Rlua tests

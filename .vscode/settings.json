@@ -17,5 +17,6 @@
         "tempdir",
         "tempfile",
         "userdata"
-    ]
+    ],
+    "rust-analyzer.cargo.features": ["rlua","rlua_builtin-lua"]
 }

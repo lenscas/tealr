@@ -111,8 +111,12 @@ fn impl_type_representation_derive(ast: &syn::DeriveInput) -> proc_macro2::Token
     let name = &ast.ident;
     let gen = quote! {
         impl ::tealr::TypeName for #name {
-            fn get_type_name(_: ::tealr::Direction) -> ::std::borrow::Cow<'static, str> {
-                ::std::borrow::Cow::from(stringify!(#name))
+            fn get_type_parts(_: ::tealr::Direction) -> ::std::borrow::Cow<'static, [::tealr::NamePart]> {
+                ::std::borrow::Cow::Borrowed(&[::tealr::NamePart::Type(::tealr::TealType{
+                    name: ::std::borrow::Cow::Borrowed(stringify!(#name)),
+                    generics: ::std::option::Option::None,
+                    type_kind: ::tealr::KindOfType::External
+                })])
             }
         }
     };

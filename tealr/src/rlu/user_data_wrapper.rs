@@ -20,6 +20,7 @@ where
     _t: PhantomData<(&'a (), T)>,
     _x: &'lua PhantomData<()>,
     documentation: HashMap<Vec<u8>, String>,
+    type_doc: String,
     next_docs: Option<String>,
 }
 impl<'a, 'lua, Container, T> UserDataWrapper<'a, 'lua, Container, T>
@@ -47,6 +48,7 @@ where
             _t: std::marker::PhantomData,
             _x: &std::marker::PhantomData,
             documentation: Default::default(),
+            type_doc: Default::default(),
             next_docs: Default::default(),
         }
     }
@@ -163,6 +165,7 @@ where
     }
     fn generate_help(&mut self) {
         let help = self.documentation.clone();
+        let type_doc = self.type_doc.clone();
         self.add_function("help", move |lua, key: Option<rlua::String>| {
             let doc = match key {
                 Some(x) => help
@@ -182,13 +185,18 @@ where
                             v
                         })
                         .collect::<Vec<_>>();
-                    let mut y = (b"Available keys:\n").to_vec();
+                    let mut y = (type_doc.clone() + "\n" + "Available pages:\n").into_bytes();
                     y.append(&mut x);
                     y
                 }
             };
             lua.create_string(&doc)
         })
+    }
+
+    fn document_type(&mut self, documentation: &str) {
+        self.type_doc.push_str(documentation);
+        self.type_doc.push('\n')
     }
 }
 // impl<'a, 'lua, Container, T> DocumentationCollector for UserDataWrapper<'a, 'lua, Container, T>

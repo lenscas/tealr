@@ -1,5 +1,5 @@
 use mlua::{FromLua, ToLua};
-use tealr::{mlu::TealData, Direction, MluaUserData, TypeName, TypeWalker};
+use tealr::{mlu::TealData, Direction, MluaUserData, NamePart, TypeName, TypeWalker};
 
 #[derive(Clone, Copy)]
 pub struct TestFromAndBack {
@@ -26,10 +26,10 @@ impl<'lua> ToLua<'lua> for TestFromAndBack {
     }
 }
 impl TypeName for TestFromAndBack {
-    fn get_type_name(dir: Direction) -> std::borrow::Cow<'static, str> {
+    fn get_type_parts(dir: Direction) -> std::borrow::Cow<'static, [NamePart]> {
         match dir {
-            Direction::FromLua => i64::get_type_name(Direction::FromLua),
-            Direction::ToLua => String::get_type_name(Direction::ToLua),
+            Direction::FromLua => i64::get_type_parts(Direction::FromLua),
+            Direction::ToLua => String::get_type_parts(Direction::ToLua),
         }
     }
 }

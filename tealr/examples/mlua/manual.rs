@@ -3,7 +3,7 @@ use tealr::{
         mlua::{Lua, Result, UserData, UserDataMethods},
         TealData, TealDataMethods, UserDataWrapper,
     },
-    Direction, TypeBody, TypeName, TypeWalker,
+    new_type, Direction, NamePart, TypeBody, TypeName, TypeWalker,
 };
 //This example shows how to manually implement UserData using TealData
 //As you can see the amount of code is small and easy copy/paste able.
@@ -18,7 +18,11 @@ struct Example {}
 impl TealData for Example {
     //implement your methods/functions
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
-        methods.add_method("example_method", |_, _, x: i8| Ok(x));
+        //methods.add_method("example_method", |_, _, x: i8| Ok(x));
+        methods.add_method(
+            "example_method2",
+            |_, _, x: tealr::mlu::TypedFunction<i32, i64>| Ok(x),
+        );
         methods.add_method_mut("example_method_mut", |_, _, x: (i8, String)| Ok(x.1));
         methods.add_function("example_function", |_, x: Vec<String>| Ok((x, 8)));
         methods.add_function_mut("example_function_mut", |_, x: (bool, Option<Example>)| {
@@ -29,8 +33,15 @@ impl TealData for Example {
 
 impl TypeName for Example {
     //how the type should be called in lua.
-    fn get_type_name(_: Direction) -> std::borrow::Cow<'static, str> {
-        "Example".into()
+    fn get_type_parts(_: Direction) -> std::borrow::Cow<'static, [NamePart]> {
+        //this
+        new_type!(Example)
+        //is the same as this:
+        // std::borrow::Cow::Borrowed(&[NamePart::Type(TealType {
+        // name: std::borrow::Cow::Borrowed("Example"),
+        // type_kind: tealr::KindOfType::External,
+        // generics: None,
+        // })])
     }
 }
 

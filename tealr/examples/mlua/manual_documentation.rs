@@ -3,7 +3,7 @@ use tealr::{
         mlua::{Lua, Result, UserData, UserDataMethods},
         TealData, TealDataMethods, UserDataWrapper,
     },
-    Direction, TypeBody, TypeName, TypeWalker,
+    Direction, NamePart, TealType, TypeBody, TypeName, TypeWalker,
 };
 //This example shows how to manually implement UserData using TealData
 //As you can see the amount of code is small and easy copy/paste able.
@@ -18,8 +18,19 @@ struct Example {}
 impl TealData for Example {
     //implement your methods/functions
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
-        methods.document("This is an example method.");
-        methods.document("It just shows you how documentation gets added");
+        methods.document_type("This is just an example type");
+        methods.document_type("This part of the documentation is for the type itself");
+        methods.document_type(
+            "That means it gets placed before the `record {name}` part in the .d.tl file",
+        );
+        methods.document_type(
+            "And is also visible when calling instance.help() without any parameters",
+        );
+
+        methods.document("This documentation is for the next registered method.");
+        methods.document("In this case that will be example_method");
+        methods.document("This means that it gets placed before this method in the .d.tl file");
+        methods.document("You can access it by calling instance.help(\"example_method\")");
         methods.add_method("example_method", |_, _, x: i8| Ok(x));
         methods.add_method_mut("example_method_mut", |_, _, x: (i8, String)| Ok(x.1));
         methods.add_function("example_function", |_, x: Vec<String>| Ok((x, 8)));
@@ -32,8 +43,12 @@ impl TealData for Example {
 
 impl TypeName for Example {
     //how the type should be called in lua.
-    fn get_type_name(_: Direction) -> std::borrow::Cow<'static, str> {
-        "Example".into()
+    fn get_type_parts(_: Direction) -> std::borrow::Cow<'static, [NamePart]> {
+        std::borrow::Cow::Borrowed(&[NamePart::Type(TealType {
+            name: std::borrow::Cow::Borrowed("Example"),
+            type_kind: tealr::KindOfType::External,
+            generics: None,
+        })])
     }
 }
 

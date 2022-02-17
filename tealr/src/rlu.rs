@@ -53,19 +53,19 @@ use crate::TypeName;
 ///The plan is to remove it if/when `rlua::Value::type_name` becomes public. Use at your own risk.
 pub fn get_type_name(value: &rlua::Value, dir: crate::Direction) -> &'static str {
     let x = match value {
-        rlua::Value::Nil => Cow::Borrowed("Nil"),
-        rlua::Value::Boolean(_) => bool::get_type_name(dir),
-        rlua::Value::LightUserData(_) => Cow::Borrowed("LightUserData"),
-        rlua::Value::Integer(_) => rlua::Integer::get_type_name(dir),
-        rlua::Value::Number(_) => rlua::Number::get_type_name(dir),
-        rlua::Value::String(_) => String::get_type_name(dir),
-        rlua::Value::Table(_) => rlua::Table::get_type_name(dir),
-        rlua::Value::Function(_) => rlua::Table::get_type_name(dir),
-        rlua::Value::Thread(_) => rlua::Thread::get_type_name(dir),
-        rlua::Value::UserData(_) => Cow::Borrowed("userdata"),
-        rlua::Value::Error(_) => Cow::Borrowed("any"),
+        rlua::Value::Nil => return "Nil",
+        rlua::Value::Boolean(_) => bool::get_type_parts(dir),
+        rlua::Value::LightUserData(_) => return "LightUserData",
+        rlua::Value::Integer(_) => rlua::Integer::get_type_parts(dir),
+        rlua::Value::Number(_) => rlua::Number::get_type_parts(dir),
+        rlua::Value::String(_) => String::get_type_parts(dir),
+        rlua::Value::Table(_) => rlua::Table::get_type_parts(dir),
+        rlua::Value::Function(_) => rlua::Table::get_type_parts(dir),
+        rlua::Value::Thread(_) => rlua::Thread::get_type_parts(dir),
+        rlua::Value::UserData(_) => return "userdata",
+        rlua::Value::Error(_) => return "any",
     };
-    match x {
+    match crate::type_parts_to_str(x) {
         Cow::Borrowed(x) => x,
         Cow::Owned(_) => "any",
     }

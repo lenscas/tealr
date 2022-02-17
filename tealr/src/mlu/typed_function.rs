@@ -2,7 +2,7 @@ use std::{borrow::Cow, marker::PhantomData};
 
 use mlua::{FromLua, FromLuaMulti, Function, Lua, ToLua, ToLuaMulti, Value};
 
-use crate::{Direction, TealMultiValue, TypeName};
+use crate::{Direction, NamePart, TealMultiValue, TypeName};
 
 ///A typed wrapper around [mlua::Function]
 #[derive(Debug)]
@@ -45,25 +45,30 @@ where
     Params: TealMultiValue,
     Response: TealMultiValue,
 {
-    fn get_type_name(_: Direction) -> Cow<'static, str> {
-        let params = Params::get_types(Direction::FromLua)
-            .into_iter()
-            .map(|v| v.name)
-            .collect::<Vec<_>>()
-            .join(",");
-        let output = Response::get_types(Direction::ToLua)
-            .into_iter()
-            .map(|v| v.name)
-            .collect::<Vec<_>>()
-            .join(",");
-        Cow::Owned(format!("function({}):({})", params, output))
-    }
-
     fn collect_children(generics: &mut Vec<crate::TealType>) {
         let params = Params::get_types(Direction::FromLua)
             .into_iter()
-            .chain(Response::get_types(Direction::ToLua));
+            .chain(Response::get_types(Direction::ToLua).into_iter())
+            .filter_map(|v| match v {
+                NamePart::Symbol(_) => None,
+                NamePart::Type(x) => Some(x),
+            });
+
         generics.extend(params);
+    }
+    fn get_type_kind() -> crate::KindOfType {
+        crate::KindOfType::Builtin
+    }
+
+    fn get_type_parts(_: Direction) -> Cow<'static, [crate::NamePart]> {
+        let params = Params::get_types(Direction::FromLua);
+        let returns = Response::get_types(Direction::ToLua);
+        let mut v = vec!["function(".into()];
+        v.extend(params);
+        v.push("):(".into());
+        v.extend(returns);
+        v.push(")".into());
+        Cow::Owned(v)
     }
 }
 impl<'lua, Params, Response> TypedFunction<'lua, Params, Response>

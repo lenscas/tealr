@@ -1,36 +1,13 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::collections::HashMap;
 
 use mlua::ToLua;
 use tealr::{
+    create_generic_mlua,
     mlu::{mlua::FromLua, TealData, TealDataMethods, TypedFunction},
     Direction, MluaUserData, TypeName, TypeWalker,
 };
 
-#[derive(Clone, PartialEq)]
-struct X<'lua>(mlua::Value<'lua>);
-impl<'lua> FromLua<'lua> for X<'lua> {
-    fn from_lua(
-        x: mlua::Value<'lua>,
-        _: &'lua mlua::Lua,
-    ) -> std::result::Result<Self, mlua::Error> {
-        Ok(X(x))
-    }
-}
-impl<'lua> ToLua<'lua> for X<'lua> {
-    fn to_lua(self, lua: &'lua mlua::Lua) -> mlua::Result<mlua::Value<'lua>> {
-        self.0.to_lua(lua)
-    }
-}
-impl<'lua> TypeName for X<'lua> {
-    fn get_type_name(_: tealr::Direction) -> Cow<'static, str> {
-        Cow::Borrowed("X")
-    }
-
-    fn get_type_kind() -> tealr::KindOfType {
-        tealr::KindOfType::Generic
-    }
-}
-
+create_generic_mlua!(X);
 #[derive(Clone, MluaUserData, TypeName)]
 struct Example {}
 
@@ -60,5 +37,5 @@ fn make_generic() {
         .generate_global("test")
         .expect("oh no :(");
 
-    assert_eq!(file_contents, "global record test\n\trecord Example\n\t\tuserdata\n\n\t\t-- Pure methods\n\t\tgeneric_function_callback: function<X>(Example, function(X):(X)):(X)\n\n\t\tgeneric_array: function<X>(Example, {X}):({X})\n\n\t\tgeneric_hashmap: function<X>(Example, {string:X}):({string:X}, integer)\n\n\t\tjust_generics: function<X>(Example, X):(X)\n\n\t\tnon_generic_container: function(Example, {string}):({string})\n\n\n\tend\nend\nreturn test");
+    assert_eq!(file_contents, "global record test\n\trecord Example\n\t\tuserdata\n\n\t\t-- Pure methods\n\t\tgeneric_function_callback: function<X>(Example,function(X):(X)):(X)\n\n\t\tgeneric_array: function<X>(Example,{X}):({X})\n\n\t\tgeneric_hashmap: function<X>(Example,{string:X}):(({string:X}),(integer))\n\n\t\tjust_generics: function<X>(Example,X):(X)\n\n\t\tnon_generic_container: function(Example,{string}):({string})\n\n\n\tend\nend\nreturn test");
 }

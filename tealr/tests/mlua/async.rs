@@ -47,7 +47,7 @@ fn async_fn() -> Result<()> {
         //in this case, as &str's where used it can't happen though, so the .expect is fine
         .expect("oh no :(");
 
-    assert_eq!(file_contents, "global record test\n\trecord Example\n\t\tuserdata\n\n\t\t-- Pure methods\n\t\texample_method: function(Example, integer):(integer)\n\n\t\t-- Pure functions\n\t\texample_method_mut: function(integer, string):(string)\n\n\t\texample_function: function({string}):({string}, integer)\n\n\t\t-- Mutating functions\n\t\texample_function_mut: function(boolean, Example):(boolean, Example)\n\n\n\tend\nend\nreturn test");
+    assert_eq!(file_contents, "global record test\n\trecord Example\n\t\tuserdata\n\n\t\t-- Pure methods\n\t\texample_method: function(Example,integer):(integer)\n\n\t\t-- Pure functions\n\t\texample_method_mut: function((integer),(string)):(string)\n\n\t\texample_function: function({string}):(({string}),(integer))\n\n\t\t-- Mutating functions\n\t\texample_function_mut: function((boolean),(Example)):((boolean),(Example))\n\n\n\tend\nend\nreturn test");
     //normally you would now save the file somewhere.
     println!("{}\n ", file_contents);
 

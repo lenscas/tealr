@@ -1,110 +1,125 @@
-use std::{
-    borrow::Cow,
-    collections::{HashMap, HashSet},
-    string::FromUtf8Error,
-};
+use std::{borrow::Cow, collections::HashMap, string::FromUtf8Error};
 
-use crate::TealType;
+use crate::type_generator::NameContainer;
 
 #[cfg(any(feature = "rlua", feature = "mlua"))]
-use crate::{Direction, TealMultiValue};
-#[cfg(any(feature = "rlua", feature = "mlua"))]
-fn get_all_generics(children: impl Iterator<Item = TealType>) -> HashSet<TealType> {
-    let mut generics = HashSet::new();
-    for teal_type in children {
-        let child_generics = get_all_generics(teal_type.generics.clone().into_iter());
-        generics.extend(child_generics);
-        if teal_type.type_kind.is_generic() {
-            generics.insert(teal_type);
+fn add_generics(v: &[crate::TealType], generics: &mut std::collections::HashSet<crate::NamePart>) {
+    use crate::KindOfType;
+
+    v.iter().for_each(|v| {
+        let should_recurse = if v.type_kind == KindOfType::Generic {
+            !generics.insert(crate::NamePart::Type(v.clone()))
+        } else {
+            true
+        };
+        if should_recurse {
+            if let Some(x) = &v.generics {
+                add_generics(x, generics)
+            }
         }
-    }
-    generics
+    })
 }
 
 ///Contains the data needed to write down the type of a function
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct ExportedFunction {
-    pub(crate) name: Vec<u8>,
-    pub(crate) generics: HashSet<TealType>,
-    pub(crate) params: Vec<TealType>,
-    pub(crate) returns: Vec<TealType>,
-    pub(crate) is_meta_method: bool,
+    ///Name of the function
+    pub name: NameContainer,
+    ///The full signature of the function
+    pub signature: Cow<'static, [crate::NamePart]>,
+    ///If this function is a meta_method
+    pub is_meta_method: bool,
 }
 impl ExportedFunction {
     ///Creates an ExportedFunction with the given name, Parameters and return value
     ///```no_run
     ///# use tealr::ExportedFunction;
-    ///ExportedFunction::new::<(String,String),String>(b"concat".to_vec(),false);
+    ///ExportedFunction::new::<(String,String),String,_>(b"concat",false,None);
     ///```
     #[cfg(any(feature = "rlua", feature = "mlua"))]
-    pub fn new<Params: TealMultiValue, Response: TealMultiValue>(
-        name: Vec<u8>,
+    pub fn new<A: crate::TealMultiValue, R: crate::TealMultiValue, S: AsRef<[u8]>>(
+        name: S,
         is_meta_method: bool,
+        extra_self: Option<Cow<'static, [crate::NamePart]>>,
     ) -> Self {
-        let params = Params::get_types(Direction::FromLua);
-        let returns = Response::get_types(Direction::ToLua);
-        let generics = get_all_generics(
-            params
-                .clone()
-                .into_iter()
-                .chain(returns.clone().into_iter()),
-        );
+        use crate::{Direction, KindOfType, NamePart};
+        use std::collections::HashSet;
+        let mut generics = HashSet::new();
+        let params2 = A::get_types(Direction::FromLua);
+        let contains_extra_params = !params2.is_empty();
+        let params2 = params2.into_iter().inspect(|v| match v {
+            NamePart::Symbol(_) => (),
+            NamePart::Type(v) => {
+                if v.type_kind == KindOfType::Generic {
+                    generics.insert(NamePart::Type(v.to_owned()));
+                }
+                if let Some(x) = &v.generics {
+                    add_generics(x, &mut generics)
+                }
+            }
+        });
+        let mut params = if let Some(x) = extra_self {
+            let mut z = x.to_vec();
+            if contains_extra_params {
+                z.push(NamePart::Symbol(Cow::Borrowed(",")));
+            }
+            z
+        } else {
+            Vec::new()
+        };
+        params.extend(params2);
+        let mut returns = R::get_types(Direction::ToLua)
+            .into_iter()
+            .inspect(|v| match v {
+                NamePart::Symbol(_) => (),
+                NamePart::Type(v) => {
+                    if v.type_kind == KindOfType::Generic {
+                        generics.insert(NamePart::Type(v.to_owned()));
+                    }
+                    if let Some(x) = &v.generics {
+                        add_generics(x, &mut generics)
+                    }
+                }
+            })
+            .collect();
+        //ExportedFunction::new::<A, R>(name.as_ref().to_vec(), is_meta_method)
+        let mut type_def = vec![NamePart::Symbol(Cow::Borrowed("function"))];
+        if !generics.is_empty() {
+            type_def.push("<".into());
+            let iter = generics.into_iter();
+            let iter =
+                itertools::Itertools::intersperse(iter, NamePart::Symbol(Cow::Borrowed(",")));
+            type_def.extend(iter);
+            type_def.push(">".into());
+        }
+        type_def.push("(".into());
+        let iter = params.into_iter();
+        type_def.extend(iter);
+        type_def.push("):(".into());
+        type_def.append(&mut returns);
+        type_def.push(")".into());
+        let signature = Cow::Owned(type_def);
         Self {
-            name,
-            params,
-            returns,
+            name: name.as_ref().to_vec().into(),
+            signature,
             is_meta_method,
-            generics,
         }
     }
     pub(crate) fn generate(
         self,
-        self_type: Option<Cow<'static, str>>,
-        documentation: &HashMap<Vec<u8>, String>,
+        documentation: &HashMap<NameContainer, String>,
     ) -> std::result::Result<String, FromUtf8Error> {
-        let params = self_type
-            .iter()
-            .map(|v| v.to_owned())
-            .chain(self.params.iter().map(|v| v.name.to_owned()))
-            .collect::<Vec<_>>()
-            .join(", ");
-
-        let returns = self
-            .returns
-            .iter()
-            .map(|v| v.name.to_owned())
-            .collect::<Vec<_>>()
-            .join(", ");
         let documentation = match documentation.get(&self.name) {
             None => "".to_string(),
             Some(x) => x.lines().map(|v| format!("--{}\n", v)).collect(),
         };
-
-        let name = String::from_utf8(self.name)?;
-
-        Ok(format!(
-            "{}{}{}: function{}({}):({})",
-            documentation,
-            if self.is_meta_method {
-                "metamethod "
-            } else {
-                ""
-            },
-            name,
-            if self.generics.is_empty() {
-                "".to_owned()
-            } else {
-                format!("<{}>", {
-                    let mut x = self
-                        .generics
-                        .into_iter()
-                        .map(|v| v.name)
-                        .collect::<Vec<_>>();
-                    x.sort();
-                    x.join(",")
-                })
-            },
-            params,
-            returns
-        ))
+        let metamethod = if self.is_meta_method {
+            "metamethod "
+        } else {
+            ""
+        };
+        let name = String::from_utf8(self.name.0)?;
+        let signature = crate::type_parts_to_str(self.signature);
+        Ok(format!("{documentation}{metamethod}{name}: {signature}",))
     }
 }
