@@ -94,7 +94,17 @@ impl Default for KindOfType {
     }
 }
 #[macro_export]
-///An easy way to implement TypeName::get_type_parts if it only needs to return a single, external type without generics.
+///An easy way to implement [TypeName::get_type_parts](crate::TypeName#tymethod.get_type_parts) if it only needs to return a single type without generics.
+/// ```rust
+/// # use std::borrow::Cow;
+/// # use tealr::TealType;
+/// let name =  tealr::new_type!(Example, External);
+/// assert_eq!(name,Cow::Borrowed(&[tealr::NamePart::Type(tealr::TealType{
+///     name: Cow::Borrowed("Example"),
+///     type_kind: tealr::KindOfType::External,
+///     generics:None
+/// })]))
+///```
 macro_rules! new_type {
     ($type_name:ident,BuiltIn) => {
         ::std::borrow::Cow::Borrowed(&[$crate::NamePart::Type($crate::TealType {
@@ -122,7 +132,7 @@ macro_rules! new_type {
         })])
     };
 }
-#[derive(Clone, PartialEq, Hash, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Hash, Eq, serde::Serialize, serde::Deserialize)]
 ///The parts that a name consists of
 pub enum NamePart {
     ///A piece of normal text that is part of the type.
@@ -142,7 +152,7 @@ impl NamePart {
             NamePart::Type(x) => &x.name,
         }
     }
-    ///checks if &self is of the `Symbol(_)` variant
+    ///checks if `&self` is of the `Symbol(_)` variant
     pub fn is_symbol(&self) -> bool {
         matches!(&self, NamePart::Symbol(_))
     }

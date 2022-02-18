@@ -32,18 +32,12 @@ where
     ///```
     ///# use std::borrow::Cow;
     ///# use mlua::{Lua, Result, UserData, UserDataMethods};
-    ///# use tealr::{mlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker, Direction, TypeName,NamePart,TealType, KindOfType};
+    ///# use tealr::{new_type, mlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker, Direction, TypeName,NamePart,TealType, KindOfType};
     /// struct Example {}
     /// impl TealData for Example {}
     /// impl TypeName for Example {
     ///     fn get_type_parts(dir: Direction) -> Cow<'static, [NamePart]> {
-    ///         Cow::Borrowed(&[
-    ///             NamePart::Type(TealType{
-    ///                 name: Cow::Borrowed("Example"),
-    ///                 type_kind: KindOfType::External,
-    ///                 generics: None
-    ///             })
-    ///         ])
+    ///         new_type!(Example)
     ///     }
     /// }
     /// impl UserData for Example {

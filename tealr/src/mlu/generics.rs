@@ -72,7 +72,7 @@ macro_rules! create_generic_mlua {
             }
         }
         impl<'lua> ::std::iter::FromIterator<$type_name<'lua>> for $crate::mlu::mlua::MultiValue<'lua> {
-            fn from_iter<I: IntoIterator<Item = $type_name<'lua>>>(iter: I) -> Self {
+            fn from_iter<__MacroIterGeneric: IntoIterator<Item = $type_name<'lua>>>(iter: __MacroIterGeneric) -> Self {
                 iter.into_iter().map($crate::mlu::mlua::Value::from).collect()
             }
         }
@@ -140,6 +140,7 @@ create_generic_mlua!(pub E);
 create_generic_mlua!(pub F);
 create_generic_mlua!(pub G);
 create_generic_mlua!(pub H);
+create_generic_mlua!(pub I);
 create_generic_mlua!(pub J);
 create_generic_mlua!(pub K);
 create_generic_mlua!(pub L);
