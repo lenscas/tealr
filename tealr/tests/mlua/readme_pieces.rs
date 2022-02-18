@@ -38,7 +38,7 @@ impl TealData for Example {
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method(
             "generic_function_callback",
-            |lua, _, fun: TypedFunction<String, X>| fun.call("A nice string!".to_string()),
+            |_, _, fun: TypedFunction<String, X>| fun.call("A nice string!".to_string()),
         );
     }
 }
@@ -49,7 +49,7 @@ fn pieces() -> Result<(), mlua::Error> {
     if false {
         //create .d.tl file
         let _file_contents = TypeWalker::new()
-            .process_type::<ExampleMlua>(tealr::Direction::ToLua)
+            .process_type::<ExampleMlua>()
             .generate_global("test")
             .expect("oh no :(");
 
@@ -60,7 +60,7 @@ fn pieces() -> Result<(), mlua::Error> {
 
         let code = compiler("example/basic_teal_file");
         let lua = tealr::mlu::mlua::Lua::new();
-        let res: u8 = lua.load(&code).set_name("embedded_compiler")?.eval()?;
+        let _res: u8 = lua.load(&code).set_name("embedded_compiler")?.eval()?;
     }
 
     Ok(())

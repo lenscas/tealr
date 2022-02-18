@@ -1,8 +1,4 @@
-use tealr::{
-    compile_inline_teal, create_union_rlua, embed_compiler,
-    rlu::{TealData, TealDataMethods, TypedFunction},
-    RluaUserData, TypeName, TypeWalker,
-};
+use tealr::{compile_inline_teal, create_union_rlua, embed_compiler, TypeName, TypeWalker};
 
 #[test]
 fn test() {
@@ -41,7 +37,7 @@ fn pieces() -> Result<(), rlua::Error> {
     if false {
         //create .d.tl file
         let _file_contents = TypeWalker::new()
-            .process_type::<ExampleRlua>(tealr::Direction::ToLua)
+            .process_type::<ExampleRlua>()
             .generate_global("test")
             .expect("oh no :(");
 
@@ -49,7 +45,7 @@ fn pieces() -> Result<(), rlua::Error> {
         let _code = compile_inline_teal!("local x : number = 5 return x");
         //embed teal
         let compiler = embed_compiler!("v0.13.1");
-        let res: u8 = tealr::rlu::rlua::Lua::new().context(|ctx| {
+        let _res: u8 = tealr::rlu::rlua::Lua::new().context(|ctx| {
             let code = compiler("example/basic_teal_file");
             ctx.load(&code).set_name("embedded_compiler")?.eval()
         })?;

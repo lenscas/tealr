@@ -22,9 +22,7 @@ use mlua::{
     ToLuaMulti as ToLuaMultiM, UserData as UserDataM,
 };
 
-use crate::{
-    exported_function::ExportedFunction, type_parts_to_str, Direction, NamePart, TypeName,
-};
+use crate::{exported_function::ExportedFunction, type_parts_to_str, NamePart, TypeName};
 
 #[cfg(any(feature = "rlua", feature = "mlua"))]
 use crate::TealMultiValue;
@@ -116,11 +114,11 @@ pub struct TypeGenerator {
     pub should_generate_help_method: bool,
 }
 impl TypeGenerator {
-    pub(crate) fn new<A: TypeName>(dir: Direction, should_be_inlined: bool) -> Self {
+    pub(crate) fn new<A: TypeName>(should_be_inlined: bool) -> Self {
         Self {
             should_be_inlined,
             is_user_data: false,
-            type_name: A::get_type_parts(dir),
+            type_name: A::get_type_parts(),
             fields: Default::default(),
             methods: Default::default(),
             mut_methods: Default::default(),
@@ -296,7 +294,7 @@ where
         self.methods.push(get_method_data::<A, R, _>(
             name,
             false,
-            Some(T::get_type_parts(Direction::FromLua)),
+            Some(T::get_type_parts()),
         ))
     }
 
@@ -311,7 +309,7 @@ where
         self.mut_methods.push(get_method_data::<A, R, _>(
             name,
             false,
-            Some(T::get_type_parts(Direction::FromLua)),
+            Some(T::get_type_parts()),
         ))
     }
 
@@ -349,7 +347,7 @@ where
         self.meta_method.push(get_method_data::<A, R, _>(
             get_meta_name_rlua(name),
             false,
-            Some(T::get_type_parts(Direction::FromLua)),
+            Some(T::get_type_parts()),
         ))
     }
 
@@ -363,7 +361,7 @@ where
         self.meta_method_mut.push(get_method_data::<A, R, _>(
             get_meta_name_rlua(name),
             false,
-            Some(T::get_type_parts(Direction::FromLua)),
+            Some(T::get_type_parts()),
         ))
     }
 
@@ -433,7 +431,7 @@ where
         self.methods.push(get_method_data::<A, R, _>(
             name,
             false,
-            Some(T::get_type_parts(Direction::FromLua)),
+            Some(T::get_type_parts()),
         ))
     }
 
@@ -448,7 +446,7 @@ where
         self.mut_methods.push(get_method_data::<A, R, _>(
             name,
             false,
-            Some(T::get_type_parts(Direction::FromLua)),
+            Some(T::get_type_parts()),
         ))
     }
 
@@ -486,7 +484,7 @@ where
         self.meta_method.push(get_method_data::<A, R, _>(
             &get_meta_name_mlua(name).as_bytes(),
             true,
-            Some(T::get_type_parts(Direction::FromLua)),
+            Some(T::get_type_parts()),
         ))
     }
 
@@ -500,7 +498,7 @@ where
         self.meta_method_mut.push(get_method_data::<A, R, _>(
             &get_meta_name_mlua(name).as_bytes(),
             true,
-            Some(T::get_type_parts(Direction::FromLua)),
+            Some(T::get_type_parts()),
         ))
     }
 
@@ -545,7 +543,7 @@ where
         self.methods.push(get_method_data::<A, R, _>(
             name,
             false,
-            Some(T::get_type_parts(Direction::FromLua)),
+            Some(T::get_type_parts()),
         ))
     }
 

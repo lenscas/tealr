@@ -81,7 +81,7 @@ These allow you to easily create a type that is only one of the types you give.
 use tealr::{
     create_union_mlua,
     mlu::{mlua::{FromLua,Lua,ToLua}, TealData, TealDataMethods, TypedFunction},
-    Direction, MluaUserData, TypeName, TypeWalker,
+    MluaUserData, TypeName, TypeWalker,
 };
 create_union_mlua!(enum YourTypeName = i32 | String);
 ```
@@ -92,7 +92,7 @@ use mlua::ToLua;
 use tealr::{
     create_generic_mlua,
     mlu::{mlua::FromLua, TealData, TealDataMethods, TypedFunction},
-    Direction, MluaUserData, TypeName, TypeWalker,
+    MluaUserData, TypeName, TypeWalker,
 };
 
 create_generic_mlua!(X);
@@ -137,7 +137,7 @@ impl TealData for Example {};
 
 //time to create the type definitions
 let file_contents = tealr::TypeWalker::new()
-    .process_type::<Example>(tealr::Direction::ToLua)
+    .process_type::<Example>()
     .generate_global("test")
     .expect("oh no :(");
 

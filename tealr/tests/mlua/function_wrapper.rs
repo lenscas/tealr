@@ -5,16 +5,14 @@ use tealr::{
 #[test]
 fn generate_correct_type() {
     assert_eq!(
-        type_parts_to_str(TypedFunction::<String, String>::get_type_parts(
-            tealr::Direction::FromLua
-        )),
+        type_parts_to_str(TypedFunction::<String, String>::get_type_parts()),
         "function(string):(string)"
     );
     assert_eq!(
         type_parts_to_str(TypedFunction::<
             TypedFunction::<(i8, String), (String, u8)>,
             f32,
-        >::get_type_parts(tealr::Direction::FromLua)),
+        >::get_type_parts()),
         "function(function((integer),(string)):((string),(integer))):(number)"
     );
 }

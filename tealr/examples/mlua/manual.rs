@@ -3,7 +3,7 @@ use tealr::{
         mlua::{Lua, Result, UserData, UserDataMethods},
         TealData, TealDataMethods, UserDataWrapper,
     },
-    new_type, Direction, NamePart, TypeBody, TypeName, TypeWalker,
+    new_type, NamePart, TypeBody, TypeName, TypeWalker,
 };
 //This example shows how to manually implement UserData using TealData
 //As you can see the amount of code is small and easy copy/paste able.
@@ -33,7 +33,7 @@ impl TealData for Example {
 
 impl TypeName for Example {
     //how the type should be called in lua.
-    fn get_type_parts(_: Direction) -> std::borrow::Cow<'static, [NamePart]> {
+    fn get_type_parts() -> std::borrow::Cow<'static, [NamePart]> {
         //this
         new_type!(Example)
         //is the same as this:
@@ -53,7 +53,7 @@ impl UserData for Example {
 }
 
 impl TypeBody for Example {
-    fn get_type_body(_: tealr::Direction, gen: &mut tealr::TypeGenerator) {
+    fn get_type_body(gen: &mut tealr::TypeGenerator) {
         gen.is_user_data = true;
         <Self as TealData>::add_methods(gen);
     }
@@ -62,7 +62,7 @@ fn main() -> Result<()> {
     let file_contents = TypeWalker::new() //creates the generator
         //tells it that we want to generate Example
         //add more calls to process_type to generate more types in the same file
-        .process_type::<Example>(Direction::ToLua)
+        .process_type::<Example>()
         //generate the file
         .generate_global("test")
         //due to how the typings work, we technically can get an error.

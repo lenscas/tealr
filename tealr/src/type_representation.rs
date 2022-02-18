@@ -1,19 +1,9 @@
 use crate::teal_multivalue::TealMultiValue;
-///The direction that the rust <-> lua conversion goes to.
-///This is needed in case the FromLua and ToLua traits aren't perfect opposites of each other.
-
-#[derive(Clone, Copy, Debug)]
-pub enum Direction {
-    ///Represents that the Rust type is being exposed to Lua
-    FromLua,
-    ///Represents that the Rust type is being constructed from Lua
-    ToLua,
-}
 
 macro_rules! impl_type_name_life_time {
     ($teal_type:literal $current_type:ty) => {
         impl<'lua> TypeName for $current_type {
-            fn get_type_parts(_: Direction) -> Cow<'static, [NamePart]> {
+            fn get_type_parts() -> Cow<'static, [NamePart]> {
                 Cow::Borrowed(&[NamePart::Type(TealType {
                     name: Cow::Borrowed($teal_type),
                     type_kind: KindOfType::Builtin,
@@ -30,7 +20,7 @@ macro_rules! impl_type_name_life_time {
 macro_rules! impl_type_name {
     ($teal_type:literal $current_type:ty) => {
         impl TypeName for $current_type {
-            fn get_type_parts(_ :Direction) -> Cow<'static, [NamePart]> {
+            fn get_type_parts() -> Cow<'static, [NamePart]> {
                 Cow::Borrowed(&[NamePart::Type(TealType {
                         name: Cow::Borrowed($teal_type),
                         type_kind: KindOfType::Builtin,
@@ -206,7 +196,7 @@ pub fn type_parts_to_str(x: Cow<'static, [NamePart]>) -> Cow<'static, str> {
 ///A trait to collect the required type information like the name of the type.
 pub trait TypeName {
     ///returns the type name as how it should show up in the generated `.d.tl` file
-    fn get_type_parts(dir: Direction) -> Cow<'static, [NamePart]>;
+    fn get_type_parts() -> Cow<'static, [NamePart]>;
     ///This method tells the generator if this type is builtin to teal/lua, if it comes from somewhere else or if it stands in as a generic
     ///
     ///In almost all cases you want to return `KindOfType::External`
@@ -236,7 +226,7 @@ impl_type_name!("integer" i8,u8,u16,i16,u32,i32,u64,i64,u128,i128,isize,usize);
 
 #[cfg(feature = "rlua")]
 impl<'lua> TypeName for rlua::Thread<'lua> {
-    fn get_type_parts(_: Direction) -> Cow<'static, [NamePart]> {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
         crate::new_type!(thread, BuiltIn)
     }
     fn get_type_kind() -> KindOfType {
@@ -246,16 +236,10 @@ impl<'lua> TypeName for rlua::Thread<'lua> {
 
 #[cfg(feature = "mlua")]
 impl_type_name_life_time!("thread" mlua::Thread<'lua>);
-// impl<'lua> TypeName for mlua::Thread<'lua> {
-//     fn get_type_name(_: Direction) -> Cow<'static, str> {}
-//     fn get_type_kind() -> KindOfType {
-//         KindOfType::Builtin
-//     }
-// }
 
 #[cfg(feature = "mlua_async")]
 impl<'lua, R> TypeName for mlua::AsyncThread<'lua, R> {
-    fn get_type_parts(_: Direction) -> Cow<'static, [NamePart]> {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
         new_type!(thread, BuiltIn)
     }
     fn get_type_kind() -> KindOfType {
@@ -289,7 +273,7 @@ fn get_type_parts_table() -> Cow<'static, [NamePart]> {
 
 #[cfg(feature = "rlua")]
 impl<'lua> TypeName for rlua::Table<'lua> {
-    fn get_type_parts(_: Direction) -> Cow<'static, [NamePart]> {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
         get_type_parts_table()
     }
     fn get_type_kind() -> KindOfType {
@@ -303,14 +287,14 @@ impl<'lua> TypeName for mlua::Table<'lua> {
         KindOfType::Builtin
     }
 
-    fn get_type_parts(_: Direction) -> Cow<'static, [NamePart]> {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
         get_type_parts_table()
     }
 }
 
 #[cfg(feature = "rlua")]
 impl<'lua> TypeName for rlua::String<'lua> {
-    fn get_type_parts(_: Direction) -> Cow<'static, [NamePart]> {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
         crate::new_type!(string, BuiltIn)
     }
     fn get_type_kind() -> KindOfType {
@@ -341,7 +325,7 @@ impl_type_name_life_time!("string" mlua::String<'lua>);
 
 #[cfg(feature = "rlua")]
 impl<'lua> TypeName for rlua::Function<'lua> {
-    fn get_type_parts(_: Direction) -> Cow<'static, [NamePart]> {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
         get_pars_any_func()
     }
     fn get_type_kind() -> KindOfType {
@@ -355,7 +339,7 @@ impl<'lua> TypeName for mlua::Function<'lua> {
         KindOfType::Builtin
     }
 
-    fn get_type_parts(_: Direction) -> Cow<'static, [NamePart]> {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
         get_pars_any_func()
     }
 }
@@ -378,16 +362,12 @@ impl<T: TypeName> TypeName for Vec<T> {
         KindOfType::Builtin
     }
     fn collect_children(child: &mut Vec<TealType>) {
-        child.extend(type_names_to_teal_types(T::get_types(
-            crate::Direction::FromLua,
-        )));
-        child.extend(type_names_to_teal_types(T::get_types(
-            crate::Direction::ToLua,
-        )));
+        child.extend(type_names_to_teal_types(T::get_types()));
+        child.extend(type_names_to_teal_types(T::get_types()));
     }
-    fn get_type_parts(dir: Direction) -> Cow<'static, [NamePart]> {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
         let mut v = vec!["{".into()];
-        v.append(&mut T::get_type_parts(dir).to_vec());
+        v.append(&mut T::get_type_parts().to_vec());
         v.push("}".into());
         Cow::Owned(v)
     }
@@ -398,16 +378,12 @@ impl<T: TypeName> TypeName for Option<T> {
         KindOfType::Builtin
     }
     fn collect_children(child: &mut Vec<TealType>) {
-        child.extend(type_names_to_teal_types(T::get_types(
-            crate::Direction::FromLua,
-        )));
-        child.extend(type_names_to_teal_types(T::get_types(
-            crate::Direction::ToLua,
-        )));
+        child.extend(type_names_to_teal_types(T::get_types()));
+        child.extend(type_names_to_teal_types(T::get_types()));
     }
 
-    fn get_type_parts(dir: Direction) -> Cow<'static, [NamePart]> {
-        T::get_type_parts(dir)
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
+        T::get_type_parts()
     }
 }
 
@@ -416,21 +392,13 @@ impl<K: TypeName, V: TypeName> TypeName for HashMap<K, V> {
         KindOfType::Builtin
     }
     fn collect_children(child: &mut Vec<TealType>) {
-        child.extend(type_names_to_teal_types(
-            K::get_types(crate::Direction::FromLua)
-                .into_iter()
-                .chain(K::get_types(crate::Direction::ToLua)),
-        ));
-        child.extend(type_names_to_teal_types(
-            V::get_types(crate::Direction::FromLua)
-                .into_iter()
-                .chain(V::get_types(crate::Direction::ToLua)),
-        ));
+        child.extend(type_names_to_teal_types(K::get_types()));
+        child.extend(type_names_to_teal_types(V::get_types()));
     }
 
-    fn get_type_parts(dir: Direction) -> Cow<'static, [NamePart]> {
-        let mut key_parts = K::get_type_parts(dir).to_vec();
-        let mut value_parts = V::get_type_parts(dir).to_vec();
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
+        let mut key_parts = K::get_type_parts().to_vec();
+        let mut value_parts = V::get_type_parts().to_vec();
         let mut type_def = vec!["{".into()];
         type_def.append(&mut key_parts);
         type_def.push(":".into());
@@ -444,20 +412,12 @@ impl<K: TypeName, V: TypeName> TypeName for BTreeMap<K, V> {
         KindOfType::Builtin
     }
     fn collect_children(child: &mut Vec<TealType>) {
-        child.extend(type_names_to_teal_types(
-            K::get_types(crate::Direction::FromLua)
-                .into_iter()
-                .chain(K::get_types(crate::Direction::ToLua)),
-        ));
-        child.extend(type_names_to_teal_types(
-            V::get_types(crate::Direction::FromLua)
-                .into_iter()
-                .chain(V::get_types(crate::Direction::ToLua)),
-        ));
+        child.extend(type_names_to_teal_types(K::get_types()));
+        child.extend(type_names_to_teal_types(V::get_types()));
     }
-    fn get_type_parts(dir: Direction) -> Cow<'static, [NamePart]> {
-        let mut key_parts = K::get_type_parts(dir).to_vec();
-        let mut value_parts = V::get_type_parts(dir).to_vec();
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
+        let mut key_parts = K::get_type_parts().to_vec();
+        let mut value_parts = V::get_type_parts().to_vec();
         let mut type_def = vec!["{".into()];
         type_def.append(&mut key_parts);
         type_def.push(":".into());
@@ -469,5 +429,5 @@ impl<K: TypeName, V: TypeName> TypeName for BTreeMap<K, V> {
 ///Creates the body of the type, so the functions and fields it exposes.
 pub trait TypeBody {
     ///Fills in the TypeGenerator so a .d.tl file can be constructed.
-    fn get_type_body(dir: Direction, gen: &mut TypeGenerator);
+    fn get_type_body(gen: &mut TypeGenerator);
 }

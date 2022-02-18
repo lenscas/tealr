@@ -1,6 +1,6 @@
 use std::string::FromUtf8Error;
 
-use crate::{Direction, TypeBody, TypeGenerator, TypeName};
+use crate::{TypeBody, TypeGenerator, TypeName};
 
 ///This generates the .d.tl files
 #[derive(Default, serde::Serialize, serde::Deserialize)]
@@ -21,16 +21,16 @@ impl TypeWalker {
     ///
     ///When embedding teal/lua there is probably not really a reason to do so.
     ///However, it ***IS*** needed for the struct that gets exposed directly to teal when using mlua to make a lua/teal library.
-    pub fn process_type_inline<A: 'static + TypeName + TypeBody>(mut self, dir: Direction) -> Self {
-        let mut new_type = TypeGenerator::new::<A>(dir, true);
-        <A as TypeBody>::get_type_body(dir, &mut new_type);
+    pub fn process_type_inline<A: 'static + TypeName + TypeBody>(mut self) -> Self {
+        let mut new_type = TypeGenerator::new::<A>(true);
+        <A as TypeBody>::get_type_body(&mut new_type);
         self.given_types.push(new_type);
         self
     }
     ///prepares a type to have a `.d.tl` file generated, and adds it to the list of types to generate.
-    pub fn process_type<A: 'static + TypeName + TypeBody>(mut self, dir: Direction) -> Self {
-        let mut new_type = TypeGenerator::new::<A>(dir, false);
-        <A as TypeBody>::get_type_body(dir, &mut new_type);
+    pub fn process_type<A: 'static + TypeName + TypeBody>(mut self) -> Self {
+        let mut new_type = TypeGenerator::new::<A>(false);
+        <A as TypeBody>::get_type_body(&mut new_type);
         self.given_types.push(new_type);
         self
     }
@@ -42,7 +42,7 @@ impl TypeWalker {
     ///#[derive(RluaUserData,TypeName)]
     ///struct Example {}
     ///impl TealData for Example {}
-    ///let generated_string = TypeWalker::new().process_type::<Example>(tealr::Direction::ToLua).generate("Examples",true);
+    ///let generated_string = TypeWalker::new().process_type::<Example>().generate("Examples",true);
     ///assert_eq!(generated_string,Ok(String::from("global record Examples
     ///\trecord Example
     ///\t\tuserdata
@@ -80,7 +80,7 @@ impl TypeWalker {
     ///#[derive(RluaUserData,TypeName)]
     ///struct Example {}
     ///impl TealData for Example {}
-    ///let generated_string = TypeWalker::new().process_type::<Example>(tealr::Direction::ToLua).generate_global("Examples");
+    ///let generated_string = TypeWalker::new().process_type::<Example>().generate_global("Examples");
     ///assert_eq!(generated_string,Ok(String::from("global record Examples
     ///\trecord Example
     ///\t\tuserdata
@@ -102,7 +102,7 @@ impl TypeWalker {
     ///#[derive(RluaUserData,TypeName)]
     ///struct Example {}
     ///impl TealData for Example {}
-    ///let generated_string = TypeWalker::new().process_type::<Example>(tealr::Direction::ToLua).generate_local("Examples");
+    ///let generated_string = TypeWalker::new().process_type::<Example>().generate_local("Examples");
     ///assert_eq!(generated_string,Ok(String::from("local record Examples
     ///\trecord Example
     ///\t\tuserdata
