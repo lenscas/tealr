@@ -48,7 +48,7 @@ use crate::TypeName;
 ///
 ///it should NOT be used to get the real typename.
 ///
-///#WARNING!
+///# WARNING!
 ///
 ///The plan is to remove it if/when `rlua::Value::type_name` becomes public. Use at your own risk.
 pub fn get_type_name(value: &rlua::Value, dir: crate::Direction) -> &'static str {

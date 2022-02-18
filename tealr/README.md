@@ -1,19 +1,27 @@
 # tealr
-A wrapper around [rlua](https://crates.io/crates/rlua) and/or [mlua](https://crates.io/crates/mlua) to help with embedding teal
+A wrapper around [rlua](https://crates.io/crates/rlua) and [mlua](https://crates.io/crates/mlua) that aims to improve the api that Rust developers can easily expose.
 
-tealr adds some traits that replace/extend those from [rlua](https://crates.io/crates/rlua) and [mlua](https://crates.io/crates/mlua),
-allowing it to generate the `.d.tl` files needed for teal.
-It also contains some macro's to make it easier to load/execute teal scripts.
+It aims to do this by improving the following:
+- Allow the api to have easily accessible documentation embedded into it
+- Allow the documentation to be built to web pages (using [tealr_doc_gen](https://github.com/lenscas/type_generator) )
+- To go along with the documentation, `tealr` also allow you to be more precise in the types your api works with. Think generic methods and typed lambdas. No more `Lua::Value`
+- Allow for the generation of `.d.tl` files. They allow the API to be used in teal, exposing type errors at compile time.
+
+It does this by adding new traits and replacing/extending the existing ones from [rlua](https://crates.io/crates/rlua) and [mlua](https://crates.io/crates/mlua). As a result, the api that tealr exposes is as similar as the api from those 2 crates as possible.
+
+It also contains some macro's to easily generate new types to better express the API type wise and also some macro's to make it easier to embed teal. 
 
 ### Note:
-Both `rlua` and `mlua` are behind feature flags with the same name.
+Both `rlua` and `mlua` are behind the feature flags `rlua` and `mlua`.
 
 It also reexports these crates and allows you to set flags through it (the forwarded flags are the same with either the prefix `rlua_` or `mlua_`. For example if you want to enable `mlua/async` then you need to enable `tealr/mlua_async`)
 
-## Expose a value to teal
-Exposing types to teal as userdata is almost the same using tealr as it is using rlua and mlua
+## Expose a value to lua/teal
+Exposing types to lua as userdata is almost the same using tealr as it is using rlua and mlua
+
+#### Rlua:
 ```rust ignore
- use tealr::TypeName;
+use tealr::TypeName;
 #[derive(Clone, tealr::RluaUserData, TypeName)]
 struct ExampleRlua {}
 
@@ -22,34 +30,99 @@ struct ExampleRlua {}
 impl tealr::rlu::TealData for ExampleRlua {
     //implement your methods/functions
     fn add_methods<'lua, T: tealr::rlu::TealDataMethods<'lua, Self>>(methods: &mut T) {
+        methods.document_type("This is documentation added to the type itself.");
+
+        methods.document("This documentation gets added to the exposed function bellow.");
         methods.add_method("example_method", |_, _, x: i8| Ok(x));
         methods.add_method_mut("example_method_mut", |_, _, x: (i8, String)| Ok(x.1));
         methods.add_function("example_function", |_, x: Vec<String>| Ok((x, 8)));
+        methods.document("***You*** can also embed markdown to the documentation, which gets picked up by [tealr_doc_gen](https://github.com/lenscas/type_generator)`");
+        methods.document("It is also possible to use this function multiple times. These are added as paragraphs.");
         methods.add_function_mut("example_function_mut", |_, x: (bool, Option<ExampleRlua>)| {
             Ok(x)
-        })
+        });
+        ///This creates the instance.help() function, which returns the documentation as a string.
+        methods.generate_help();
     }
 }
 ```
-Working with mlua is almost the same
+Mlua:
 ```rust ignore
- use tealr::TypeName;
+use tealr::TypeName;
 #[derive(Clone, tealr::MluaUserData, TypeName)]
 struct ExampleMlua {}
 impl tealr::mlu::TealData for ExampleMlua {
     //implement your methods/functions
     fn add_methods<'lua, T: tealr::mlu::TealDataMethods<'lua, Self>>(methods: &mut T) {
+        methods.document_type("This is documentation added to the type itself.");
+        methods.document("This documentation gets added to the exposed function bellow.");
         methods.add_method("example_method", |_, _, x: i8| Ok(x));
         methods.add_method_mut("example_method_mut", |_, _, x: (i8, String)| Ok(x.1));
         methods.add_function("example_function", |_, x: Vec<String>| Ok((x, 8)));
+        methods.document("***You*** can also embed markdown to the documentation, which gets picked up by [tealr_doc_gen](https://github.com/lenscas/type_generator)`");
+        methods.document("It is also possible to use this function multiple times. These are added as paragraphs.");
         methods.add_function_mut("example_function_mut", |_, x: (bool, Option<ExampleMlua>)| {
             Ok(x)
-        })
+        });
+        ///This creates the instance.help() function, which returns the documentation as a string.
+        methods.generate_help();
     }
 }
 ```
-## Create a .d.tl file
-Creating of the `.d.tl` files works the same for rlua or mlua
+
+## Replacing lua::Value
+Though it is perfectly possible to use the `lua::Value` from `rlua` and `mlua`, `tealr` does offer some alternatives to better document your code.
+
+### Simple unions:
+
+These allow you to easily create a type that is only one of the types you give.
+
+```rust ignore
+use tealr::{
+    create_union_mlua,
+    mlu::{mlua::{FromLua,Lua,ToLua}, TealData, TealDataMethods, TypedFunction},
+    Direction, MluaUserData, TypeName, TypeWalker,
+};
+create_union_mlua!(enum YourTypeName = i32 | String);
+```
+
+### Generics
+```rust ignore
+use mlua::ToLua;
+use tealr::{
+    create_generic_mlua,
+    mlu::{mlua::FromLua, TealData, TealDataMethods, TypedFunction},
+    Direction, MluaUserData, TypeName, TypeWalker,
+};
+
+create_generic_mlua!(X);
+#[derive(Clone, MluaUserData, TypeName)]
+struct Example {}
+impl TealData for Example {
+    fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
+        methods.add_method(
+            "generic_function_callback",
+            |lua, _, fun: TypedFunction<String, X>| {
+                fun.call("A nice string!".to_string())
+            },
+        );
+    }
+}
+```
+In this example, the generated signature of `generic_function_callback` will be `function<X>(function(string):X):X`. Without generics and using `lua::Value` instead, the generated signature would have instead become `function(function(string):any):any` which is a lot less descriptive.
+
+For rlua, all you have to do is replace `mlua` for `rlua`
+
+## Teal integration
+
+The [teal](https://github.com/teal-language/tl) language is basically just a statically typed variant of lua and can even be made to run in the lua vm without compiling to lua first.
+
+As a result of this and `tealr`'s focus on enabling a richer typed api causes the 2 projects to work well together. However, to further help bind the 2 projects, `tealr` contains some extra helpers for those that want to use teal.
+
+### Create a .d.tl file
+`.d.tl` files are type definition files used by the teal compiler so it knows what types a library has that isn't written in teal. Similar to how `.d.ts` files allow typescript to work with libraries written in `JS`
+
+`tealr` allows you to easily create these `.d.tl` files based on your types.
 ```rust
 //set your type up with either rlua or mlua
 use tealr::{TypeName};
@@ -71,8 +144,13 @@ let file_contents = tealr::TypeWalker::new()
 //write the output to a file
 println!("{}",file_contents)
 ```
-## Compile inline teal code into lua
- As you get a string containing the lua code back this feature works the same for both rlua and mlua
+### Compile inline teal code into lua
+Both rlua and mlua allow you to run lua code embedded in your application.
+
+Similarly, tealr allows you to compile embedded teal code to lua while compiling your application. This can then be executed by rlua and mlua.
+
+This means that you can make use of teal's static type system even for small scripts inside your rust codebase.
+
 ```rust
 use tealr::compile_inline_teal;
 let code = compile_inline_teal!("local x : number = 5 return x");
@@ -80,15 +158,17 @@ let code = compile_inline_teal!("local x : number = 5 return x");
 
 ## Embed the teal compiler
 
-It is possible to embed the teal compiler into your rust application.
-This makes it possible to easily load it into the lua vm thus allowing it to run teal files as normal lua files.
+Teal makes it possible for the lua vm to load teal files as if they are normal lua files.
+
+Tealr makes doing this from withing rust a bit easier, by exposing a macro that can embed the teal compiler in your application and create a function that creates the needed lua code to set the VM up. This function takes a string, which is the file that needs to get required.
+
 
 ```rust no_run
+use tealr::embed_compiler;
+let compiler = embed_compiler!("v0.13.1");
 #[cfg(feature = "rlua")]
 {
-    use tealr::embed_compiler;
-    let compiler = embed_compiler!("v0.13.1");
-    let res : u8 = rlua::Lua::new().context(|ctx| {
+    let res : u8 = tealr::rlu::rlua::Lua::new().context(|ctx| {
         let code = compiler("example/basic_teal_file");
         ctx.load(&code).set_name("embedded_compiler")?.eval()
     })?;
@@ -96,10 +176,8 @@ This makes it possible to easily load it into the lua vm thus allowing it to run
 
 #[cfg(feature = "mlua")]
 {
-    use tealr::embed_compiler;
-    let compiler = embed_compiler!("v0.13.1");
-    let lua = mlua::Lua::new();
     let code = compiler("example/basic_teal_file");
+    let lua = tealr::mlu::mlua::Lua::new();
     let res: u8 = lua.load(&code).set_name("embedded_compiler")?.eval()?;
 };
 Ok::<(), Box<dyn std::error::Error>>(())
@@ -118,12 +196,3 @@ embed_compiler!(Luarocks(version = "v0.13.1"));
 ```
 
 You can find longer ones with comments on what each call does [here](https://github.com/lenscas/tealr/tree/master/tealr/examples)
-
-## Future plans
-Tealr can already help with 2 ways to run teal scripts.
-
-It can compile inline teal code at the same time as your rust code
-
-It can also embed the teal compiler for you, allowing you to execute external teal scripts like normal lua scripts.
-
-There is a third method I want tealr to help with. In this mode, it will compile a teal project, pack it into 1 file and embed it into the project.

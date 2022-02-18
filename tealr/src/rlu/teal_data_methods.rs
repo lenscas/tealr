@@ -41,25 +41,25 @@ pub trait TealDataMethods<'lua, T> {
         R: ToLuaMulti<'lua> + TealMultiValue,
         F: 'static + Send + FnMut(Context<'lua>, A) -> Result<R>;
 
-    ///Exposes a meta method to lua http://lua-users.org/wiki/MetatableEvents
+    ///Exposes a meta method to lua <http://lua-users.org/wiki/MetatableEvents>
     fn add_meta_method<A, R, M>(&mut self, meta: MetaMethod, method: M)
     where
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         M: 'static + Send + Fn(Context<'lua>, &T, A) -> Result<R>;
-    ///Exposes a meta and mutable method to lua http://lua-users.org/wiki/MetatableEvents
+    ///Exposes a meta and mutable method to lua <http://lua-users.org/wiki/MetatableEvents>
     fn add_meta_method_mut<A, R, M>(&mut self, meta: MetaMethod, method: M)
     where
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         M: 'static + Send + FnMut(Context<'lua>, &mut T, A) -> Result<R>;
-    ///Exposes a meta function to lua http://lua-users.org/wiki/MetatableEvents
+    ///Exposes a meta function to lua <http://lua-users.org/wiki/MetatableEvents>
     fn add_meta_function<A, R, F>(&mut self, meta: MetaMethod, function: F)
     where
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         F: 'static + Send + Fn(Context<'lua>, A) -> Result<R>;
-    ///Exposes a meta and mutable function to lua http://lua-users.org/wiki/MetatableEvents
+    ///Exposes a meta and mutable function to lua <http://lua-users.org/wiki/MetatableEvents>
     fn add_meta_function_mut<A, R, F>(&mut self, meta: MetaMethod, function: F)
     where
         A: FromLuaMulti<'lua> + TealMultiValue,
@@ -69,6 +69,6 @@ pub trait TealDataMethods<'lua, T> {
     fn document(&mut self, documentation: &str);
     ///Adds documentation for this type itself. They will be written right above the record in the .d.tl file
     fn document_type(&mut self, documentation: &str);
-    ///generates a `.help()` function on lua's/teals side, which can be used at run time to view the documentation.
+    ///generates an `instance.help()` function on lua's/teals side, which can be used at run time to view the documentation.
     fn generate_help(&mut self);
 }
