@@ -1,6 +1,6 @@
 use tealr::{
     compile_inline_teal, create_union_rlua, embed_compiler,
-    rlu::{TealData, TealDataMethods},
+    rlu::{TealData, TealDataMethods, TypedFunction},
     RluaUserData, TypeName, TypeWalker,
 };
 
