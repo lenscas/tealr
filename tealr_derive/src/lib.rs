@@ -56,7 +56,7 @@ fn impl_rlua_user_data_derive(ast: &syn::DeriveInput) -> proc_macro2::TokenStrea
             }
         }
         impl ::tealr::TypeBody for #name {
-            fn get_type_body(_: ::tealr::Direction, gen: &mut ::tealr::TypeGenerator) {
+            fn get_type_body(gen: &mut ::tealr::TypeGenerator) {
                 gen.is_user_data = true;
                 <Self as ::tealr::rlu::TealData>::add_methods(gen);
             }
@@ -88,7 +88,7 @@ fn impl_mlua_user_data_derive(ast: &syn::DeriveInput) -> proc_macro2::TokenStrea
             }
         }
         impl ::tealr::TypeBody for #name {
-            fn get_type_body(_: ::tealr::Direction, gen: &mut ::tealr::TypeGenerator) {
+            fn get_type_body(gen: &mut ::tealr::TypeGenerator) {
                 gen.is_user_data = true;
                 <Self as ::tealr::mlu::TealData>::add_methods(gen);
             }
@@ -111,7 +111,7 @@ fn impl_type_representation_derive(ast: &syn::DeriveInput) -> proc_macro2::Token
     let name = &ast.ident;
     let gen = quote! {
         impl ::tealr::TypeName for #name {
-            fn get_type_parts(_: ::tealr::Direction) -> ::std::borrow::Cow<'static, [::tealr::NamePart]> {
+            fn get_type_parts() -> ::std::borrow::Cow<'static, [::tealr::NamePart]> {
                 ::std::borrow::Cow::Borrowed(&[::tealr::NamePart::Type(::tealr::TealType{
                     name: ::std::borrow::Cow::Borrowed(stringify!(#name)),
                     generics: ::std::option::Option::None,

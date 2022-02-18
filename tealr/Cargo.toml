@@ -66,10 +66,7 @@ required-features = ["rlua"]
 name = "rlua_readme_pieces"
 path = "tests/rlua/readme_pieces.rs"
 required-features = ["rlua"]
-[[test]]
-name = "rlua_to_from_lua"
-path = "tests/rlua/to_from_lua.rs"
-required-features = ["rlua"]
+
 [[test]]
 name = "rlua_meta_methods"
 path = "tests/rlua/meta_methods.rs"
@@ -105,10 +102,7 @@ required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
 name = "mlua_readme_pieces"
 path = "tests/mlua/readme_pieces.rs"
 required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
-[[test]]
-name = "mlua_to_from_lua"
-path = "tests/mlua/to_from_lua.rs"
-required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
+
 [[test]]
 name = "mlua_meta_methods"
 path = "tests/mlua/meta_methods.rs"

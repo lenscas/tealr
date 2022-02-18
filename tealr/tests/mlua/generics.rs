@@ -4,7 +4,7 @@ use mlua::ToLua;
 use tealr::{
     create_generic_mlua,
     mlu::{mlua::FromLua, TealData, TealDataMethods, TypedFunction},
-    Direction, MluaUserData, TypeName, TypeWalker,
+    MluaUserData, TypeName, TypeWalker,
 };
 
 create_generic_mlua!(X);
@@ -33,7 +33,7 @@ impl TealData for Example {
 #[test]
 fn make_generic() {
     let file_contents = TypeWalker::new()
-        .process_type::<Example>(Direction::ToLua)
+        .process_type::<Example>()
         .generate_global("test")
         .expect("oh no :(");
 

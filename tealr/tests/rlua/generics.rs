@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use tealr::{
     rlu::{generics::X, rlua::ToLua, TealData, TealDataMethods, TypedFunction},
-    Direction, RluaUserData, TypeName, TypeWalker,
+    RluaUserData, TypeName, TypeWalker,
 };
 
 #[derive(Clone, RluaUserData, TypeName)]
@@ -30,7 +30,7 @@ impl TealData for Example {
 #[test]
 fn make_generic() {
     let file_contents = TypeWalker::new()
-        .process_type::<Example>(Direction::ToLua)
+        .process_type::<Example>()
         .generate_global("test")
         .expect("oh no :(");
 

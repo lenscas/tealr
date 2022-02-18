@@ -42,10 +42,10 @@ macro_rules! create_union_mlua {
             }
         }
         impl $crate::TypeName for $type_name {
-            fn get_type_parts(dir: $crate::Direction) -> ::std::borrow::Cow<'static,[$crate::NamePart]> {
+            fn get_type_parts() -> ::std::borrow::Cow<'static,[$crate::NamePart]> {
                 let mut name = Vec::new();
                 $(
-                    name.append(&mut $sub_types::get_type_parts(dir).to_vec());
+                    name.append(&mut $sub_types::get_type_parts().to_vec());
                     name.push(" | ".into());
                 )*
                 name.pop();
@@ -55,15 +55,9 @@ macro_rules! create_union_mlua {
                 use $crate::TealMultiValue;
                 $(
                     v.extend(
-                        ($sub_types::get_types(
-                            $crate::Direction::FromLua
-                        )
+                        ($sub_types::get_types()
                         .into_iter()
-                        .chain(
-                            $sub_types::get_types(
-                                $crate::Direction::ToLua
-                            )
-                        )).filter_map(|v| {
+                        ).filter_map(|v| {
                             if let $crate::NamePart::Type(x) = v {
                                 Some(x)
                             } else {

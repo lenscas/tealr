@@ -31,8 +31,8 @@ impl TealData for Example {
 #[test]
 fn make_inline_type() {
     let file_contents = TypeWalker::new()
-        .process_type_inline::<Example>(tealr::Direction::ToLua)
-        .process_type::<Example>(tealr::Direction::ToLua)
+        .process_type_inline::<Example>()
+        .process_type::<Example>()
         .generate_global("test")
         .expect("oh no :(");
 

@@ -42,10 +42,10 @@ impl ExportedFunction {
         is_meta_method: bool,
         extra_self: Option<Cow<'static, [crate::NamePart]>>,
     ) -> Self {
-        use crate::{Direction, KindOfType, NamePart};
+        use crate::{KindOfType, NamePart};
         use std::collections::HashSet;
         let mut generics = HashSet::new();
-        let params2 = A::get_types(Direction::FromLua);
+        let params2 = A::get_types();
         let contains_extra_params = !params2.is_empty();
         let params2 = params2.into_iter().inspect(|v| match v {
             NamePart::Symbol(_) => (),
@@ -68,7 +68,7 @@ impl ExportedFunction {
             Vec::new()
         };
         params.extend(params2);
-        let mut returns = R::get_types(Direction::ToLua)
+        let mut returns = R::get_types()
             .into_iter()
             .inspect(|v| match v {
                 NamePart::Symbol(_) => (),

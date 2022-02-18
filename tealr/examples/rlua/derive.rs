@@ -34,7 +34,7 @@ fn main() -> Result<()> {
     let file_contents = TypeWalker::new() //creates the generator
         //tells it that we want to generate Example
         //add more calls to process_type to generate more types in the same file
-        .process_type::<Example>(tealr::Direction::ToLua)
+        .process_type::<Example>()
         //generate the file
         .generate_global("test")
         //the name parameter for TealDataMethods::{add_method,add_method_mut,add_function,add_function_mut}

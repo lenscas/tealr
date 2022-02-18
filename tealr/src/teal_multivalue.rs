@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{type_representation::KindOfType, Direction, NamePart, TypeName};
+use crate::{type_representation::KindOfType, NamePart, TypeName};
 
 ///Represents a type
 #[derive(Debug, PartialEq, Eq, Clone, Hash, serde::Serialize, serde::Deserialize)]
@@ -20,13 +20,13 @@ pub struct TealType {
 pub trait TealMultiValue {
     ///Gets the types contained in this collection.
     ///Order *IS* important.
-    fn get_types(dir: Direction) -> Vec<NamePart>;
+    fn get_types() -> Vec<NamePart>;
 }
 
 macro_rules! impl_teal_multi_value {
     () => (
         impl TealMultiValue for () {
-            fn get_types(_:Direction) -> Vec<NamePart> {
+            fn get_types() -> Vec<NamePart> {
                 Vec::new()
             }
         }
@@ -38,9 +38,9 @@ macro_rules! impl_teal_multi_value {
         {
             #[allow(unused_mut)]
             #[allow(non_snake_case)]
-            fn get_types(dir:Direction) ->  Vec<NamePart>{
+            fn get_types() ->  Vec<NamePart>{
                 let x:Vec<Cow<'static,[$crate::NamePart]>> = vec![
-                    $($names::get_type_parts(dir),)*
+                    $($names::get_type_parts(),)*
                 ];
                 let x = itertools::Itertools::intersperse(
                     x.into_iter(),
@@ -83,8 +83,8 @@ where
 {
     #[allow(unused_mut)]
     #[allow(non_snake_case)]
-    fn get_types(dir: Direction) -> Vec<NamePart> {
-        A::get_type_parts(dir).to_vec()
+    fn get_types() -> Vec<NamePart> {
+        A::get_type_parts().to_vec()
     }
 }
 

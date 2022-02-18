@@ -4,7 +4,7 @@ use bstr::ByteVec;
 use mlua::{FromLuaMulti, Lua, MetaMethod, Result, ToLuaMulti, UserData, UserDataMethods};
 
 use super::{MaybeSend, TealDataMethods};
-use crate::{type_generator::get_method_data, Direction, TealMultiValue, TypeName};
+use crate::{type_generator::get_method_data, TealMultiValue, TypeName};
 
 ///Used to turn [UserDataMethods](mlua::UserDataMethods) into [TealDataMethods](crate::mlu::TealDataMethods).
 ///
@@ -32,11 +32,11 @@ where
     ///```
     ///# use std::borrow::Cow;
     ///# use mlua::{Lua, Result, UserData, UserDataMethods};
-    ///# use tealr::{new_type, mlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker, Direction, TypeName,NamePart,TealType, KindOfType};
+    ///# use tealr::{new_type, mlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker,  TypeName,NamePart,TealType, KindOfType};
     /// struct Example {}
     /// impl TealData for Example {}
     /// impl TypeName for Example {
-    ///     fn get_type_parts(dir: Direction) -> Cow<'static, [NamePart]> {
+    ///     fn get_type_parts() -> Cow<'static, [NamePart]> {
     ///         new_type!(Example)
     ///     }
     /// }
@@ -69,11 +69,8 @@ where
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
     {
-        let type_def = get_method_data::<A, R, _>(
-            to,
-            false,
-            self_type.then(|| T::get_type_parts(Direction::FromLua)),
-        );
+        let type_def =
+            get_method_data::<A, R, _>(to, false, self_type.then(|| T::get_type_parts()));
         let generated = type_def
             .generate(&Default::default())
             .map(|v| "Signature: ".to_string() + &v)

@@ -2,7 +2,7 @@ use mlua::{Lua, ToLua};
 use tealr::{
     create_union_mlua,
     mlu::{mlua::FromLua, TealData, TealDataMethods, TypedFunction},
-    Direction, MluaUserData, TypeName, TypeWalker,
+    MluaUserData, TypeName, TypeWalker,
 };
 
 create_union_mlua!(enum X = String | f32 | bool);
@@ -27,7 +27,7 @@ impl TealData for Example {
 #[test]
 fn test_limited() {
     let file_contents = TypeWalker::new()
-        .process_type::<Example>(Direction::ToLua)
+        .process_type::<Example>()
         .generate_global("test")
         .expect("oh no :(");
 

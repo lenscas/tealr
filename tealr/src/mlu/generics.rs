@@ -115,7 +115,7 @@ macro_rules! create_generic_mlua {
             }
         }
         impl<'lua> $crate::TypeName for $type_name<'lua> {
-            fn get_type_parts(_: $crate::Direction) -> std::borrow::Cow<'static, [$crate::NamePart]> {
+            fn get_type_parts() -> std::borrow::Cow<'static, [$crate::NamePart]> {
                 let x:&'static [$crate::NamePart] =&[
                     $crate::NamePart::Type($crate::TealType{
                         name: ::std::borrow::Cow::Borrowed(stringify!($type_name)),
