@@ -1,7 +1,5 @@
 use tealr::{
-    create_union_mlua,
-    create_generic_mlua,
-    compile_inline_teal, embed_compiler,
+    compile_inline_teal, create_generic_mlua, create_union_mlua, embed_compiler,
     mlu::{TealData, TealDataMethods},
     MluaUserData, TypeName, TypeWalker,
 };
@@ -22,10 +20,11 @@ impl tealr::mlu::TealData for ExampleMlua {
         methods.add_function("example_function", |_, x: Vec<String>| Ok((x, 8)));
         methods.document("***You*** can also embed markdown to the documentation, which gets picked up by [tealr_doc_gen](https://github.com/lenscas/type_generator)`");
         methods.document("It is also possible to use this function multiple times. These are added as paragraphs.");
-        methods.add_function_mut("example_function_mut", |_, x: (bool, Option<ExampleMlua>)| {
-            Ok(x)
-        })
-        ///This creates the instance.help() function, which returns the documentation as a string.
+        methods.add_function_mut(
+            "example_function_mut",
+            |_, x: (bool, Option<ExampleMlua>)| Ok(x),
+        );
+        //This creates the instance.help() function, which returns the documentation as a string.
         methods.generate_help()
     }
 }
@@ -39,9 +38,7 @@ impl TealData for Example {
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method(
             "generic_function_callback",
-            |lua, _, fun: TypedFunction<String, X>| {
-                fun.call("A nice string!".to_string())
-            },
+            |lua, _, fun: TypedFunction<String, X>| fun.call("A nice string!".to_string()),
         );
     }
 }

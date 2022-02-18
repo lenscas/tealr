@@ -29,7 +29,7 @@ impl tealr::rlu::TealData for ExampleRlua {
             "example_function_mut",
             |_, x: (bool, Option<ExampleRlua>)| Ok(x),
         );
-        ///This creates the instance.help() function, which returns the documentation as a string.
+        //This creates the instance.help() function, which returns the documentation as a string.
         methods.generate_help()
     }
 }
