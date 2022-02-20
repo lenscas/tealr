@@ -3,6 +3,7 @@
 All notable changes to this project are documented in this file.
 
 ## Overview
+- [`0.8.0`](#080)
 - [`0.6.0-preview1`](#060-preview1)
 - [`0.5.1`](#051)
 - [`0.5.0`](#050)
@@ -12,6 +13,8 @@ All notable changes to this project are documented in this file.
 
 ## upcoming
 
+## 0.8.0
+- Update macros to work with tealr changes
 ## 0.6.0-preview1
 - Make derive macros bit more hygienic (last time I missed some)
 - **BREAKING** rename `UserData` derive macro to `RluaUserData`. This is to have good support for Mlua
