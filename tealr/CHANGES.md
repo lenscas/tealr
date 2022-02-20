@@ -3,7 +3,7 @@
 All notable changes to this project are documented in this file.
 
 ## Overview
-
+- [`0.8.0`](#080)
 - [`0.7.0`](#070)
 - [`0.6.0`](#060)
 - [`0.6.0-preview1`](#060-preview1)
@@ -17,6 +17,12 @@ All notable changes to this project are documented in this file.
 - [`0.0.1`](#001)
 
 ## upcoming
+## 0.8.0
+- Improved readme
+- Add ability to document the api
+- Make types serializable with serde
+- **BREAKING** removed `Direction`
+- **BREAKING** used different way to store type info
 
 ## 0.7.0
 - Add generic methods/functions

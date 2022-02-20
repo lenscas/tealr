@@ -3,15 +3,23 @@ A wrapper around [rlua](https://crates.io/crates/rlua) and [mlua](https://crates
 
 It aims to do this by improving the following:
 - Allow the api to have easily accessible documentation embedded into it
-- Allow the documentation to be built to web pages (using [tealr_doc_gen](https://github.com/lenscas/type_generator) )
+- Allow the documentation to be built to web pages (using [tealr_doc_gen](https://github.com/lenscas/tealr_doc_gen) )
 - To go along with the documentation, `tealr` also allow you to be more precise in the types your api works with. Think generic methods and typed lambdas. No more `Lua::Value`
 - Allow for the generation of `.d.tl` files. They allow the API to be used in teal, exposing type errors at compile time.
 
 It does this by adding new traits and replacing/extending the existing ones from [rlua](https://crates.io/crates/rlua) and [mlua](https://crates.io/crates/mlua). As a result, the api that tealr exposes is as similar as the api from those 2 crates as possible.
 
-It also contains some macro's to easily generate new types to better express the API type wise and also some macro's to make it easier to embed teal. 
+It also contains some macro's to easily generate new types to better express the API type wise and also some macro's to make it easier to embed teal.
 
-### Note:
+## Example of `instance.help()`
+
+The library shown is <https://github.com/lenscas/tealsql>
+
+![<https://github.com/lenscas/tealr/tree/master/tealr/images/help_example.gif>](/images/help_example.gif)
+
+## html rendered documentation
+Rendered html is also available at <https://lenscas.github.io/tealsql/>
+## Note:
 Both `rlua` and `mlua` are behind the feature flags `rlua` and `mlua`.
 
 It also reexports these crates and allows you to set flags through it (the forwarded flags are the same with either the prefix `rlua_` or `mlua_`. For example if you want to enable `mlua/async` then you need to enable `tealr/mlua_async`)
