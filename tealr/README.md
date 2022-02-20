@@ -1,5 +1,6 @@
 # tealr
-A wrapper around [rlua](https://crates.io/crates/rlua) and [mlua](https://crates.io/crates/mlua) that aims to improve the api that Rust developers can easily expose.
+A crate to enhance the APIs provided by the [rlua](https://crates.io/crates/rlua) and [mlua](https://crates.io/crates/mlua) crates
+
 
 It aims to do this by improving the following:
 - Allow the api to have easily accessible documentation embedded into it
