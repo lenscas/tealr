@@ -16,7 +16,7 @@ It also contains some macro's to easily generate new types to better express the
 
 The library shown is <https://github.com/lenscas/tealsql>
 
-![<https://github.com/lenscas/tealr/tree/master/tealr/images/help_example.gif>](/images/help_example.gif)
+![<https://github.com/lenscas/tealr/tree/master/tealr/images/help_example.gif>](https://github.com/lenscas/tealr/blob/master/images/help_example.gif)
 
 ## html rendered documentation
 Rendered html is also available at <https://lenscas.github.io/tealsql/>
