@@ -33,15 +33,17 @@ mlua_send = ["mlua/send"]
 mlua_serialize = ["mlua/serialize"]
 mlua_vendored = ["mlua/vendored"]
 
+hv_lua = ["mlua/ecs", "mlua/nalgebra", "mlua/hv-lua-derive"]
+
 #rlua specific features
-rlua_builtin-lua = ["rlua/builtin-lua"]
-rlua_system-lua = ["rlua/system-lua"]
+#rlua_builtin-lua = ["rlua/builtin-lua"]
+#rlua_system-lua = ["rlua/system-lua"]
 
 [dependencies]
 bstr = {version = "0.2", default_features = false, features = ["std"]}
 itertools = "0.10.3"
-mlua = {version = "0.6.6", optional = true, default_features = false}
-rlua = {version = "0.17", optional = true, default_features = false}
+mlua = {path = "../../hv-dev/hv-lua", package = "hv-lua", optional = true, default_features = false}
+#rlua = {version = "0.17", optional = true, default_features = false}
 serde = {version = "1.0.136", features = ["derive"]}
 tealr_derive = {version = "0.8.0", optional = true, path = "../tealr_derive"}
 

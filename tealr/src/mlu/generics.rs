@@ -71,11 +71,11 @@ macro_rules! create_generic_mlua {
                 }
             }
         }
-        impl<'lua> ::std::iter::FromIterator<$type_name<'lua>> for $crate::mlu::mlua::MultiValue<'lua> {
-            fn from_iter<__MacroIterGeneric: IntoIterator<Item = $type_name<'lua>>>(iter: __MacroIterGeneric) -> Self {
-                iter.into_iter().map($crate::mlu::mlua::Value::from).collect()
-            }
-        }
+        // impl<'lua> ::std::iter::FromIterator<$type_name<'lua>> for $crate::mlu::mlua::MultiValue<'lua> {
+            // fn from_iter<__MacroIterGeneric: IntoIterator<Item = $type_name<'lua>>>(iter: __MacroIterGeneric) -> Self {
+                // iter.into_iter().map($crate::mlu::mlua::Value::from).collect()
+            // }
+        // }
         impl<'lua> ::core::cmp::PartialEq<$crate::mlu::mlua::Value<'lua>> for $type_name<'lua> {
             fn eq(&self, other: &$crate::mlu::mlua::Value<'lua>) -> bool {
                 match (self, other) {
