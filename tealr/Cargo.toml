@@ -41,6 +41,9 @@ hv_lua = ["mlua/ecs", "mlua/nalgebra", "mlua/hv-lua-derive"]
 
 [dependencies]
 bstr = {version = "0.2", default_features = false, features = ["std"]}
+hv-ecs = {git = "https://github.com/sdleffler/hv-dev", package = "hecs"}
+hv-elastic = {version = "0.4.1", git = "https://github.com/sdleffler/hv-dev"}
+hv-guarded-borrow = {git = "https://github.com/sdleffler/hv-dev"}
 itertools = "0.10.3"
 mlua = {git = "https://github.com/sdleffler/hv-dev", package = "hv-lua", optional = true, default_features = false}
 #rlua = {version = "0.17", optional = true, default_features = false}

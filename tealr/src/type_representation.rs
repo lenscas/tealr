@@ -1,4 +1,11 @@
-use crate::teal_multivalue::TealMultiValue;
+use hv_elastic::{external::ecs::StretchedBatchWriter, Elastic};
+use mlua::{hv::ecs::ComponentType, AnyUserData, Error, Function, MultiValue};
+
+use crate::{
+    mlu::{TealData, TealDataMethods},
+    teal_multivalue::TealMultiValue,
+    ExportedFunction,
+};
 
 macro_rules! impl_type_name_life_time {
     ($teal_type:literal $current_type:ty) => {
@@ -236,6 +243,8 @@ impl<'lua> TypeName for rlua::Thread<'lua> {
 
 #[cfg(feature = "mlua")]
 impl_type_name_life_time!("thread" mlua::Thread<'lua>);
+#[cfg(feature = "mlua")]
+impl_type_name_life_time!("userdata" mlua::AnyUserData<'lua>);
 
 #[cfg(feature = "mlua_async")]
 impl<'lua, R> TypeName for mlua::AsyncThread<'lua, R> {
@@ -430,4 +439,240 @@ impl<K: TypeName, V: TypeName> TypeName for BTreeMap<K, V> {
 pub trait TypeBody {
     ///Fills in the TypeGenerator so a .d.tl file can be constructed.
     fn get_type_body(gen: &mut TypeGenerator);
+}
+
+impl TypeName for hv_ecs::DynamicQuery {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
+        crate::new_type!(DynamicQuery, External)
+    }
+}
+
+impl TealData for hv_ecs::DynamicQuery {
+    fn add_methods<'lua, T: crate::mlu::TealDataMethods<'lua, Self>>(methods: &mut T) {
+        methods.add_function("new", move |_, table: mlua::Table| {
+            let mut free_elements = Vec::new();
+            for try_element in table.sequence_values::<hv_ecs::DynamicQuery>() {
+                free_elements.push(try_element?);
+            }
+
+            let q = hv_ecs::DynamicQuery::new(free_elements);
+
+            Ok(q)
+        });
+
+        methods.add_function("read", move |_, ty: mlua::AnyUserData| {
+            Ok(ty.dyn_borrow::<dyn ComponentType>()?.read())
+        });
+
+        methods.add_function("write", move |_, ty: mlua::AnyUserData| {
+            Ok(ty.dyn_borrow::<dyn ComponentType>()?.write())
+        });
+    }
+}
+
+impl TypeName for hv_ecs::DynamicItem {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
+        crate::new_type!(DynamicQuery, External)
+    }
+}
+
+impl TealData for hv_ecs::DynamicItem {
+    fn add_methods<'lua, M: TealDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_method_mut("take", move |lua, this, ty: AnyUserData| {
+            ty.dyn_borrow::<dyn ComponentType>()?
+                .dynamic_item_take(lua, this)
+        });
+    }
+}
+
+impl TypeName for hv_ecs::ColumnBatchBuilder {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
+        crate::new_type!(ColumnBatchBuilder, External)
+    }
+}
+
+impl<'a> TealMultiValue for MultiValue<'a> {
+    fn get_types() -> Vec<NamePart> {
+        let name = NamePart::Type(TealType {
+            name: Cow::Borrowed("Name"),
+            type_kind: KindOfType::Builtin,
+            generics: None,
+        });
+        vec![name]
+    }
+}
+
+impl TealData for hv_ecs::ColumnBatchBuilder {
+    fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
+        methods.add_method_mut(
+            "writer",
+            |lua, this, (ty, scope): (AnyUserData, Function)| {
+                // safety: guard MUST be dropped before end of scope
+                let (guard, writer) = unsafe {
+                    ty.dyn_borrow::<dyn ComponentType>()?
+                        .column_batch_builder_writer(lua, this)?
+                };
+                let res = scope.call::<_, MultiValue>(writer);
+                drop(guard);
+                res
+            },
+        );
+    }
+}
+
+impl TypeName for hv_ecs::ColumnBatchType {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
+        crate::new_type!(ColumnBatchType, External)
+    }
+}
+
+impl TealData for hv_ecs::ColumnBatchType {
+    fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
+        methods.add_method_mut("add", |_, this, ty: AnyUserData| {
+            ty.dyn_borrow::<dyn ComponentType>()?
+                .column_batch_type_add(this);
+            Ok(())
+        });
+
+        methods.add_function("into_batch", |_, (this, size): (AnyUserData, u32)| {
+            Ok(this.take::<Self>()?.into_batch(size))
+        });
+    }
+}
+impl TypeName for hv_ecs::ColumnBatch {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
+        crate::new_type!(ColumnBatch, External)
+    }
+}
+impl TealData for hv_ecs::ColumnBatch {}
+
+impl<T: 'static + TypeName> TypeName for Elastic<StretchedBatchWriter<T>> {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
+        let z = NamePart::Type(TealType {
+            name: Cow::Borrowed("ElasticStretchedBatchWriter"),
+            type_kind: KindOfType::External,
+            generics: None,
+        });
+        let mut x = vec![z, NamePart::Symbol(Cow::Borrowed("<"))];
+        x.append(&mut T::get_type_parts().into_owned());
+        x.push(NamePart::Symbol(Cow::Borrowed(">")));
+        Cow::Owned(x)
+    }
+}
+
+impl<T: TypeName> TypeName for hv_ecs::DynamicComponent<T> {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
+        let x = NamePart::Type(TealType {
+            name: Cow::Borrowed("DynamicComponent"),
+            type_kind: KindOfType::External,
+            generics: None,
+        });
+        let mut type_name = vec![x, NamePart::Symbol(Cow::Borrowed("<"))];
+        type_name.append(&mut T::get_type_parts().into_owned());
+        type_name.push(NamePart::Symbol(Cow::Borrowed(">")));
+        Cow::Owned(type_name)
+    }
+}
+
+//TODO properly implement TealData for DynamicComponent<T>
+impl<T: 'static + mlua::UserData + TealData + Send + Sync> TealData
+    for hv_ecs::DynamicComponent<T>
+{
+}
+
+impl<T: 'static + TealData + mlua::UserData> TealData for Elastic<StretchedBatchWriter<T>> {
+    fn add_methods<'lua, M: TealDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_method_mut("push", |_, this, ud: AnyUserData| {
+            this.try_borrow_as_parameterized_mut()
+                .map_err(|_| Error::external("BatchWriter already destructed!"))?
+                .push(ud.clone_or_take::<T>()?)
+                .ok()
+                .ok_or_else(|| Error::external("BatchWriter is full!"))?;
+            Ok(())
+        });
+
+        methods.add_method("fill", |_, this, ()| {
+            Ok(this
+                .try_borrow_as_parameterized()
+                .map_err(|_| Error::external("BatchWriter already destructed!"))?
+                .fill())
+        });
+    }
+}
+
+impl TypeName for hv_ecs::Entity {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
+        crate::new_type!(Entity, External)
+    }
+}
+impl TypeBody for hv_ecs::Entity {
+    fn get_type_body(_: &mut TypeGenerator) {}
+}
+
+impl TypeName for hv_ecs::World {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
+        crate::new_type!(World, External)
+    }
+}
+
+enum FakeUserDataOrTable {}
+impl TypeName for FakeUserDataOrTable {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
+        Cow::Borrowed(&[
+            NamePart::Symbol(Cow::Borrowed("{")),
+            NamePart::Type(TealType {
+                name: Cow::Borrowed("any"),
+                type_kind: KindOfType::Builtin,
+                generics: None,
+            }),
+            NamePart::Symbol(Cow::Borrowed(":")),
+            NamePart::Type(TealType {
+                name: Cow::Borrowed("any"),
+                type_kind: KindOfType::Builtin,
+                generics: None,
+            }),
+            NamePart::Symbol(Cow::Borrowed("} | ")),
+            NamePart::Type(TealType {
+                name: Cow::Borrowed("userdata"),
+                type_kind: KindOfType::Builtin,
+                generics: None,
+            }),
+        ])
+    }
+}
+
+impl TypeBody for hv_ecs::World {
+    fn get_type_body(gen: &mut TypeGenerator) {
+        gen.methods.push(ExportedFunction::new::<(), usize, _>(
+            "len",
+            false,
+            Some(hv_ecs::World::get_type_parts()),
+        ));
+        gen.methods
+            .push(ExportedFunction::new::<hv_ecs::Entity, bool, _>(
+                "contains",
+                false,
+                Some(hv_ecs::World::get_type_parts()),
+            ));
+        gen.methods.push(ExportedFunction::new::<
+            FakeUserDataOrTable,
+            hv_ecs::Entity,
+            _,
+        >(
+            "spawn", false, Some(hv_ecs::World::get_type_parts())
+        ));
+        gen.methods.push(ExportedFunction::new::<
+            (
+                hv_ecs::DynamicQuery,
+                hv_ecs::Entity,
+                crate::mlu::TypedFunction<mlua::Value, crate::mlu::generics::X>,
+            ),
+            crate::mlu::generics::X,
+            _,
+        >(
+            "query", false, Some(hv_ecs::World::get_type_parts())
+        ));
+        gen.functions
+            .push(ExportedFunction::new::<(), Self, _>("new", false, None))
+    }
 }
