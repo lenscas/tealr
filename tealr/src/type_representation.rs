@@ -469,6 +469,12 @@ impl TealData for hv_ecs::DynamicQuery {
         });
     }
 }
+impl TypeBody for hv_ecs::DynamicQuery {
+    fn get_type_body(gen: &mut crate::TypeGenerator) {
+        gen.is_user_data = true;
+        <Self as TealData>::add_methods(gen);
+    }
+}
 
 impl TypeName for hv_ecs::DynamicItem {
     fn get_type_parts() -> Cow<'static, [NamePart]> {
@@ -482,6 +488,13 @@ impl TealData for hv_ecs::DynamicItem {
             ty.dyn_borrow::<dyn ComponentType>()?
                 .dynamic_item_take(lua, this)
         });
+    }
+}
+
+impl TypeBody for hv_ecs::DynamicItem {
+    fn get_type_body(gen: &mut crate::TypeGenerator) {
+        gen.is_user_data = true;
+        <Self as TealData>::add_methods(gen);
     }
 }
 
@@ -520,6 +533,13 @@ impl TealData for hv_ecs::ColumnBatchBuilder {
     }
 }
 
+impl TypeBody for hv_ecs::ColumnBatchBuilder {
+    fn get_type_body(gen: &mut crate::TypeGenerator) {
+        gen.is_user_data = true;
+        <Self as TealData>::add_methods(gen);
+    }
+}
+
 impl TypeName for hv_ecs::ColumnBatchType {
     fn get_type_parts() -> Cow<'static, [NamePart]> {
         crate::new_type!(ColumnBatchType, External)
@@ -539,12 +559,27 @@ impl TealData for hv_ecs::ColumnBatchType {
         });
     }
 }
+
+impl TypeBody for hv_ecs::ColumnBatchType {
+    fn get_type_body(gen: &mut crate::TypeGenerator) {
+        gen.is_user_data = true;
+        <Self as TealData>::add_methods(gen);
+    }
+}
+
 impl TypeName for hv_ecs::ColumnBatch {
     fn get_type_parts() -> Cow<'static, [NamePart]> {
         crate::new_type!(ColumnBatch, External)
     }
 }
 impl TealData for hv_ecs::ColumnBatch {}
+
+impl TypeBody for hv_ecs::ColumnBatch {
+    fn get_type_body(gen: &mut crate::TypeGenerator) {
+        gen.is_user_data = true;
+        <Self as TealData>::add_methods(gen);
+    }
+}
 
 impl<T: 'static + TypeName> TypeName for Elastic<StretchedBatchWriter<T>> {
     fn get_type_parts() -> Cow<'static, [NamePart]> {
@@ -580,6 +615,15 @@ impl<T: 'static + mlua::UserData + TealData + Send + Sync> TealData
 {
 }
 
+impl<T: 'static + mlua::UserData + TealData + Send + Sync> TypeBody
+    for hv_ecs::DynamicComponent<T>
+{
+    fn get_type_body(gen: &mut crate::TypeGenerator) {
+        gen.is_user_data = true;
+        <Self as TealData>::add_methods(gen);
+    }
+}
+
 impl<T: 'static + TealData + mlua::UserData> TealData for Elastic<StretchedBatchWriter<T>> {
     fn add_methods<'lua, M: TealDataMethods<'lua, Self>>(methods: &mut M) {
         methods.add_method_mut("push", |_, this, ud: AnyUserData| {
@@ -597,6 +641,13 @@ impl<T: 'static + TealData + mlua::UserData> TealData for Elastic<StretchedBatch
                 .map_err(|_| Error::external("BatchWriter already destructed!"))?
                 .fill())
         });
+    }
+}
+
+impl<T: 'static + TealData + mlua::UserData> TypeBody for Elastic<StretchedBatchWriter<T>> {
+    fn get_type_body(gen: &mut crate::TypeGenerator) {
+        gen.is_user_data = true;
+        <Self as TealData>::add_methods(gen);
     }
 }
 

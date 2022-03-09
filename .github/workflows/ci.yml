@@ -25,10 +25,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macOS-latest]
         tests : 
-          - "cargo test --features mlua,mlua_vendored,mlua_lua53,mlua_async,mlua_send,hv_lua,mlua_serialize"
-          - "cargo test --features mlua,mlua_vendored,mlua_lua54,mlua_async,mlua_send,hv_lua,mlua_serialize"
-          - "cargo test --features mlua,mlua_vendored,mlua_lua53,mlua_async,hv_lua,mlua_serialize --no-run"
-          - "cargo test --features mlua,mlua_vendored,mlua_lua54,mlua_async,hv_lua,mlua_serialize --no-run"
+          - "cargo test --features mlua,mlua_vendored,mlua_luajit,mlua_async,mlua_send,hv_lua,mlua_serialize"
     steps:
     - uses: actions/checkout@master
     - uses: hecrj/setup-rust-action@v1.3.4 
@@ -49,7 +46,7 @@ jobs:
     strategy:
       matrix:
         tests :
-          - "cargo clippy --features mlua,mlua_vendored,mlua_lua53,mlua_async,mlua_send,hv_lua,mlua_serialize -- -D warnings"
+          - "cargo clippy --features mlua,mlua_vendored,mlua_luajit,mlua_async,mlua_send,hv_lua,mlua_serialize -- -D warnings"
     steps:
     - uses: hecrj/setup-rust-action@v1.3.4 
       with:
