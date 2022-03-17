@@ -222,6 +222,7 @@ pub trait TypeName {
 use std::{
     borrow::Cow,
     collections::{BTreeMap, HashMap},
+    sync::Arc,
 };
 
 use crate::{TealType, TypeGenerator};
@@ -725,5 +726,28 @@ impl TypeBody for hv_ecs::World {
         ));
         gen.functions
             .push(ExportedFunction::new::<(), Self, _>("new", false, None))
+    }
+}
+
+impl<T: TypeName> TypeName for Arc<T> {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
+        T::get_type_parts()
+    }
+}
+impl<T: TypeBody> TypeBody for Arc<T> {
+    fn get_type_body(gen: &mut TypeGenerator) {
+        T::get_type_body(gen)
+    }
+}
+
+impl<T: TypeName> TypeName for hv_cell::AtomicRefCell<T> {
+    fn get_type_parts() -> std::borrow::Cow<'static, [NamePart]> {
+        T::get_type_parts()
+    }
+}
+
+impl<T: TypeBody> TypeBody for hv_cell::AtomicRefCell<T> {
+    fn get_type_body(gen: &mut TypeGenerator) {
+        T::get_type_body(gen)
     }
 }

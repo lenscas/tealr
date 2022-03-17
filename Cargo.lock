@@ -1109,6 +1109,7 @@ version = "0.8.2"
 dependencies = [
  "bstr",
  "hecs",
+ "hv-cell",
  "hv-elastic",
  "hv-guarded-borrow",
  "hv-lua",
