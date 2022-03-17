@@ -88,7 +88,7 @@ pub struct TypeGenerator {
     ///The name of the type in teal
     pub type_name: Cow<'static, [NamePart]>,
     ///The exposed fields and their types
-    pub fields: Vec<(Cow<'static, str>, Cow<'static, str>)>,
+    pub fields: Vec<(Cow<'static, str>, Cow<'static, [NamePart]>)>,
     ///exported methods
     pub methods: Vec<ExportedFunction>,
     ///exported methods that mutate something
@@ -142,7 +142,7 @@ impl TypeGenerator {
         let fields: Vec<_> = self
             .fields
             .into_iter()
-            .map(|(name, lua_type)| format!("{} : {}", name, lua_type))
+            .map(|(name, lua_type)| format!("{} : {}", name, crate::type_parts_to_str(lua_type)))
             .collect();
 
         let documentation = &self.documentation;
