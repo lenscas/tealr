@@ -41,6 +41,7 @@ hv_lua = ["mlua/ecs", "mlua/nalgebra", "mlua/hv-lua-derive"]
 
 [dependencies]
 bstr = {version = "0.2", default_features = false, features = ["std"]}
+hv-alchemy = {git = "https://github.com/sdleffler/hv-dev"}
 hv-cell = {git = "https://github.com/sdleffler/hv-dev"}
 hv-ecs = {git = "https://github.com/sdleffler/hv-dev", package = "hecs"}
 hv-elastic = {version = "0.4.1", git = "https://github.com/sdleffler/hv-dev"}

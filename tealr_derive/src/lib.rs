@@ -81,7 +81,7 @@ pub fn mlua_user_data_derive(input: TokenStream) -> TokenStream {
 fn impl_mlua_user_data_derive(ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
     let name = &ast.ident;
     let gen = quote! {
-        impl mlua::UserData for #name {
+        impl ::tealr::mlu::mlua::UserData for #name {
             fn add_methods<'lua, T: ::tealr::mlu::mlua::UserDataMethods<'lua, Self>>(methods: &mut T) {
                 let mut x = ::tealr::mlu::UserDataWrapper::from_user_data_methods(methods);
                 <Self as ::tealr::mlu::TealData>::add_methods(&mut x);
@@ -97,6 +97,10 @@ fn impl_mlua_user_data_derive(ast: &syn::DeriveInput) -> proc_macro2::TokenStrea
                 <Self as ::tealr::mlu::TealData>::add_fields(gen);
                 <Self as ::tealr::mlu::TealData>::add_methods(gen);
 
+            }
+            fn get_type_body_marker(gen: &mut ::tealr::TypeGenerator) {
+                gen.is_user_data = true;
+                <Self as ::tealr::mlu::TealData>::add_type_methods(gen)
             }
         }
     };

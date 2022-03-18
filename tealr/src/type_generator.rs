@@ -139,6 +139,26 @@ impl TypeGenerator {
             type_doc: Default::default(),
         }
     }
+    pub(crate) fn new_marker_type<A: TypeName>(should_be_inlined: bool) -> Self {
+        Self {
+            should_be_inlined,
+            is_user_data: false,
+            type_name: A::get_marker_type_parts(),
+            fields: Default::default(),
+            methods: Default::default(),
+            mut_methods: Default::default(),
+            functions: Default::default(),
+            mut_functions: Default::default(),
+            meta_method: Default::default(),
+            meta_method_mut: Default::default(),
+            meta_function: Default::default(),
+            meta_function_mut: Default::default(),
+            documentation: Default::default(),
+            should_generate_help_method: true,
+            next_docs: Default::default(),
+            type_doc: Default::default(),
+        }
+    }
 
     pub(crate) fn generate(self) -> std::result::Result<String, FromUtf8Error> {
         //let head = format!("local record {}", self.type_name);

@@ -34,6 +34,13 @@ impl TypeWalker {
         self.given_types.push(new_type);
         self
     }
+    ///processes a type so it works as a marker type.
+    pub fn process_type_as_marker<A: 'static + TypeName + TypeBody>(mut self) -> Self {
+        let mut new_type = TypeGenerator::new_marker_type::<A>(false);
+        <A as TypeBody>::get_type_body_marker(&mut new_type);
+        self.given_types.push(new_type);
+        self
+    }
     ///generates the `.d.tl` file. It outputs the string, its up to you to store it.
     #[cfg_attr(feature = "rlua", doc = " ```")]
     #[cfg_attr(not(feature = "rlua"), doc = " ```ignore")]

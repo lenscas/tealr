@@ -1,3 +1,4 @@
+use hv_alchemy::Type;
 use hv_elastic::{external::ecs::StretchedBatchWriter, Elastic};
 use mlua::{hv::ecs::ComponentType, AnyUserData, Error, Function, MultiValue};
 
@@ -204,6 +205,14 @@ pub fn type_parts_to_str(x: Cow<'static, [NamePart]>) -> Cow<'static, str> {
 pub trait TypeName {
     ///returns the type name as how it should show up in the generated `.d.tl` file
     fn get_type_parts() -> Cow<'static, [NamePart]>;
+    ///get how this type should be called when defined as a type marker
+    fn get_marker_type_parts() -> Cow<'static, [NamePart]> {
+        let mut x = Self::get_type_parts().into_owned();
+        if let Some(NamePart::Type(x)) = x.first_mut() {
+            x.name = Cow::Owned(String::from("type_") + &x.name);
+        }
+        Cow::Owned(x)
+    }
     ///This method tells the generator if this type is builtin to teal/lua, if it comes from somewhere else or if it stands in as a generic
     ///
     ///In almost all cases you want to return `KindOfType::External`
@@ -440,6 +449,7 @@ impl<K: TypeName, V: TypeName> TypeName for BTreeMap<K, V> {
 pub trait TypeBody {
     ///Fills in the TypeGenerator so a .d.tl file can be constructed.
     fn get_type_body(gen: &mut TypeGenerator);
+    fn get_type_body_marker(_gen: &mut TypeGenerator) {}
 }
 
 impl TypeName for hv_ecs::DynamicQuery {
@@ -749,5 +759,11 @@ impl<T: TypeName> TypeName for hv_cell::AtomicRefCell<T> {
 impl<T: TypeBody> TypeBody for hv_cell::AtomicRefCell<T> {
     fn get_type_body(gen: &mut TypeGenerator) {
         T::get_type_body(gen)
+    }
+}
+
+impl<T: TypeName> TypeName for Type<T> {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
+        T::get_marker_type_parts()
     }
 }
