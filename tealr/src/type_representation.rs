@@ -767,3 +767,17 @@ impl<T: TypeName> TypeName for Type<T> {
         T::get_marker_type_parts()
     }
 }
+impl<T: TypeBody> TypeBody for Type<T> {
+    fn get_type_body(gen: &mut TypeGenerator) {
+        T::get_type_body_marker(gen)
+    }
+}
+impl<A: TealData> TealData for Type<A> {
+    fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(_methods: &mut T) {}
+
+    fn add_type_methods<'lua, M: TealDataMethods<'lua, Type<Self>>>(_methods: &mut M)
+    where
+        Self: 'static + crate::mlu::MaybeSend,
+    {
+    }
+}
