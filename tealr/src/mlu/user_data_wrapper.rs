@@ -77,7 +77,7 @@ where
     ///     }
     /// }
     /// impl UserData for Example {
-    ///     fn add_fields<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
+    ///     fn add_fields<'lua, T: UserDataFields<'lua, Self>>(methods: &mut T) {
     ///         let mut x = UserDataWrapper::from_user_data_fields(methods);
     ///         <Self as TealData>::add_fields(&mut x);
     ///     }
