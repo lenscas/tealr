@@ -1,11 +1,8 @@
+use bstr::ByteVec;
 use mlua::{
     FromLuaMulti, Lua, MetaMethod, Result, ToLuaMulti, UserData, UserDataFields, UserDataMethods,
 };
-use std::{
-    collections::HashMap,
-    marker::PhantomData,
-    sync::{Arc, Mutex},
-};
+use std::{collections::HashMap, marker::PhantomData};
 
 use super::{MaybeSend, TealData, TealDataFields, TealDataMethods};
 use crate::{type_generator::get_method_data, TealMultiValue, TypeName};
@@ -22,7 +19,7 @@ where
     cont: &'a mut Container,
     _t: std::marker::PhantomData<(&'a (), T)>,
     _x: &'lua std::marker::PhantomData<()>,
-    documentation: Arc<Mutex<HashMap<Vec<u8>, String>>>,
+    documentation: HashMap<Vec<u8>, String>,
     type_doc: String,
     next_docs: Option<String>,
 }
@@ -115,12 +112,12 @@ where
             .map(|v| "Signature: ".to_string() + &v)
             .unwrap_or_default();
         let docs = generated + "\n\ndocs:\n" + &self.next_docs.take().unwrap_or_default();
-        let mut documentation = self.documentation.borrow_mut();
+        let documentation = &mut self.documentation;
         documentation.insert(to.to_owned(), docs);
     }
     fn copy_field_docs<F: TypeName>(&mut self, name: &[u8]) {
         let name = name.to_vec();
-        let mut documentation = self.documentation.borrow_mut();
+        let documentation = &mut self.documentation;
         let mut current_doc = match documentation.remove(&name) {
             Some(x) => x,
             None => {
@@ -270,7 +267,6 @@ where
         let help = self.documentation.clone();
         let type_doc = self.type_doc.clone();
         self.add_function("help", move |lua, key: Option<mlua::String>| {
-            let help = help.borrow();
             let doc = match key {
                 Some(x) => help
                     .get(x.as_bytes())
