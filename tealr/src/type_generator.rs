@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "mlua")]
 use crate::mlu::{
-    get_meta_name as get_meta_name_mlua, MaybeSend, TealData as TealDataM,
+    get_meta_name as get_meta_name_mlua, MaybeSend, TealData as TealDataM, TealDataFields,
     TealDataMethods as TealDataMethodsM,
 };
 #[cfg(feature = "mlua")]
@@ -27,9 +27,7 @@ use mlua::{
     ToLuaMulti as ToLuaMultiM, UserData as UserDataM,
 };
 
-use crate::{
-    exported_function::ExportedFunction, mlu::TealDataFields, type_parts_to_str, NamePart, TypeName,
-};
+use crate::{exported_function::ExportedFunction, type_parts_to_str, NamePart, TypeName};
 
 #[cfg(any(feature = "rlua", feature = "mlua"))]
 use crate::TealMultiValue;
