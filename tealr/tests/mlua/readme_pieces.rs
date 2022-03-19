@@ -33,13 +33,23 @@ create_union_mlua!(enum YourTypeName = i32 | String);
 
 create_generic_mlua!(X);
 #[derive(Clone, MluaUserData, TypeName)]
-struct Example {}
+struct Example {
+    example: u32,
+}
+
 impl TealData for Example {
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method(
             "generic_function_callback",
             |_, _, fun: TypedFunction<String, X>| fun.call("A nice string!".to_string()),
         );
+    }
+    fn add_fields<'lua, F: tealr::mlu::TealDataFields<'lua, Self>>(fields: &mut F) {
+        fields.add_field_method_get("example", |_, this| Ok(this.example));
+        fields.add_field_method_set("example", |_, this, value| {
+            this.example = value;
+            Ok(())
+        })
     }
 }
 
