@@ -1,8 +1,10 @@
-use std::{cell::RefCell, collections::HashMap, marker::PhantomData, rc::Rc};
-
-use bstr::ByteVec;
 use mlua::{
     FromLuaMulti, Lua, MetaMethod, Result, ToLuaMulti, UserData, UserDataFields, UserDataMethods,
+};
+use std::{
+    collections::HashMap,
+    marker::PhantomData,
+    sync::{Arc, Mutex},
 };
 
 use super::{MaybeSend, TealData, TealDataFields, TealDataMethods};
@@ -20,7 +22,7 @@ where
     cont: &'a mut Container,
     _t: std::marker::PhantomData<(&'a (), T)>,
     _x: &'lua std::marker::PhantomData<()>,
-    documentation: Rc<RefCell<HashMap<Vec<u8>, String>>>,
+    documentation: Arc<Mutex<HashMap<Vec<u8>, String>>>,
     type_doc: String,
     next_docs: Option<String>,
 }
@@ -128,7 +130,7 @@ where
             }
         };
         current_doc.push_str(&self.next_docs.take().unwrap_or_default());
-        documentation.insert(name.clone(), current_doc);
+        documentation.insert(name, current_doc);
     }
     fn document(&mut self, documentation: &str) {
         match &mut self.next_docs {
