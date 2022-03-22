@@ -32,7 +32,7 @@ use crate::{exported_function::ExportedFunction, type_parts_to_str, NamePart, Ty
 #[cfg(any(feature = "rlua", feature = "mlua"))]
 use crate::TealMultiValue;
 
-#[derive(Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 ///Simple wrapper around `Vec<u8>`
 pub struct NameContainer(pub(crate) Vec<u8>);
 
@@ -148,7 +148,7 @@ impl TypeGenerator {
         let fields: Vec<_> = self
             .fields
             .into_iter()
-            .filter(|(name, _)| !duplicates.insert(name.0.clone()))
+            .filter(|(name, _)| duplicates.insert(name.0.clone()))
             .map(|(name, lua_type)| {
                 let doc = match documentation.get(&name) {
                     Some(x) => x.lines().map(|v| format!("--{v}\n")).collect::<String>(),

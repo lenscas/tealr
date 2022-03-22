@@ -21,7 +21,7 @@ fn add_generics(v: &[crate::TealType], generics: &mut std::collections::HashSet<
 }
 
 ///Contains the data needed to write down the type of a function
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct ExportedFunction {
     ///Name of the function
     pub name: NameContainer,
