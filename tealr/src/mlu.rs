@@ -2,17 +2,18 @@
 pub mod generics;
 mod picker_macro;
 pub(crate) mod teal_data;
+mod teal_data_fields;
 pub(crate) mod teal_data_methods;
 mod typed_function;
 pub(crate) mod user_data_wrapper;
 use std::borrow::Cow;
 
-pub use mlua;
-
 pub use self::{
     teal_data::TealData, teal_data_methods::TealDataMethods, typed_function::TypedFunction,
     user_data_wrapper::UserDataWrapper,
 };
+pub use mlua;
+pub use teal_data_fields::TealDataFields;
 
 pub(crate) fn get_meta_name(name: mlua::MetaMethod) -> Cow<'static, str> {
     use mlua::MetaMethod;

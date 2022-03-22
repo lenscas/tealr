@@ -12,7 +12,7 @@ use tealr::{
 
 //First, create the struct you want to export to lua.
 #[derive(Clone, Copy)]
-struct Example {}
+struct Example(u32);
 
 //now, implement TealData. This tells rlua what methods are available and tealr what the types are
 impl TealData for Example {
@@ -20,7 +20,7 @@ impl TealData for Example {
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
         //methods.add_method("example_method", |_, _, x: i8| Ok(x));
         methods.add_method(
-            "example_method2",
+            "example_method",
             |_, _, x: tealr::mlu::TypedFunction<i32, i64>| Ok(x),
         );
         methods.add_method_mut("example_method_mut", |_, _, x: (i8, String)| Ok(x.1));
@@ -28,6 +28,13 @@ impl TealData for Example {
         methods.add_function_mut("example_function_mut", |_, x: (bool, Option<Example>)| {
             Ok(x)
         })
+    }
+    fn add_fields<'lua, F: tealr::mlu::TealDataFields<'lua, Self>>(fields: &mut F) {
+        fields.add_field_method_get("example_field", |_, this| Ok(this.0));
+        fields.add_field_method_set("example_field", |_, this, value| {
+            this.0 = value;
+            Ok(())
+        });
     }
 }
 
@@ -50,11 +57,16 @@ impl UserData for Example {
         let mut wrapper = UserDataWrapper::from_user_data_methods(methods);
         <Self as TealData>::add_methods(&mut wrapper)
     }
+    fn add_fields<'lua, F: mlua::UserDataFields<'lua, Self>>(fields: &mut F) {
+        let mut wrapper = UserDataWrapper::from_user_data_fields(fields);
+        <Self as TealData>::add_fields(&mut wrapper)
+    }
 }
 
 impl TypeBody for Example {
     fn get_type_body(gen: &mut tealr::TypeGenerator) {
         gen.is_user_data = true;
+        <Self as TealData>::add_fields(gen);
         <Self as TealData>::add_methods(gen);
     }
 }
@@ -76,12 +88,15 @@ fn main() -> Result<()> {
     let lua = Lua::new();
 
     let globals = lua.globals();
-    globals.set("test", Example {})?;
+    globals.set("test", Example(1))?;
     let code = "
-print(test:example_method(1))
+print(test:example_method(function()return 1 end))
 print(test:example_method_mut(2,\"test\"))
 print(test.example_function({}))
 print(test.example_function_mut(true))
+print(\"Example field\", test.example_field)
+test.example_field = 2
+print(\"After modifying\",test.example_field)
         ";
     let x = lua.load(code).set_name("test?")?.eval();
     x

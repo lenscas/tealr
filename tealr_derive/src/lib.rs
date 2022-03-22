@@ -86,11 +86,17 @@ fn impl_mlua_user_data_derive(ast: &syn::DeriveInput) -> proc_macro2::TokenStrea
                 let mut x = ::tealr::mlu::UserDataWrapper::from_user_data_methods(methods);
                 <Self as ::tealr::mlu::TealData>::add_methods(&mut x);
             }
+            fn add_fields<'lua, F: ::tealr::mlu::mlua::UserDataFields<'lua, Self>>(fields: &mut F) {
+                let mut wrapper = ::tealr::mlu::UserDataWrapper::from_user_data_fields(fields);
+                <Self as ::tealr::mlu::TealData>::add_fields(&mut wrapper)
+            }
         }
         impl ::tealr::TypeBody for #name {
             fn get_type_body(gen: &mut ::tealr::TypeGenerator) {
                 gen.is_user_data = true;
+                <Self as ::tealr::mlu::TealData>::add_fields(gen);
                 <Self as ::tealr::mlu::TealData>::add_methods(gen);
+
             }
         }
     };

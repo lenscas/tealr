@@ -1,4 +1,9 @@
-use std::{borrow::Cow, collections::HashMap, ops::Deref, string::FromUtf8Error};
+use std::{
+    borrow::Cow,
+    collections::{HashMap, HashSet},
+    ops::Deref,
+    string::FromUtf8Error,
+};
 
 #[cfg(feature = "rlua")]
 use crate::rlu::{
@@ -13,7 +18,7 @@ use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "mlua")]
 use crate::mlu::{
-    get_meta_name as get_meta_name_mlua, MaybeSend, TealData as TealDataM,
+    get_meta_name as get_meta_name_mlua, MaybeSend, TealData as TealDataM, TealDataFields,
     TealDataMethods as TealDataMethodsM,
 };
 #[cfg(feature = "mlua")]
@@ -27,7 +32,7 @@ use crate::{exported_function::ExportedFunction, type_parts_to_str, NamePart, Ty
 #[cfg(any(feature = "rlua", feature = "mlua"))]
 use crate::TealMultiValue;
 
-#[derive(Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 ///Simple wrapper around `Vec<u8>`
 pub struct NameContainer(pub(crate) Vec<u8>);
 
@@ -88,7 +93,7 @@ pub struct TypeGenerator {
     ///The name of the type in teal
     pub type_name: Cow<'static, [NamePart]>,
     ///The exposed fields and their types
-    pub fields: Vec<(Cow<'static, str>, Cow<'static, [NamePart]>)>,
+    pub fields: Vec<(NameContainer, Cow<'static, [NamePart]>)>,
     ///exported methods
     pub methods: Vec<ExportedFunction>,
     ///exported methods that mutate something
@@ -138,14 +143,28 @@ impl TypeGenerator {
     pub(crate) fn generate(self) -> std::result::Result<String, FromUtf8Error> {
         //let head = format!("local record {}", self.type_name);
         let type_name = type_parts_to_str(self.type_name);
-
+        let mut duplicates = HashSet::new();
+        let documentation = &self.documentation;
         let fields: Vec<_> = self
             .fields
             .into_iter()
-            .map(|(name, lua_type)| format!("{} : {}", name, crate::type_parts_to_str(lua_type)))
+            .filter(|(name, _)| duplicates.insert(name.0.clone()))
+            .map(|(name, lua_type)| {
+                let doc = match documentation.get(&name) {
+                    Some(x) => x.lines().map(|v| format!("--{v}\n")).collect::<String>(),
+                    None => String::from(""),
+                };
+                (name, lua_type, doc)
+            })
+            .map(|(name, lua_type, doc)| {
+                format!(
+                    "{doc}{} : {}",
+                    String::from_utf8_lossy(&name),
+                    crate::type_parts_to_str(lua_type)
+                )
+            })
             .collect();
 
-        let documentation = &self.documentation;
         let methods: Vec<_> = self
             .methods
             .into_iter()
@@ -272,9 +291,29 @@ impl TypeGenerator {
 
 impl TypeGenerator {
     fn copy_docs(&mut self, to: &[u8]) {
-        if let Some(x) = self.next_docs.take() {
-            self.documentation.insert(to.to_owned().into(), x);
+        if let Some(docs) = self.next_docs.take() {
+            match self.documentation.entry(to.to_owned().into()) {
+                std::collections::hash_map::Entry::Vacant(x) => {
+                    x.insert(docs);
+                }
+                std::collections::hash_map::Entry::Occupied(mut x) => {
+                    let current_docs = x.get_mut();
+                    current_docs.push('\n');
+                    current_docs.push('\n');
+                    current_docs.push_str(&docs);
+                }
+            }
         }
+    }
+    fn document(&mut self, documentation: &str) {
+        match &mut self.next_docs {
+            Some(x) => {
+                x.push('\n');
+                x.push('\n');
+                x.push_str(documentation)
+            }
+            None => self.next_docs = Some(documentation.to_owned()),
+        };
     }
 }
 
@@ -393,13 +432,7 @@ where
         ))
     }
     fn document(&mut self, documentation: &str) {
-        match &mut self.next_docs {
-            Some(x) => {
-                x.push('\n');
-                x.push_str(documentation)
-            }
-            None => self.next_docs = Some(documentation.to_owned()),
-        };
+        self.document(documentation)
     }
     fn generate_help(&mut self) {
         self.functions
@@ -561,26 +594,83 @@ where
             .push(get_method_data::<A, R, _>(name, false, None))
     }
 
-    fn document(&mut self, documentation: &str) {
-        match &mut self.next_docs {
-            Some(x) => {
-                x.push('\n');
-                x.push('\n');
-                x.push_str(documentation)
-            }
-            None => self.next_docs = Some(documentation.to_owned()),
-        };
-    }
     fn generate_help(&mut self) {
         self.functions
             .push(get_method_data::<Option<String>, String, _>(
                 "help", false, None,
             ))
     }
-
+    fn document(&mut self, documentation: &str) {
+        self.document(documentation)
+    }
     fn document_type(&mut self, documentation: &str) {
         self.type_doc.push_str(documentation);
         self.type_doc.push('\n');
         self.type_doc.push('\n');
+    }
+}
+#[cfg(feature = "mlua")]
+impl<'lua, T> TealDataFields<'lua, T> for TypeGenerator
+where
+    T: 'static + TealDataM + UserDataM + TypeName,
+{
+    fn add_field_method_get<S, R, M>(&mut self, name: &S, _: M)
+    where
+        S: AsRef<[u8]> + ?Sized,
+        R: mlua::ToLua<'lua> + TypeName,
+        M: 'static + MaybeSend + Fn(&'lua Lua, &T) -> mlua::Result<R>,
+    {
+        self.copy_docs(name.as_ref());
+        self.fields
+            .push((name.as_ref().to_vec().into(), R::get_type_parts()));
+    }
+
+    fn add_field_method_set<S, A, M>(&mut self, name: &S, _: M)
+    where
+        S: AsRef<[u8]> + ?Sized,
+        A: mlua::FromLua<'lua> + TypeName,
+        M: 'static + MaybeSend + FnMut(&'lua Lua, &mut T, A) -> mlua::Result<()>,
+    {
+        self.copy_docs(name.as_ref());
+        self.fields
+            .push((name.as_ref().to_vec().into(), A::get_type_parts()));
+    }
+
+    fn add_field_function_get<S, R, F>(&mut self, name: &S, _: F)
+    where
+        S: AsRef<[u8]> + ?Sized,
+        R: mlua::ToLua<'lua> + TypeName,
+        F: 'static + MaybeSend + Fn(&'lua Lua, mlua::AnyUserData<'lua>) -> mlua::Result<R>,
+    {
+        self.copy_docs(name.as_ref());
+        self.fields
+            .push((name.as_ref().to_vec().into(), R::get_type_parts()));
+    }
+
+    fn add_field_function_set<S, A, F>(&mut self, name: &S, _: F)
+    where
+        S: AsRef<[u8]> + ?Sized,
+        A: mlua::FromLua<'lua> + TypeName,
+        F: 'static + MaybeSend + FnMut(&'lua Lua, mlua::AnyUserData<'lua>, A) -> mlua::Result<()>,
+    {
+        self.copy_docs(name.as_ref());
+        self.fields
+            .push((name.as_ref().to_vec().into(), A::get_type_parts()));
+    }
+
+    fn add_meta_field_with<R, F>(&mut self, meta: MetaMethodM, _: F)
+    where
+        F: 'static + MaybeSend + Fn(&'lua Lua) -> mlua::Result<R>,
+        R: mlua::ToLua<'lua> + TypeName,
+    {
+        let x = Into::<MetaMethodM>::into(meta);
+        let name: Cow<'_, str> = Cow::Owned(x.name().to_string());
+        self.copy_docs(name.as_bytes());
+        self.fields
+            .push((NameContainer::from(name), R::get_type_parts()));
+    }
+
+    fn document(&mut self, documentation: &str) {
+        self.document(documentation)
     }
 }

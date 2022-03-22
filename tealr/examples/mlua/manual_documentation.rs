@@ -12,7 +12,7 @@ use tealr::{
 
 //First, create the struct you want to export to lua.
 #[derive(Clone, Copy)]
-struct Example {}
+struct Example(u32);
 
 //now, implement TealData. This tells rlua what methods are available and tealr what the types are
 impl TealData for Example {
@@ -39,6 +39,15 @@ impl TealData for Example {
         });
         methods.generate_help();
     }
+    fn add_fields<'lua, F: tealr::mlu::TealDataFields<'lua, Self>>(fields: &mut F) {
+        fields.document("This is an example field");
+        fields.add_field_method_get("example", |_, this| Ok(this.0));
+        fields.document("Documentation for fields with the same name get merged");
+        fields.add_field_method_set("example", |_, this, value| {
+            this.0 = value;
+            Ok(())
+        })
+    }
 }
 
 impl TypeName for Example {
@@ -57,11 +66,16 @@ impl UserData for Example {
         let mut wrapper = UserDataWrapper::from_user_data_methods(methods);
         <Self as TealData>::add_methods(&mut wrapper);
     }
+    fn add_fields<'lua, F: mlua::UserDataFields<'lua, Self>>(fields: &mut F) {
+        let mut wrapper = UserDataWrapper::from_user_data_fields(fields);
+        <Self as TealData>::add_fields(&mut wrapper);
+    }
 }
 
 impl TypeBody for Example {
     fn get_type_body(gen: &mut tealr::TypeGenerator) {
         gen.is_user_data = true;
+        <Self as TealData>::add_fields(gen);
         <Self as TealData>::add_methods(gen);
     }
 }
@@ -83,7 +97,7 @@ fn main() -> Result<()> {
     let lua = Lua::new();
 
     let globals = lua.globals();
-    globals.set("test", Example {})?;
+    globals.set("test", Example(1))?;
     let code = "
 print(test.help())
 print(\"----\")
