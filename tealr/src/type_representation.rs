@@ -373,6 +373,12 @@ impl<T: TypeName> TypeName for Vec<T> {
     }
 }
 
+impl<T: TypeName, const N: usize> TypeName for [T; N] {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
+        Vec::<T>::get_type_parts()
+    }
+}
+
 impl<T: TypeName> TypeName for Option<T> {
     fn get_type_kind() -> KindOfType {
         KindOfType::Builtin
