@@ -48,9 +48,14 @@ pub(crate) fn get_meta_name(name: mlua::MetaMethod) -> Cow<'static, str> {
         MetaMethod::NewIndex => Cow::Borrowed("__newindex"),
         MetaMethod::Call => Cow::Borrowed("__call"),
         MetaMethod::ToString => Cow::Borrowed("__tostring"),
-        #[cfg(any(feature = "mlua_lua54", feature = "mlua_lua53", feature = "mlua_lua52"))]
+        #[cfg(any(
+            feature = "mlua_lua54",
+            feature = "mlua_lua53",
+            feature = "mlua_lua52",
+            feature = "mlua_luajit52"
+        ))]
         MetaMethod::Pairs => Cow::Borrowed("__pairs"),
-        #[cfg(any(feature = "mlua_lua52"))]
+        #[cfg(any(feature = "mlua_lua52", feature = "mlua_luajit52"))]
         MetaMethod::IPairs => Cow::Borrowed("__ipairs"),
         #[cfg(any(feature = "mlua_lua54"))]
         MetaMethod::Close => Cow::Borrowed("__close"),

@@ -27,6 +27,7 @@ mlua_lua52 = ["mlua/lua52"]
 mlua_lua53 = ["mlua/lua53"]
 mlua_lua54 = ["mlua/lua54"]
 mlua_luajit = ["mlua/luajit"]
+mlua_luajit52 = ["mlua/luajit52"]
 mlua_macros = ["mlua/macros"]
 mlua_module = ["mlua/module"]
 mlua_send = ["mlua/send"]
@@ -34,14 +35,18 @@ mlua_serialize = ["mlua/serialize"]
 mlua_vendored = ["mlua/vendored"]
 
 #rlua specific features
-rlua_builtin-lua = ["rlua/builtin-lua"]
-rlua_system-lua = ["rlua/system-lua"]
+rlua_builtin-lua51 = ["rlua/builtin-lua51"]
+rlua_builtin-lua53 = ["rlua/builtin-lua53"]
+rlua_builtin-lua54 = ["rlua/builtin-lua54"]
+rlua_system-lua51 = ["rlua/system-lua51"]
+rlua_system-lua53 = ["rlua/system-lua53"]
+rlua_system-lua54 = ["rlua/system-lua54"]
 
 [dependencies]
 bstr = {version = "0.2", default_features = false, features = ["std"]}
 itertools = "0.10.3"
-mlua = {version = "0.6.6", optional = true, default_features = false}
-rlua = {version = "0.17", optional = true, default_features = false}
+mlua = {version = "0.7.4", optional = true, default_features = false}
+rlua = {version = "0.19.1", optional = true, default_features = false}
 serde = {version = "1.0.136", features = ["derive"]}
 tealr_derive = {version = "0.8.0", optional = true, path = "../tealr_derive"}
 
@@ -76,37 +81,37 @@ required-features = ["rlua"]
 [[test]]
 name = "mlua_embed_teal"
 path = "tests/mlua/embed_teal.rs"
-required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
+required-features = ["mlua"]
 [[test]]
 name = "mlua_inlined_type"
 path = "tests/mlua/inlined_type.rs"
-required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
+required-features = ["mlua"]
 
 [[test]]
 name = "mlua_generics"
 path = "tests/mlua/generics.rs"
-required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
+required-features = ["mlua"]
 [[test]]
 name = "mlua_type_picker"
 path = "tests/mlua/type_picker.rs"
-required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
+required-features = ["mlua"]
 [[test]]
 name = "mlua_async"
 path = "tests/mlua/async.rs"
-required-features = ["mlua", "mlua_lua54", "mlua_vendored", "mlua_async"]
+required-features = ["mlua", "mlua_async"]
 [[test]]
 name = "mlua_function_wrapper"
 path = "tests/mlua/function_wrapper.rs"
-required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
+required-features = ["mlua"]
 [[test]]
 name = "mlua_readme_pieces"
 path = "tests/mlua/readme_pieces.rs"
-required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
+required-features = ["mlua"]
 
 [[test]]
 name = "mlua_meta_methods"
 path = "tests/mlua/meta_methods.rs"
-required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
+required-features = ["mlua"]
 
 # Examples using rlua
 [[example]]
@@ -134,24 +139,24 @@ required-features = ["rlua"]
 [[example]]
 name = "mlua_compile_inline_teal"
 path = "examples/mlua/compile_inline_teal.rs"
-required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
+required-features = ["mlua"]
 [[example]]
 name = "mlua_derive"
 path = "examples/mlua/derive.rs"
-required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
+required-features = ["mlua"]
 [[example]]
 name = "mlua_embed_teal"
 path = "examples/mlua/embed_teal.rs"
-required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
+required-features = ["mlua"]
 [[example]]
 name = "mlua_manual"
 path = "examples/mlua/manual.rs"
-required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
+required-features = ["mlua"]
 
 [[example]]
 name = "mlua_manual_documentation"
 path = "examples/mlua/manual_documentation.rs"
-required-features = ["mlua", "mlua_lua54", "mlua_vendored"]
+required-features = ["mlua"]
 
 [package.metadata.docs.rs]
-features = ["mlua", "rlua", "mlua_lua53", "mlua_vendored", "mlua_async", "mlua_serialize", "rlua_builtin-lua"]
+features = ["mlua", "rlua", "rlua_builtin-lua54", "mlua_lua54", "mlua_vendored", "mlua_async", "mlua_serialize", "rlua_builtin-lua"]

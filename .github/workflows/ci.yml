@@ -29,7 +29,8 @@ jobs:
           - "cargo test --features mlua,mlua_vendored,mlua_lua54,mlua_async,mlua_send"
           - "cargo test --features mlua,mlua_vendored,mlua_lua53,mlua_async --no-run"
           - "cargo test --features mlua,mlua_vendored,mlua_lua54,mlua_async --no-run"
-          - "cargo test --features rlua,rlua_builtin-lua"
+          - "cargo test --features rlua,rlua_builtin-lua54"
+          - "cargo test --features rlua,rlua_builtin-lua53"
     steps:
     - uses: actions/checkout@master
     - uses: hecrj/setup-rust-action@v1.3.4 
@@ -37,7 +38,7 @@ jobs:
         rust-version: stable
     - uses: leafo/gh-actions-lua@v8.0.0
       with:
-        luaVersion: "5.3"
+        luaVersion: "5.4"
     - uses: leafo/gh-actions-luarocks@v4.0.0
     - name:  Install dependencies
       run: luarocks install tl
@@ -50,8 +51,10 @@ jobs:
     strategy:
       matrix:
         tests :
+          - "cargo clippy --features mlua,mlua_vendored,mlua_lua54,mlua_async,mlua_send -- -D warnings"
           - "cargo clippy --features mlua,mlua_vendored,mlua_lua53,mlua_async,mlua_send -- -D warnings"
-          - "cargo clippy --features rlua,rlua_builtin-lua -- -D warnings"
+          - "cargo clippy --features rlua,rlua_builtin-lua54 -- -D warnings"
+          - "cargo clippy --features rlua,rlua_builtin-lua53 -- -D warnings"
     steps:
     - uses: hecrj/setup-rust-action@v1.3.4 
       with:

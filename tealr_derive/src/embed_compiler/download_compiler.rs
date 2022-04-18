@@ -9,7 +9,15 @@ use ureq::get;
 use zip::{read::ZipFile, ZipArchive};
 
 pub(crate) fn download_teal(url: String, main_folder: String) -> String {
-    let res = get(&url).call();
+    let res = match get(&url).call() {
+        Ok(x) => x,
+        Err(ureq::Error::Status(state, res)) => {
+            eprintln!("Did not get a success status. Got: {}", state);
+            eprintln!("Message: {:?}", res);
+            res
+        }
+        Err(x) => panic!("Failed downloading teal compiler. Error:{}", x),
+    };
     let mut reader = res.into_reader();
     let mut buffer = Vec::with_capacity(100000);
     reader
