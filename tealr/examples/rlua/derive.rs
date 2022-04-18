@@ -1,5 +1,6 @@
 use rlua::{Lua, Result};
 use tealr::{
+    new_type,
     rlu::{TealData, TealDataMethods},
     RluaUserData, TypeName, TypeWalker,
 };
@@ -13,19 +14,27 @@ use tealr::{
 //derive TealDerive, which does both. However you will still need to import
 //UserData and TypeName
 //The clone is only needed because one of the example functions has it as a parameter
-#[derive(Clone, RluaUserData, TypeName)]
-struct Example {}
+#[derive(Clone, RluaUserData)]
+struct Example<A: Clone> {
+    _test: A,
+}
 
 //now, implement TealData. This tells rlua what methods are available and tealr what the types are
-impl TealData for Example {
+impl<A: Clone> TealData for Example<A> {
     //implement your methods/functions
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method("example_method", |_, _, x: i8| Ok(x));
         methods.add_method_mut("example_method_mut", |_, _, x: (i8, String)| Ok(x.1));
         methods.add_function("example_function", |_, x: Vec<String>| Ok((x, 8)));
-        methods.add_function_mut("example_function_mut", |_, x: (bool, Option<Example>)| {
-            Ok(x)
-        })
+        methods.add_function_mut(
+            "example_function_mut",
+            |_, x: (bool, Option<Example<A>>)| Ok(x),
+        )
+    }
+}
+impl<T: Clone> TypeName for Example<T> {
+    fn get_type_parts() -> std::borrow::Cow<'static, [tealr::NamePart]> {
+        new_type!(Example)
     }
 }
 
@@ -34,7 +43,7 @@ fn main() -> Result<()> {
     let file_contents = TypeWalker::new() //creates the generator
         //tells it that we want to generate Example
         //add more calls to process_type to generate more types in the same file
-        .process_type::<Example>()
+        .process_type::<Example<i32>>()
         //generate the file
         .generate_global("test")
         //the name parameter for TealDataMethods::{add_method,add_method_mut,add_function,add_function_mut}
@@ -51,7 +60,7 @@ fn main() -> Result<()> {
     let lua = Lua::new();
     lua.context(|lua_ctx| {
         let globals = lua_ctx.globals();
-        globals.set("test", Example {})?;
+        globals.set("test", Example { _test: 1 })?;
         let code = "
 print(test:example_method(1))
 print(test:example_method_mut(2,\"test\"))

@@ -8,6 +8,7 @@
 
 extern crate proc_macro;
 extern crate syn;
+extern crate venial;
 #[macro_use]
 extern crate quote;
 
@@ -16,6 +17,8 @@ extern crate quote;
     feature = "embed_compiler_from_download"
 ))]
 mod embed_compiler;
+#[cfg(feature = "derive")]
+mod user_data;
 
 use std::{
     ffi::OsStr,
@@ -32,6 +35,7 @@ use std::{
 use embed_compiler::EmbedOptions;
 use proc_macro::TokenStream;
 use syn::{parse::Parse, parse_macro_input, LitStr, Token};
+use venial::parse_declaration;
 
 ///Implements [rlua::UserData](rlua::UserData) and `tealr::TypeBody`
 ///
@@ -42,27 +46,10 @@ use syn::{parse::Parse, parse_macro_input, LitStr, Token};
 #[cfg(feature = "derive")]
 #[proc_macro_derive(RluaUserData)]
 pub fn rlua_user_data_derive(input: TokenStream) -> TokenStream {
-    let ast = syn::parse(input).unwrap();
-    impl_rlua_user_data_derive(&ast).into()
-}
+    use user_data::impl_rlua_user_data_derive;
 
-fn impl_rlua_user_data_derive(ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
-    let name = &ast.ident;
-    let gen = quote! {
-        impl rlua::UserData for #name {
-            fn add_methods<'lua, T: ::tealr::rlu::rlua::UserDataMethods<'lua, Self>>(methods: &mut T) {
-                let mut x = ::tealr::rlu::UserDataWrapper::from_user_data_methods(methods);
-                <Self as ::tealr::rlu::TealData>::add_methods(&mut x);
-            }
-        }
-        impl ::tealr::TypeBody for #name {
-            fn get_type_body(gen: &mut ::tealr::TypeGenerator) {
-                gen.is_user_data = true;
-                <Self as ::tealr::rlu::TealData>::add_methods(gen);
-            }
-        }
-    };
-    gen
+    let ast = parse_declaration(proc_macro2::TokenStream::from(input));
+    impl_rlua_user_data_derive(ast).into()
 }
 
 ///Implements [mlua::UserData](mlua::UserData) and `tealr::TypeBody`
@@ -74,59 +61,22 @@ fn impl_rlua_user_data_derive(ast: &syn::DeriveInput) -> proc_macro2::TokenStrea
 #[cfg(feature = "derive")]
 #[proc_macro_derive(MluaUserData)]
 pub fn mlua_user_data_derive(input: TokenStream) -> TokenStream {
+    use user_data::impl_mlua_user_data_derive;
+
     let ast = syn::parse(input).unwrap();
     impl_mlua_user_data_derive(&ast).into()
 }
-
-fn impl_mlua_user_data_derive(ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
-    let name = &ast.ident;
-    let gen = quote! {
-        impl mlua::UserData for #name {
-            fn add_methods<'lua, T: ::tealr::mlu::mlua::UserDataMethods<'lua, Self>>(methods: &mut T) {
-                let mut x = ::tealr::mlu::UserDataWrapper::from_user_data_methods(methods);
-                <Self as ::tealr::mlu::TealData>::add_methods(&mut x);
-            }
-            fn add_fields<'lua, F: ::tealr::mlu::mlua::UserDataFields<'lua, Self>>(fields: &mut F) {
-                let mut wrapper = ::tealr::mlu::UserDataWrapper::from_user_data_fields(fields);
-                <Self as ::tealr::mlu::TealData>::add_fields(&mut wrapper)
-            }
-        }
-        impl ::tealr::TypeBody for #name {
-            fn get_type_body(gen: &mut ::tealr::TypeGenerator) {
-                gen.is_user_data = true;
-                <Self as ::tealr::mlu::TealData>::add_fields(gen);
-                <Self as ::tealr::mlu::TealData>::add_methods(gen);
-
-            }
-        }
-    };
-    gen
-}
-
 ///Implements `tealr::TypeName`.
 ///
 ///`TypeName::get_type_name` will return the name of the rust type.
 #[cfg(feature = "derive")]
 #[proc_macro_derive(TypeName)]
 pub fn type_representation_derive(input: TokenStream) -> TokenStream {
-    let ast = syn::parse(input).unwrap();
+    use user_data::impl_type_representation_derive;
+
+    let ast = parse_declaration(input.into());
 
     impl_type_representation_derive(&ast).into()
-}
-fn impl_type_representation_derive(ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
-    let name = &ast.ident;
-    let gen = quote! {
-        impl ::tealr::TypeName for #name {
-            fn get_type_parts() -> ::std::borrow::Cow<'static, [::tealr::NamePart]> {
-                ::std::borrow::Cow::Borrowed(&[::tealr::NamePart::Type(::tealr::TealType{
-                    name: ::std::borrow::Cow::Borrowed(stringify!(#name)),
-                    generics: ::std::option::Option::None,
-                    type_kind: ::tealr::KindOfType::External
-                })])
-            }
-        }
-    };
-    gen
 }
 
 ///Implement both [rlua::UserData](rlua::UserData) and `tealr::TypeName`.
@@ -136,9 +86,11 @@ fn impl_type_representation_derive(ast: &syn::DeriveInput) -> proc_macro2::Token
 #[cfg(feature = "derive")]
 #[proc_macro_derive(RluaTealDerive)]
 pub fn rlua_teal_derive(input: TokenStream) -> TokenStream {
-    let ast = syn::parse(input).unwrap();
+    use crate::user_data::{impl_rlua_user_data_derive, impl_type_representation_derive};
+
+    let ast = parse_declaration(input.into());
     let mut stream = impl_type_representation_derive(&ast);
-    stream.extend(impl_rlua_user_data_derive(&ast));
+    stream.extend(impl_rlua_user_data_derive(ast));
     stream.into()
 }
 
@@ -149,10 +101,14 @@ pub fn rlua_teal_derive(input: TokenStream) -> TokenStream {
 #[cfg(feature = "derive")]
 #[proc_macro_derive(MluaTealDerive)]
 pub fn mlua_teal_derive(input: TokenStream) -> TokenStream {
-    let ast = syn::parse(input).unwrap();
-    let mut stream = impl_type_representation_derive(&ast);
-    stream.extend(impl_mlua_user_data_derive(&ast));
-    stream.into()
+    todo!();
+    // use user_data::impl_mlua_user_data_derive;
+    //
+    // use crate::user_data::impl_type_representation_derive;
+    // let ast = syn::parse(input).unwrap();
+    // let mut stream = impl_type_representation_derive(&ast);
+    // stream.extend(impl_mlua_user_data_derive(&ast));
+    // stream.into()
 }
 
 struct CompileInput {
