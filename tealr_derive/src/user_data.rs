@@ -1,6 +1,5 @@
-use proc_macro2::TokenStream;
-use quote::ToTokens;
-use venial::{Declaration, Error, Struct};
+use proc_macro2::{Ident, TokenStream};
+use venial::{Declaration, Error};
 
 pub(crate) fn impl_type_representation_derive(ast: &Declaration) -> proc_macro2::TokenStream {
     let name = ast.name();
@@ -18,45 +17,63 @@ pub(crate) fn impl_type_representation_derive(ast: &Declaration) -> proc_macro2:
     gen
 }
 
-pub(crate) fn impl_rlua_user_data_derive(ast: Declaration) -> proc_macro2::TokenStream {
-    let structure = match ast {
-        Declaration::Struct(x) => x,
-        _ => return Error::new("As of right now, only struts are supported.").to_compile_error(),
+fn generate_type_body(
+    name: &Ident,
+    traits: TokenStream,
+    extra_method: Option<TokenStream>,
+) -> TokenStream {
+    let extra_method = match extra_method {
+        Some(x) => quote! {<Self as #traits>::#x(gen);},
+        None => quote!(),
     };
-    return quote! {};
-    // let name = &structure.name;
-    // let generics = structure
-    //     .generic_params
-    //     .map(|v| v.into_token_stream())
-    //     .unwrap_or_else(|| quote! {});
-    // let where_clause = structure
-    //     .where_clause
-    //     .map(|v| v.into_token_stream())
-    //     .unwrap_or_else(|| quote! {});
-    // let res = quote! {
-    //     impl#generics rlua::UserData for #name#generics
-    //     #where_clause
-    //     {
-    //         fn add_methods<'lua, T: ::tealr::rlu::rlua::UserDataMethods<'lua, Self>>(methods: &mut T) {
-    //             let mut x = ::tealr::rlu::UserDataWrapper::from_user_data_methods(methods);
-    //             <Self as ::tealr::rlu::TealData>::add_methods(&mut x);
-    //         }
-    //     }
-    //     impl#generics ::tealr::TypeBody for #name#generics
-    //     #where_clause
-    //     {
-    //         fn get_type_body(gen: &mut ::tealr::TypeGenerator) {
-    //             gen.is_user_data = true;
-    //             <Self as ::tealr::rlu::TealData>::add_methods(gen);
-    //         }
-    //     }
-    // };
-    // res
+    quote! {
+        impl ::tealr::TypeBody for #name {
+            fn get_type_body(gen: &mut ::tealr::TypeGenerator) {
+                gen.is_user_data = true;
+                #extra_method
+                <Self as #traits>::add_methods(gen);
+
+            }
+        }
+    }
 }
 
-pub(crate) fn impl_mlua_user_data_derive(ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
-    let name = &ast.ident;
-    let gen = quote! {
+pub(crate) fn impl_rlua_user_data_derive(ast: &Declaration) -> proc_macro2::TokenStream {
+    let name = match ast {
+        Declaration::Struct(x) => &x.name,
+        Declaration::Enum(x) => &x.name,
+        _ => {
+            return Error::new("As of right now, only structs and enums are supported.")
+                .to_compile_error()
+        }
+    };
+    let type_body = generate_type_body(name, quote! {::tealr::rlu::TealData}, None);
+    quote! {
+        impl rlua::UserData for #name {
+            fn add_methods<'lua, T: ::tealr::rlu::rlua::UserDataMethods<'lua, Self>>(methods: &mut T) {
+                let mut x = ::tealr::rlu::UserDataWrapper::from_user_data_methods(methods);
+                <Self as ::tealr::rlu::TealData>::add_methods(&mut x);
+            }
+        }
+        #type_body
+    }
+}
+
+pub(crate) fn impl_mlua_user_data_derive(ast: &Declaration) -> proc_macro2::TokenStream {
+    let name = match ast {
+        Declaration::Struct(x) => &x.name,
+        Declaration::Enum(x) => &x.name,
+        _ => {
+            return Error::new("As of right now, only structs and enums are supported.")
+                .to_compile_error()
+        }
+    };
+    let type_body = generate_type_body(
+        name,
+        quote! {::tealr::mlu::TealData},
+        Some(quote!(add_fields)),
+    );
+    quote! {
         impl mlua::UserData for #name {
             fn add_methods<'lua, T: ::tealr::mlu::mlua::UserDataMethods<'lua, Self>>(methods: &mut T) {
                 let mut x = ::tealr::mlu::UserDataWrapper::from_user_data_methods(methods);
@@ -67,14 +84,6 @@ pub(crate) fn impl_mlua_user_data_derive(ast: &syn::DeriveInput) -> proc_macro2:
                 <Self as ::tealr::mlu::TealData>::add_fields(&mut wrapper)
             }
         }
-        impl ::tealr::TypeBody for #name {
-            fn get_type_body(gen: &mut ::tealr::TypeGenerator) {
-                gen.is_user_data = true;
-                <Self as ::tealr::mlu::TealData>::add_fields(gen);
-                <Self as ::tealr::mlu::TealData>::add_methods(gen);
-
-            }
-        }
-    };
-    gen
+        #type_body
+    }
 }
