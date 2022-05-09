@@ -1,4 +1,3 @@
-#![warn(missing_docs)]
 //!# Tealr_derive
 //!The derive macro used by [tealr](https://github.com/lenscas/tealr/tree/master/tealr).
 //!
@@ -6,8 +5,6 @@
 //!
 //!Read the [README.md](https://github.com/lenscas/tealr/tree/master/tealr/README.md) in [tealr](https://github.com/lenscas/tealr/tree/master/tealr) for more information.
 
-extern crate proc_macro;
-extern crate syn;
 #[macro_use]
 extern crate quote;
 
@@ -16,14 +13,10 @@ extern crate quote;
     feature = "embed_compiler_from_download"
 ))]
 mod embed_compiler;
-
-use std::{
-    ffi::OsStr,
-    fs::{read_to_string, File},
-    io::Write,
-    path::PathBuf,
-    process::Command,
-};
+#[cfg(feature = "derive")]
+mod from_to_lua;
+#[cfg(feature = "derive")]
+mod user_data;
 
 #[cfg(any(
     feature = "embed_compiler_from_local",
@@ -31,7 +24,7 @@ use std::{
 ))]
 use embed_compiler::EmbedOptions;
 use proc_macro::TokenStream;
-use syn::{parse::Parse, parse_macro_input, LitStr, Token};
+use venial::parse_declaration;
 
 ///Implements [rlua::UserData](rlua::UserData) and `tealr::TypeBody`
 ///
@@ -42,27 +35,10 @@ use syn::{parse::Parse, parse_macro_input, LitStr, Token};
 #[cfg(feature = "derive")]
 #[proc_macro_derive(RluaUserData)]
 pub fn rlua_user_data_derive(input: TokenStream) -> TokenStream {
-    let ast = syn::parse(input).unwrap();
-    impl_rlua_user_data_derive(&ast).into()
-}
+    use user_data::impl_rlua_user_data_derive;
 
-fn impl_rlua_user_data_derive(ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
-    let name = &ast.ident;
-    let gen = quote! {
-        impl rlua::UserData for #name {
-            fn add_methods<'lua, T: ::tealr::rlu::rlua::UserDataMethods<'lua, Self>>(methods: &mut T) {
-                let mut x = ::tealr::rlu::UserDataWrapper::from_user_data_methods(methods);
-                <Self as ::tealr::rlu::TealData>::add_methods(&mut x);
-            }
-        }
-        impl ::tealr::TypeBody for #name {
-            fn get_type_body(gen: &mut ::tealr::TypeGenerator) {
-                gen.is_user_data = true;
-                <Self as ::tealr::rlu::TealData>::add_methods(gen);
-            }
-        }
-    };
-    gen
+    let ast = parse_declaration(input.into());
+    impl_rlua_user_data_derive(&ast).into()
 }
 
 ///Implements [mlua::UserData](mlua::UserData) and `tealr::TypeBody`
@@ -74,59 +50,22 @@ fn impl_rlua_user_data_derive(ast: &syn::DeriveInput) -> proc_macro2::TokenStrea
 #[cfg(feature = "derive")]
 #[proc_macro_derive(MluaUserData)]
 pub fn mlua_user_data_derive(input: TokenStream) -> TokenStream {
-    let ast = syn::parse(input).unwrap();
+    use user_data::impl_mlua_user_data_derive;
+
+    let ast = parse_declaration(input.into());
     impl_mlua_user_data_derive(&ast).into()
 }
-
-fn impl_mlua_user_data_derive(ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
-    let name = &ast.ident;
-    let gen = quote! {
-        impl mlua::UserData for #name {
-            fn add_methods<'lua, T: ::tealr::mlu::mlua::UserDataMethods<'lua, Self>>(methods: &mut T) {
-                let mut x = ::tealr::mlu::UserDataWrapper::from_user_data_methods(methods);
-                <Self as ::tealr::mlu::TealData>::add_methods(&mut x);
-            }
-            fn add_fields<'lua, F: ::tealr::mlu::mlua::UserDataFields<'lua, Self>>(fields: &mut F) {
-                let mut wrapper = ::tealr::mlu::UserDataWrapper::from_user_data_fields(fields);
-                <Self as ::tealr::mlu::TealData>::add_fields(&mut wrapper)
-            }
-        }
-        impl ::tealr::TypeBody for #name {
-            fn get_type_body(gen: &mut ::tealr::TypeGenerator) {
-                gen.is_user_data = true;
-                <Self as ::tealr::mlu::TealData>::add_fields(gen);
-                <Self as ::tealr::mlu::TealData>::add_methods(gen);
-
-            }
-        }
-    };
-    gen
-}
-
 ///Implements `tealr::TypeName`.
 ///
 ///`TypeName::get_type_name` will return the name of the rust type.
 #[cfg(feature = "derive")]
 #[proc_macro_derive(TypeName)]
 pub fn type_representation_derive(input: TokenStream) -> TokenStream {
-    let ast = syn::parse(input).unwrap();
+    use user_data::impl_type_representation_derive;
+
+    let ast = parse_declaration(input.into());
 
     impl_type_representation_derive(&ast).into()
-}
-fn impl_type_representation_derive(ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
-    let name = &ast.ident;
-    let gen = quote! {
-        impl ::tealr::TypeName for #name {
-            fn get_type_parts() -> ::std::borrow::Cow<'static, [::tealr::NamePart]> {
-                ::std::borrow::Cow::Borrowed(&[::tealr::NamePart::Type(::tealr::TealType{
-                    name: ::std::borrow::Cow::Borrowed(stringify!(#name)),
-                    generics: ::std::option::Option::None,
-                    type_kind: ::tealr::KindOfType::External
-                })])
-            }
-        }
-    };
-    gen
 }
 
 ///Implement both [rlua::UserData](rlua::UserData) and `tealr::TypeName`.
@@ -136,7 +75,9 @@ fn impl_type_representation_derive(ast: &syn::DeriveInput) -> proc_macro2::Token
 #[cfg(feature = "derive")]
 #[proc_macro_derive(RluaTealDerive)]
 pub fn rlua_teal_derive(input: TokenStream) -> TokenStream {
-    let ast = syn::parse(input).unwrap();
+    use crate::user_data::{impl_rlua_user_data_derive, impl_type_representation_derive};
+
+    let ast = parse_declaration(input.into());
     let mut stream = impl_type_representation_derive(&ast);
     stream.extend(impl_rlua_user_data_derive(&ast));
     stream.into()
@@ -149,34 +90,18 @@ pub fn rlua_teal_derive(input: TokenStream) -> TokenStream {
 #[cfg(feature = "derive")]
 #[proc_macro_derive(MluaTealDerive)]
 pub fn mlua_teal_derive(input: TokenStream) -> TokenStream {
-    let ast = syn::parse(input).unwrap();
+    use crate::user_data::impl_type_representation_derive;
+    use user_data::impl_mlua_user_data_derive;
+
+    let ast = parse_declaration(input.into());
+
     let mut stream = impl_type_representation_derive(&ast);
     stream.extend(impl_mlua_user_data_derive(&ast));
     stream.into()
 }
 
-struct CompileInput {
-    code: String,
-    path: PathBuf,
-}
-impl Parse for CompileInput {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let code: String = input.parse::<LitStr>()?.value();
-        let has_comma = input.parse::<Option<Token![,]>>()?.is_some();
-        let mut path: PathBuf = std::env::var("CARGO_MANIFEST_DIR")
-            .expect("Could not get the crate directory")
-            .into();
-
-        if has_comma {
-            let extra: LitStr = input.parse()?;
-
-            path = path.join(extra.value());
-        }
-
-        Ok(Self { code, path })
-    }
-}
-
+#[cfg(feature = "compile")]
+mod compile_inline_teal;
 ///Compiles the given teal code at compile time to lua.
 ///
 ///The macro tries it best to pass the correct `--include-dir` to tl using `CARGO_MANIFEST_DIR`.
@@ -188,71 +113,13 @@ impl Parse for CompileInput {
 ///## Example
 ///```
 ///# use tealr_derive::compile_inline_teal;
-///assert_eq!(compile_inline_teal!("local a : number = 1\n"),"local a = 1\n")
+///assert_eq!(compile_inline_teal!("local a : number = 1"),"local a = 1\n")
 ///```
-
 #[cfg(feature = "compile")]
 #[proc_macro]
 pub fn compile_inline_teal(input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as CompileInput);
-
-    let code = input.code;
-    let path = input.path;
-
-    let dir = tempfile::tempdir().expect("Could not create a temporary directory");
-    let temp_path = dir.path();
-    let mut input_file =
-        File::create(temp_path.join("input.tl")).expect("Could not create teal source file");
-    input_file
-        .write_all(code.as_bytes())
-        .expect("Could not write teal source file");
-
-    println!("{:?}", path);
-
-    let mut command = Command::new("tl")
-        .args(&[
-            OsStr::new("check"),
-            OsStr::new("-I"),
-            path.as_os_str(),
-            OsStr::new("input.tl"),
-        ])
-        .current_dir(temp_path)
-        .spawn()
-        .expect("Could not run `tl check`. Make sure it is available in the path");
-
-    if !command
-        .wait()
-        .expect("Something has gone wrong while running `tl check`")
-        .success()
-    {
-        panic!("There was an error while typechecking your teal code.")
-    }
-
-    let mut command = Command::new("tl")
-        .args(&[
-            OsStr::new("gen"),
-            OsStr::new("-o"),
-            OsStr::new("output.lua"),
-            OsStr::new("-I"),
-            path.as_os_str(),
-            OsStr::new("input.tl"),
-        ])
-        .current_dir(temp_path)
-        .spawn()
-        .expect("Could not run `tl gen`. Make sure it is available in the path");
-
-    if !command
-        .wait()
-        .expect("Something has gone wrong while running `tl gen`")
-        .success()
-    {
-        panic!("Could not compile teal code.");
-    }
-    let contents =
-        read_to_string(temp_path.join("output.lua")).expect("Could not read generated lua");
-
-    let stream = quote! {#contents};
-    stream.into()
+    use crate::compile_inline_teal::compile_inline_teal;
+    compile_inline_teal(input.into()).into()
 }
 ///Embeds the teal compiler, making it easy to load teal files directly.
 ///
@@ -295,6 +162,7 @@ pub fn compile_inline_teal(input: TokenStream) -> TokenStream {
 ))]
 #[proc_macro]
 pub fn embed_compiler(input: TokenStream) -> TokenStream {
+    use syn::parse_macro_input;
     let input = parse_macro_input!(input as EmbedOptions);
     let compiler = embed_compiler::get_teal(input);
     let primed_vm_string = format!(
@@ -307,4 +175,17 @@ pub fn embed_compiler(input: TokenStream) -> TokenStream {
         }
     };
     stream.into()
+}
+#[cfg(feature = "derive")]
+#[proc_macro_derive(MluaFromToLua, attributes(tealr))]
+pub fn mlua_from_to_lua(input: TokenStream) -> TokenStream {
+    crate::from_to_lua::mlua_from_to_lua(input.into()).into()
+}
+
+///Derives [FromLua](rlua::FromLua), [ToLua](rlua::ToLua) and [TypeBody](tealr::TypeBody) for the type.
+///Right now it only works for Structs
+#[cfg(feature = "derive")]
+#[proc_macro_derive(RluaFromToLua, attributes(tealr))]
+pub fn rlua_from_to_lua(input: TokenStream) -> TokenStream {
+    crate::from_to_lua::rlua_from_to_lua(input.into()).into()
 }

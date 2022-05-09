@@ -3,7 +3,7 @@ proc-macro = true
 
 [package]
 authors = ["Lenscas <lenscas@gmail.com>"]
-description = "The derive macro for tealr"
+description = "Derive/Proc macro's to reduce boilerplate when using tealr."
 edition = "2018"
 keywords = ["derive", "macro", "teal", "lua", "tealr"]
 license = "MIT OR Apache-2.0"
@@ -14,13 +14,16 @@ version = "0.8.2"
 [features]
 compile = ["tempfile"]
 derive = []
-embed_compiler_from_download = ["tempfile", "zip", "ureq"]
-embed_compiler_from_local = ["tempfile", "zip"]
-
+embed_compiler_from_download = ["tempfile", "zip", "ureq", "syn"]
+embed_compiler_from_local = ["tempfile", "zip", "syn"]
+# uses an ugly hack to aid debugging macros. Probably best to leave this off unless you know what you are doing
+# most likely doesn't work on Windows 
+debug_macros = []
 [dependencies]
 proc-macro2 = "1"
 quote = "1"
-syn = "1"
+syn = {version = "1", optional = true}
 tempfile = {version = "3.3.0", optional = true}
 ureq = {version = "2.4.0", optional = true}
+venial = "0.3"
 zip = {version = "0.6.2", optional = true}

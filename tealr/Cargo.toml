@@ -76,6 +76,10 @@ required-features = ["rlua"]
 name = "rlua_meta_methods"
 path = "tests/rlua/meta_methods.rs"
 required-features = ["rlua"]
+[[test]]
+name = "rlua_to_from_derived"
+path = "tests/rlua/to_from_derived.rs"
+required-features = ["rlua"]
 
 #Mlua tests
 [[test]]
@@ -111,6 +115,10 @@ required-features = ["mlua"]
 [[test]]
 name = "mlua_meta_methods"
 path = "tests/mlua/meta_methods.rs"
+required-features = ["mlua"]
+[[test]]
+name = "mlua_to_from_derived"
+path = "tests/mlua/to_from_derived.rs"
 required-features = ["mlua"]
 
 # Examples using rlua
