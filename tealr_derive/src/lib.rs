@@ -113,7 +113,7 @@ mod compile_inline_teal;
 ///## Example
 ///```
 ///# use tealr_derive::compile_inline_teal;
-///assert_eq!(compile_inline_teal!("local a : number = 1\n"),"local a = 1\n")
+///assert_eq!(compile_inline_teal!("local a : number = 1"),"local a = 1")
 ///```
 #[cfg(feature = "compile")]
 #[proc_macro]
