@@ -1,8 +1,8 @@
-use proc_macro2::{Literal, TokenStream, TokenTree, Span};
+use proc_macro2::{Literal, Span, TokenStream, TokenTree};
 use quote::ToTokens;
 use venial::{parse_declaration, Struct};
 
-#[cfg(feature="debug_macros")]
+#[cfg(feature = "debug_macros")]
 fn debug_macro(ts: TokenStream) -> TokenStream {
     let hopefully_unique = {
         use ::std::hash::*;
@@ -20,7 +20,7 @@ fn debug_macro(ts: TokenStream) -> TokenStream {
     ::std::fs::write(file_name, ts.to_string()).unwrap();
     quote!(::core::include! { #file_name })
 }
-#[cfg(not(feature="debug_macros"))]
+#[cfg(not(feature = "debug_macros"))]
 fn debug_macro(ts: TokenStream) -> TokenStream {
     ts
 }
@@ -279,7 +279,7 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
                                 let z = format!("param{key}");
                                 (
                                     proc_macro2::Ident::new(
-                                        &z, 
+                                        &z,
                                         x.ty.tokens.get(0).map(|v|v.span())
                                         .unwrap_or_else(Span::call_site)),
                                     x,
@@ -293,7 +293,7 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
                                         let name = field.ty;
                                         Some(quote! {#name})
                                     })
-                                    .map(|to| 
+                                    .map(|to|
                                         (quote! {<(#to) as From<_>>::from(<_ as ::std::borrow::ToOwned>::to_owned(#v))},to)
                                     )
                                     .unwrap();
@@ -379,7 +379,10 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
         .unwrap_or_else(|| {
             proc_macro2::Ident::new(&format!("{name}Creator"), name.span()).into_token_stream()
         });
-    let visibility = enumeration.vis_marker.map(|v|v.to_token_stream()).unwrap_or_else(||quote!{});
+    let visibility = enumeration
+        .vis_marker
+        .map(|v| v.to_token_stream())
+        .unwrap_or_else(|| quote! {});
     let creator_struct_stream = quote! {
         #visibility struct #creator_struct_name {}
     };
