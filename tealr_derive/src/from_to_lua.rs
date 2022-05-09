@@ -27,20 +27,12 @@ fn debug_macro(ts: TokenStream) -> TokenStream {
 
 fn find_tag_with_value(to_find: &str, tags: &[venial::Attribute]) -> Option<TokenTree> {
     tags.iter()
-        .inspect(|v| println!("`{}`", v.path.iter().cloned().collect::<TokenStream>()))
         .find(|v| v.path.iter().cloned().collect::<TokenStream>().to_string() == "tealr")
         .and_then(|v| {
-            println!("{:?}", v.value);
             match &v.value {
                 Some(value) => value.first().map(|v| match v {
-                    proc_macro2::TokenTree::Ident(x) => {
-                        println!("{}", x);
-                        x == to_find
-                    }
-                    x => {
-                        println!("{:?}", x);
-                        false
-                    }
+                    proc_macro2::TokenTree::Ident(x) => x == to_find,
+                    _ => false,
                 }),
                 None => None,
             }
