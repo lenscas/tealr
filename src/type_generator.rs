@@ -82,10 +82,62 @@ pub(crate) fn get_method_data<A: TealMultiValue, R: TealMultiValue, S: ?Sized + 
 ) -> ExportedFunction {
     ExportedFunction::new::<A, R, _>(name, is_meta_method, extra_self)
 }
-
-///This struct collects all the information needed to create the .d.tl file for your type.
+///Container of all the information needed to create the `.d.tl` file for your type.
 #[derive(serde::Serialize, serde::Deserialize)]
-pub struct TypeGenerator {
+pub enum TypeGenerator {
+    ///the type should be represented as a struct
+    Record(Box<RecordGenerator>),
+    ///the type should be represented as an enum
+    Enum(EnumGenerator),
+}
+
+impl TypeGenerator {
+    pub(crate) fn generate(self) -> Result<String, FromUtf8Error> {
+        match self {
+            TypeGenerator::Record(x) => x.generate(),
+            TypeGenerator::Enum(x) => Ok(x.generate()),
+        }
+    }
+}
+
+///contains all the information needed to create a teal enum.
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct EnumGenerator {
+    ///the name of this enum
+    pub name: Cow<'static, [NamePart]>,
+    ///the variants that make up this enum.
+    pub variants: Vec<NameContainer>,
+}
+impl From<EnumGenerator> for TypeGenerator {
+    fn from(a: EnumGenerator) -> Self {
+        TypeGenerator::Enum(a)
+    }
+}
+impl EnumGenerator {
+    ///creates a new EnumGenerator
+    pub fn new<A: TypeName>() -> Self {
+        Self {
+            name: A::get_type_parts(),
+            variants: Default::default(),
+        }
+    }
+    pub(crate) fn generate(self) -> String {
+        let variants = self
+            .variants
+            .into_iter()
+            .map(|v| String::from_utf8_lossy(&v).to_string())
+            .map(|v| v.replace('\\', "\\\\").replace('"', "\\\""))
+            .map(|v| format!("\t\t\"{v}\""))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let name = type_parts_to_str(self.name);
+        format!("\tenum {name}\n{variants}\n\tend")
+    }
+}
+
+///contains all the information needed to create a record
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct RecordGenerator {
     ///Represents if the type should be inlined or not.
     pub should_be_inlined: bool,
     ///Represents if the type is UserData
@@ -118,8 +170,15 @@ pub struct TypeGenerator {
     ///if this type needs to get a `.help()` function
     pub should_generate_help_method: bool,
 }
-impl TypeGenerator {
-    pub(crate) fn new<A: TypeName>(should_be_inlined: bool) -> Self {
+
+impl From<RecordGenerator> for TypeGenerator {
+    fn from(a: RecordGenerator) -> Self {
+        TypeGenerator::Record(Box::new(a))
+    }
+}
+impl RecordGenerator {
+    ///creates a new RecordGenerator
+    pub fn new<A: TypeName>(should_be_inlined: bool) -> Self {
         Self {
             should_be_inlined,
             is_user_data: false,
@@ -289,7 +348,7 @@ impl TypeGenerator {
     }
 }
 
-impl TypeGenerator {
+impl RecordGenerator {
     fn copy_docs(&mut self, to: &[u8]) {
         if let Some(docs) = self.next_docs.take() {
             match self.documentation.entry(to.to_owned().into()) {
@@ -318,7 +377,7 @@ impl TypeGenerator {
 }
 
 #[cfg(feature = "rlua")]
-impl<'lua, T> TealDataMethodsR<'lua, T> for TypeGenerator
+impl<'lua, T> TealDataMethodsR<'lua, T> for RecordGenerator
 where
     T: 'static + TealDataR + UserDataR + TypeName,
 {
@@ -449,7 +508,7 @@ where
 }
 
 #[cfg(feature = "mlua")]
-impl<'lua, T> TealDataMethodsM<'lua, T> for TypeGenerator
+impl<'lua, T> TealDataMethodsM<'lua, T> for Struct
 where
     T: 'static + TealDataM + UserDataM + TypeName,
 {
@@ -610,7 +669,7 @@ where
     }
 }
 #[cfg(feature = "mlua")]
-impl<'lua, T> TealDataFields<'lua, T> for TypeGenerator
+impl<'lua, T> TealDataFields<'lua, T> for Struct
 where
     T: 'static + TealDataM + UserDataM + TypeName,
 {

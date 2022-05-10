@@ -67,6 +67,8 @@ struct BasicConfig {
     type_name_path: TokenStream,
     type_body_loc: TokenStream,
     type_generator_loc: TokenStream,
+    record_generator_loc: TokenStream,
+    enum_generator_loc: TokenStream,
     user_data_location: TokenStream,
     teal_data_location: TokenStream,
     has_userdata_fields: bool,
@@ -75,6 +77,7 @@ struct BasicConfig {
     user_data_wrapper_location: TokenStream,
     user_data_methods_location: TokenStream,
     teal_data_methods_location: TokenStream,
+    invalid_enum_variant_error: TokenStream,
     is_mlua: bool,
 }
 
@@ -90,6 +93,7 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
     let type_name_path = config.type_name_path;
     let type_body_loc = config.type_body_loc;
     let type_generator_loc = config.type_generator_loc;
+    let record_generator_loc = config.record_generator_loc;
     let name = &structure.name;
 
     let (to_add, (to_remove, type_body)): (TokenStream, (TokenStream, TokenStream)) =
@@ -191,14 +195,19 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
             }
         }
         impl #type_body_loc for #name {
-            fn get_type_body(gen: #type_generator_loc) {
+            fn get_type_body()-> #type_generator_loc {
+                let mut gen = #record_generator_loc::new::<Self>(false);
                 #type_body
+                <#type_generator_loc as ::std::convert::From<_>>::from(gen)
             }
         }
     }
 }
 
 fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenStream {
+    if enumeration.is_c_enum() {
+        return implement_for_c_enum(enumeration, config);
+    }
     let call_fields = find_tag_with_value("extend_fields", &enumeration.attributes)
         .map(|v| quote! {#v(fields)})
         .unwrap_or_else(|| quote! {});
@@ -214,6 +223,7 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
     let type_generator_loc = config.type_generator_loc;
     let user_data_methods_location = config.user_data_methods_location;
     let teal_data_methods_location = config.teal_data_methods_location;
+    let record_generator_loc = config.record_generator_loc;
     let (add_fields_user_data, add_fields_teal_data, add_fields_type_body) = config
         .has_userdata_fields
         .then(|| {
@@ -359,10 +369,12 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
             }
         }
         impl #type_body_loc for #name {
-            fn get_type_body(gen: #type_generator_loc) {
+            fn get_type_body() -> #type_generator_loc {
+                let mut gen = #record_generator_loc::new::<Self>(false);
                 gen.is_user_data = true;
-                #add_fields_type_body
-                <Self as #teal_data_location>::add_methods(gen);
+                #add_fields_type_body;
+                <Self as #teal_data_location>::add_methods(&mut gen);
+                <#type_generator_loc as ::std::convert::From<_>>::from(gen)
             }
         }
     };
@@ -420,6 +432,68 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
     trait_impls
 }
 
+fn implement_for_c_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenStream {
+    let name = enumeration.name;
+    let type_body_loc = config.type_body_loc;
+    let type_generator_loc = config.type_generator_loc;
+    let to_loc = config.to_location;
+    let from_loc = config.from_location;
+    let result_location_to = config.result_location_to;
+    let result_location_from = config.result_location_from;
+    let lua_location = config.lua_type;
+    let lua_value = config.lua_value;
+    let enum_generator_loc = config.enum_generator_loc;
+    let invalid_enum_variant_error = config.invalid_enum_variant_error;
+
+    let (to_branches, (from_branches, variants)): (TokenStream, (TokenStream, TokenStream)) =
+        enumeration
+            .variants
+            .iter()
+            .map(|(v, _)| {
+                let variant_name = &v.name;
+                (
+                    quote! {#name::#variant_name => stringify!(#variant_name),},
+                    (
+                        quote! {stringify!(#variant_name) => #name::#variant_name,},
+                        quote! {
+                            gen
+                                .variants
+                                .push(
+                                    ::std::borrow::Cow::Borrowed(stringify!(#variant_name)).into(),
+                                );
+                        },
+                    ),
+                )
+            })
+            .unzip();
+    quote! {
+        impl<'lua> #to_loc for #name {
+            fn to_lua(self, #lua_location) -> #result_location_to {
+                let res = match self {
+                    #to_branches
+                };
+                lua.pack(res.to_string())
+            }
+        }
+        impl<'lua> #from_loc for #name {
+            fn from_lua(lua_value:#lua_value<'lua>, #lua_location) -> #result_location_from {
+                let x = <std::string::String as #from_loc>::from_lua(lua_value,lua)?;
+                Ok(match x.as_str() {
+                    #from_branches
+                    x => return Err(#invalid_enum_variant_error)
+                })
+            }
+        }
+        impl #type_body_loc for #name {
+            fn get_type_body()-> #type_generator_loc {
+                let mut gen = #enum_generator_loc::new::<Self>();
+                #variants;
+                <#type_generator_loc as ::std::convert::From<_>>::from(gen)
+            }
+        }
+    }
+}
+
 pub(crate) fn mlua_from_to_lua(input: TokenStream) -> TokenStream {
     let config = BasicConfig {
         to_location: quote! {::tealr::mlu::mlua::ToLua<'lua>},
@@ -431,14 +505,16 @@ pub(crate) fn mlua_from_to_lua(input: TokenStream) -> TokenStream {
         lua_value: quote! {::tealr::mlu::mlua::Value},
         error_message: quote! {
             ::tealr::mlu::mlua::Error::FromLuaConversionError{
-                from: x. type_name(),
+                from: x.type_name(),
                 to: "unknown",
                 message:None
             }
         },
         type_name_path: quote! {::tealr::TypeName},
         type_body_loc: quote! {::tealr::TypeBody},
-        type_generator_loc: quote! {&mut ::tealr::TypeGenerator},
+        type_generator_loc: quote! {::tealr::TypeGenerator},
+        record_generator_loc: quote! {::tealr::RecordGenerator},
+        enum_generator_loc: quote! {::tealr::EnumGenerator},
         user_data_location: quote! {::tealr::mlu::mlua::UserData},
         teal_data_location: quote! {::tealr::mlu::TealData},
         has_userdata_fields: true,
@@ -447,6 +523,11 @@ pub(crate) fn mlua_from_to_lua(input: TokenStream) -> TokenStream {
         user_data_wrapper_location: quote! {::tealr::mlu::UserDataWrapper},
         user_data_methods_location: quote! {::tealr::mlu::mlua::UserDataMethods},
         teal_data_methods_location: quote! {::tealr::mlu::TealDataMethods},
+        invalid_enum_variant_error: quote! {::tealr::mlu::mlua::Error::FromLuaConversionError {
+            from: "String",
+            to:"unknown",
+            message:None
+        } },
         is_mlua: true,
     };
 
@@ -475,7 +556,9 @@ pub(crate) fn rlua_from_to_lua(input: TokenStream) -> TokenStream {
         },
         type_name_path: quote! {::tealr::TypeName},
         type_body_loc: quote! {::tealr::TypeBody},
-        type_generator_loc: quote! {&mut ::tealr::TypeGenerator},
+        type_generator_loc: quote! {::tealr::TypeGenerator},
+        record_generator_loc: quote! {::tealr::RecordGenerator},
+        enum_generator_loc: quote! {::tealr::EnumGenerator},
         user_data_location: quote! {::tealr::rlu::rlua::UserData},
         teal_data_location: quote! {::tealr::rlu::TealData},
         has_userdata_fields: false,
@@ -484,6 +567,11 @@ pub(crate) fn rlua_from_to_lua(input: TokenStream) -> TokenStream {
         user_data_wrapper_location: quote! {::tealr::rlu::UserDataWrapper},
         user_data_methods_location: quote! {::tealr::rlu::rlua::UserDataMethods},
         teal_data_methods_location: quote! {::tealr::rlu::TealDataMethods},
+        invalid_enum_variant_error: quote! {::tealr::rlu::rlua::Error::FromLuaConversionError {
+            from: "String",
+            to:"unknown",
+            message:None
+        } },
         is_mlua: false,
     };
 

@@ -435,5 +435,5 @@ impl<K: TypeName, V: TypeName> TypeName for BTreeMap<K, V> {
 ///Creates the body of the type, so the functions and fields it exposes.
 pub trait TypeBody {
     ///Fills in the TypeGenerator so a .d.tl file can be constructed.
-    fn get_type_body(gen: &mut TypeGenerator);
+    fn get_type_body() -> TypeGenerator;
 }
