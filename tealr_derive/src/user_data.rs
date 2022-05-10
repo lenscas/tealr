@@ -23,7 +23,7 @@ fn generate_type_body(
     extra_method: Option<TokenStream>,
 ) -> TokenStream {
     let extra_method = match extra_method {
-        Some(x) => quote! {<Self as #traits>::#x(gen);},
+        Some(x) => quote! {<Self as #traits>::#x(&mut gen);},
         None => quote!(),
     };
     quote! {

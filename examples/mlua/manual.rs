@@ -64,10 +64,12 @@ impl UserData for Example {
 }
 
 impl TypeBody for Example {
-    fn get_type_body(gen: &mut tealr::TypeGenerator) {
+    fn get_type_body() -> tealr::TypeGenerator {
+        let mut gen = tealr::RecordGenerator::new::<Self>(false);
         gen.is_user_data = true;
-        <Self as TealData>::add_fields(gen);
-        <Self as TealData>::add_methods(gen);
+        <Self as TealData>::add_fields(&mut gen);
+        <Self as TealData>::add_methods(&mut gen);
+        gen.into()
     }
 }
 fn main() -> Result<()> {

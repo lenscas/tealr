@@ -22,7 +22,13 @@ impl TypeWalker {
     ///When embedding teal/lua there is probably not really a reason to do so.
     ///However, it ***IS*** needed for the struct that gets exposed directly to teal when using mlua to make a lua/teal library.
     pub fn process_type_inline<A: 'static + TypeName + TypeBody>(mut self) -> Self {
-        let x = <A as TypeBody>::get_type_body();
+        let mut x = <A as TypeBody>::get_type_body();
+        match &mut x {
+            TypeGenerator::Record(x) => {
+                x.should_be_inlined = true;
+            }
+            TypeGenerator::Enum(_) => (),
+        }
         self.given_types.push(x);
         self
     }

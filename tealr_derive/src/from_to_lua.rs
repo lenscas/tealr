@@ -240,7 +240,7 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
                     }
                 },
                 quote! {
-                    <Self as #teal_data_location>::add_fields(gen);
+                    <Self as #teal_data_location>::add_fields(&mut gen);
                 },
             )
         })
