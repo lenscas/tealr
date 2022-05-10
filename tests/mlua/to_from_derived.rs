@@ -1,6 +1,6 @@
 use tealr::{mlu::mlua::Lua, MluaFromToLua, TypeName, TypeWalker};
 
-#[derive(RluaFromToLua, TypeName, PartialEq, Debug, Clone)]
+#[derive(MluaFromToLua, TypeName, PartialEq, Debug, Clone)]
 enum ExampleCStyleEnum {
     This,
     Is,
