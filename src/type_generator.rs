@@ -508,7 +508,7 @@ where
 }
 
 #[cfg(feature = "mlua")]
-impl<'lua, T> TealDataMethodsM<'lua, T> for Struct
+impl<'lua, T> TealDataMethodsM<'lua, T> for RecordGenerator
 where
     T: 'static + TealDataM + UserDataM + TypeName,
 {
@@ -669,7 +669,7 @@ where
     }
 }
 #[cfg(feature = "mlua")]
-impl<'lua, T> TealDataFields<'lua, T> for Struct
+impl<'lua, T> TealDataFields<'lua, T> for RecordGenerator
 where
     T: 'static + TealDataM + UserDataM + TypeName,
 {
