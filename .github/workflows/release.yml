@@ -26,7 +26,7 @@ jobs:
         with:
           time: '20s'
       - name: Release the main crate
-        run: cd tealr && cargo publish
+        run: cargo publish
       #Now, release to github as well.
       - name: Create Release on github
         id: create_release
