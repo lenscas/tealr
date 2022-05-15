@@ -22,16 +22,20 @@ impl TypeWalker {
     ///When embedding teal/lua there is probably not really a reason to do so.
     ///However, it ***IS*** needed for the struct that gets exposed directly to teal when using mlua to make a lua/teal library.
     pub fn process_type_inline<A: 'static + TypeName + TypeBody>(mut self) -> Self {
-        let mut new_type = TypeGenerator::new::<A>(true);
-        <A as TypeBody>::get_type_body(&mut new_type);
-        self.given_types.push(new_type);
+        let mut x = <A as TypeBody>::get_type_body();
+        match &mut x {
+            TypeGenerator::Record(x) => {
+                x.should_be_inlined = true;
+            }
+            TypeGenerator::Enum(_) => (),
+        }
+        self.given_types.push(x);
         self
     }
     ///prepares a type to have a `.d.tl` file generated, and adds it to the list of types to generate.
     pub fn process_type<A: 'static + TypeName + TypeBody>(mut self) -> Self {
-        let mut new_type = TypeGenerator::new::<A>(false);
-        <A as TypeBody>::get_type_body(&mut new_type);
-        self.given_types.push(new_type);
+        let x = <A as TypeBody>::get_type_body();
+        self.given_types.push(x);
         self
     }
     ///generates the `.d.tl` file. It outputs the string, its up to you to store it.
