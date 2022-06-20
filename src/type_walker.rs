@@ -162,7 +162,7 @@ impl TypeWalker {
 #[cfg(feature = "mlua")]
 impl TypeWalker {
     ///collect every instance that is getting shared with lua
-    pub fn document_global_instance<'lua, T: crate::mlu::ExportInstances>(
+    pub fn document_global_instance<T: crate::mlu::ExportInstances>(
         mut self,
     ) -> mlua::Result<Self> {
         let mut collector = crate::export_instance::InstanceWalker::new();
