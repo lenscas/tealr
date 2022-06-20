@@ -1,11 +1,14 @@
-use std::string::FromUtf8Error;
+use std::{borrow::Cow, string::FromUtf8Error};
 
-use crate::{TypeBody, TypeGenerator, TypeName};
+use crate::{type_parts_to_str, NamePart, TypeBody, TypeGenerator, TypeName};
 
 ///This generates the .d.tl files
 #[derive(Default, serde::Serialize, serde::Deserialize)]
 pub struct TypeWalker {
-    given_types: Vec<TypeGenerator>,
+    ///All the types that are currently registered by the TypeWalker
+    pub given_types: Vec<TypeGenerator>,
+    ///list of items that
+    pub global_instances_off: Vec<(Cow<'static, str>, Cow<'static, [NamePart]>, bool)>,
 }
 
 impl TypeWalker {
@@ -69,8 +72,29 @@ impl TypeWalker {
             .collect::<std::result::Result<_, _>>()?;
         let v = v.join("\n");
         let scope = if is_global { "global" } else { "local" };
+        let global_instances = self
+            .global_instances_off
+            .into_iter()
+            .map(|(name, teal_type, is_external)| {
+                let teal_type = type_parts_to_str(teal_type);
+                let teal_type = if is_external {
+                    format!("{outer_name}.{teal_type}")
+                } else {
+                    teal_type.to_string()
+                };
+                format!("global {name}: {teal_type}")
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+        let global_instances = if !global_instances.is_empty() {
+            let mut x = String::from("\n");
+            x.push_str(&global_instances);
+            x
+        } else {
+            global_instances
+        };
         Ok(format!(
-            "{} record {name}\n{record}\nend\nreturn {name}",
+            "{} record {name}\n{record}\nend{global_instances}\nreturn {name}",
             scope,
             name = outer_name,
             record = v
@@ -119,5 +143,31 @@ impl TypeWalker {
     ///```
     pub fn generate_local(self, outer_name: &str) -> std::result::Result<String, FromUtf8Error> {
         self.generate(outer_name, false)
+    }
+}
+
+#[cfg(feature = "rlua")]
+impl TypeWalker {
+    ///collect every instance that is getting shared with lua
+    pub fn document_global_instance<T: crate::rlu::ExportInstances>(
+        mut self,
+    ) -> rlua::Result<Self> {
+        let mut collector = crate::export_instance::InstanceWalker::new();
+        T::add_instances(&mut collector)?;
+        self.global_instances_off.append(&mut collector.instances);
+        Ok(self)
+    }
+}
+
+#[cfg(feature = "mlua")]
+impl TypeWalker {
+    ///collect every instance that is getting shared with lua
+    pub fn document_global_instance<'lua, T: crate::mlu::ExportInstances>(
+        mut self,
+    ) -> mlua::Result<Self> {
+        let mut collector = crate::export_instance::InstanceWalker::new();
+        T::add_instances(&mut collector)?;
+        self.global_instances_off.append(&mut collector.instances);
+        Ok(self)
     }
 }

@@ -1,6 +1,8 @@
-use rlua::{Context, FromLuaMulti, MetaMethod, Result, ToLuaMulti};
+use std::borrow::Cow;
 
-use crate::TealMultiValue;
+use rlua::{Context, FromLuaMulti, MetaMethod, Result, ToLua, ToLuaMulti};
+
+use crate::{TealMultiValue, TypeName};
 
 ///The teal version of [UserDataMethods](rlua::UserDataMethods)
 ///
@@ -71,4 +73,38 @@ pub trait TealDataMethods<'lua, T> {
     fn document_type(&mut self, documentation: &str);
     ///generates an `instance.help()` function on lua's/teals side, which can be used at run time to view the documentation.
     fn generate_help(&mut self);
+}
+
+///collets every instance that needs to be exposed to lua
+pub trait InstanceCollector<'lua> {
+    ///adds an instance
+    fn add_instance<T: TypeName + ToLua<'lua>, F: Fn(Context<'lua>) -> rlua::Result<T>>(
+        &mut self,
+        global_name: Cow<'static, str>,
+        instance: F,
+    ) -> Result<()>;
+}
+///used to export instances to lua
+pub fn set_global_env<T: ExportInstances>(context: rlua::Context) -> rlua::Result<()> {
+    let globals = context.globals();
+    T::add_instances::<_>(&mut (globals, context))?;
+    Ok(())
+}
+
+impl<'lua> InstanceCollector<'lua> for (rlua::Table<'lua>, rlua::Context<'lua>) {
+    fn add_instance<T: TypeName + ToLua<'lua>, F: Fn(Context<'lua>) -> rlua::Result<T>>(
+        &mut self,
+        global_name: Cow<'static, str>,
+        instance: F,
+    ) -> Result<()> {
+        let instance = instance(self.1)?;
+        self.0.set(global_name.to_string(), instance)?;
+        Ok(())
+    }
+}
+
+///implement this to easily document what global instances are exposed to lua
+pub trait ExportInstances {
+    ///adds the instances
+    fn add_instances<'lua, T: InstanceCollector<'lua>>(instance_collector: &mut T) -> Result<()>;
 }

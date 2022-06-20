@@ -85,6 +85,11 @@ name = "rlua_to_from_derived"
 path = "tests/rlua/to_from_derived.rs"
 required-features = ["rlua"]
 
+[[test]]
+name = "rlua_export_instances"
+path = "tests/rlua/export_instances.rs"
+required-features = ["rlua"]
+
 #Mlua tests
 [[test]]
 name = "mlua_embed_teal"
@@ -123,6 +128,11 @@ required-features = ["mlua"]
 [[test]]
 name = "mlua_to_from_derived"
 path = "tests/mlua/to_from_derived.rs"
+required-features = ["mlua"]
+
+[[test]]
+name = "mlua_export_instances"
+path = "tests/mlua/export_instances.rs"
 required-features = ["mlua"]
 
 # Examples using rlua
