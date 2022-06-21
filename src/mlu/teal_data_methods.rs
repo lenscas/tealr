@@ -107,6 +107,8 @@ pub trait InstanceCollector<'lua> {
         global_name: Cow<'static, str>,
         instance: F,
     ) -> Result<()>;
+    ///Adds documentation to the next global instance
+    fn document_instance(&mut self, doc: &'static str);
 }
 
 ///used to export instances to lua
@@ -114,7 +116,6 @@ pub fn set_global_env<T: ExportInstances>(lua: &mlua::Lua) -> Result<()> {
     let globals = lua.globals();
     T::add_instances(&mut (globals, lua))?;
     Ok(())
-    //
 }
 
 impl<'lua> InstanceCollector<'lua> for (mlua::Table<'lua>, &'lua mlua::Lua) {
@@ -127,6 +128,7 @@ impl<'lua> InstanceCollector<'lua> for (mlua::Table<'lua>, &'lua mlua::Lua) {
         self.0.set(global_name, instance)?;
         Ok(())
     }
+    fn document_instance(&mut self, _: &'static str) {}
 }
 
 ///implement this to easily document what global instances are exposed to lua

@@ -1,9 +1,10 @@
 use std::borrow::Cow;
 
-use crate::{KindOfType, NamePart, TypeName};
+use crate::{type_walker::GlobalInstance, KindOfType, TypeName};
 
 pub(crate) struct InstanceWalker {
-    pub(crate) instances: Vec<(Cow<'static, str>, Cow<'static, [NamePart]>, bool)>,
+    doc: String,
+    pub(crate) instances: Vec<GlobalInstance>,
 }
 #[cfg(feature = "mlua")]
 impl<'lua> crate::mlu::InstanceCollector<'lua> for InstanceWalker {
@@ -14,6 +15,9 @@ impl<'lua> crate::mlu::InstanceCollector<'lua> for InstanceWalker {
     ) -> Result<(), mlua::Error> {
         self.add_instance::<T>(global_name);
         Ok(())
+    }
+    fn document_instance(&mut self, doc: &'static str) {
+        self.document_instance(doc)
     }
 }
 
@@ -27,19 +31,33 @@ impl<'lua> crate::rlu::InstanceCollector<'lua> for InstanceWalker {
         self.add_instance::<T>(global_name);
         Ok(())
     }
+    fn document_instance(&mut self, doc: &'static str) {
+        self.document_instance(doc)
+    }
 }
 
 impl InstanceWalker {
     pub(crate) fn new() -> Self {
         Self {
+            doc: Default::default(),
             instances: Default::default(),
         }
     }
-    fn add_instance<T: TypeName>(&mut self, global_name: Cow<'static, str>) {
-        let type_name = T::get_type_parts();
+    fn add_instance<T: TypeName>(&mut self, name: Cow<'static, str>) {
+        let teal_type = T::get_type_parts();
         let z = T::get_type_kind();
         let is_external = matches!(z, KindOfType::External);
-        self.instances.push((global_name, type_name, is_external));
+        let doc = std::mem::take(&mut self.doc);
+        self.instances.push(GlobalInstance {
+            name,
+            teal_type,
+            is_external,
+            doc,
+        });
+    }
+    fn document_instance(&mut self, doc: &'static str) {
+        self.doc.push_str(doc);
+        self.doc.push('\n');
     }
 }
 

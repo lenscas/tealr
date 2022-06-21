@@ -2,13 +2,21 @@ use std::{borrow::Cow, string::FromUtf8Error};
 
 use crate::{type_parts_to_str, NamePart, TypeBody, TypeGenerator, TypeName};
 
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct GlobalInstance {
+    pub name: Cow<'static, str>,
+    pub teal_type: Cow<'static, [NamePart]>,
+    pub is_external: bool,
+    pub doc: String,
+}
+
 ///This generates the .d.tl files
 #[derive(Default, serde::Serialize, serde::Deserialize)]
 pub struct TypeWalker {
     ///All the types that are currently registered by the TypeWalker
     pub given_types: Vec<TypeGenerator>,
     ///list of items that
-    pub global_instances_off: Vec<(Cow<'static, str>, Cow<'static, [NamePart]>, bool)>,
+    pub global_instances_off: Vec<GlobalInstance>,
 }
 
 impl TypeWalker {
@@ -75,14 +83,29 @@ impl TypeWalker {
         let global_instances = self
             .global_instances_off
             .into_iter()
-            .map(|(name, teal_type, is_external)| {
+            .map(|global| {
+                let GlobalInstance {
+                    name,
+                    teal_type,
+                    is_external,
+                    doc,
+                } = global;
+                let doc = doc
+                    .lines()
+                    .map(|v| {
+                        let mut add = String::from("--");
+                        add.push_str(v);
+                        add.push_str("\n\n");
+                        add
+                    })
+                    .collect::<String>();
                 let teal_type = type_parts_to_str(teal_type);
                 let teal_type = if is_external {
                     format!("{outer_name}.{teal_type}")
                 } else {
                     teal_type.to_string()
                 };
-                format!("global {name}: {teal_type}")
+                format!("{doc}global {name}: {teal_type}")
             })
             .collect::<Vec<_>>()
             .join("\n");
