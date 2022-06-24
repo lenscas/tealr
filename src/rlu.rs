@@ -18,7 +18,7 @@ pub(crate) fn get_meta_name(name: rlua::MetaMethod) -> &'static str {
     use rlua::MetaMethod;
     match name {
         MetaMethod::Add => "__add",
-        MetaMethod::Sub => "__su",
+        MetaMethod::Sub => "__sub",
         MetaMethod::Mul => "__mul",
         MetaMethod::Div => "__div",
         MetaMethod::Mod => "__mod",
