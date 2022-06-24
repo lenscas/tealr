@@ -19,7 +19,7 @@ pub(crate) fn get_meta_name(name: mlua::MetaMethod) -> Cow<'static, str> {
     use mlua::MetaMethod;
     match name {
         MetaMethod::Add => Cow::Borrowed("__add"),
-        MetaMethod::Sub => Cow::Borrowed("__su"),
+        MetaMethod::Sub => Cow::Borrowed("__sub"),
         MetaMethod::Mul => Cow::Borrowed("__mul"),
         MetaMethod::Div => Cow::Borrowed("__div"),
         MetaMethod::Mod => Cow::Borrowed("__mod"),
