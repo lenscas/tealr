@@ -9,6 +9,7 @@ pub mod rlu;
 #[cfg(feature = "mlua")]
 pub mod mlu;
 
+mod export_instance;
 mod exported_function;
 mod teal_multivalue;
 mod type_generator;
