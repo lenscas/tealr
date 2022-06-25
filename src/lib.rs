@@ -22,7 +22,7 @@ pub use teal_multivalue::{TealMultiValue, TealType};
 pub use tealr_derive::{MluaTealDerive, MluaUserData, RluaTealDerive, RluaUserData, TypeName};
 pub use type_generator::{EnumGenerator, NameContainer, RecordGenerator, TypeGenerator};
 pub use type_representation::{type_parts_to_str, KindOfType, NamePart, TypeBody, TypeName};
-pub use type_walker::TypeWalker;
+pub use type_walker::{GlobalInstance, TypeWalker};
 
 #[cfg(feature = "compile")]
 pub use tealr_derive::compile_inline_teal;
