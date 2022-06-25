@@ -3,10 +3,15 @@ use std::{borrow::Cow, string::FromUtf8Error};
 use crate::{type_parts_to_str, NamePart, TypeBody, TypeGenerator, TypeName};
 
 #[derive(serde::Serialize, serde::Deserialize)]
+///Used to document what global instances get made by the module
 pub struct GlobalInstance {
+    ///name of the global
     pub name: Cow<'static, str>,
+    ///the type
     pub teal_type: Cow<'static, [NamePart]>,
+    ///if the type is external
     pub is_external: bool,
+    ///documentation for this global
     pub doc: String,
 }
 
