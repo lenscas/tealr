@@ -66,6 +66,16 @@ pub(crate) fn get_meta_name(name: mlua::MetaMethod) -> Cow<'static, str> {
     }
 }
 
+impl crate::TypeName for mlua::MultiValue<'_> {
+    fn get_type_parts() -> Cow<'static, [crate::NamePart]> {
+        std::borrow::Cow::Borrowed(&[crate::NamePart::Type(crate::TealType {
+            name: Cow::Borrowed("MultiValue"),
+            type_kind: crate::KindOfType::External,
+            generics: None,
+        })])
+    }
+}
+
 #[cfg(feature = "mlua_send")]
 ///used by the `mlua_send` feature
 pub trait MaybeSend: Send {}
