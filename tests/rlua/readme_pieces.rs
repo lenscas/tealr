@@ -5,7 +5,7 @@ fn test() {
     pieces().unwrap();
 }
 
-#[derive(Clone, tealr::RluaUserData, TypeName)]
+#[derive(Clone, tealr::rlu::UserData, TypeName)]
 struct ExampleRlua {}
 
 //now, implement rlu::TealData.

@@ -31,7 +31,7 @@ Exposing types to lua as userdata is almost the same using tealr as it is using 
 #### Rlua:
 ```rust ignore
 use tealr::TypeName;
-#[derive(Clone, tealr::RluaUserData, TypeName)]
+#[derive(Clone, tealr::rlu::UserData, TypeName)]
 struct ExampleRlua {}
 
 //now, implement rlu::TealData.
@@ -58,7 +58,7 @@ impl tealr::rlu::TealData for ExampleRlua {
 Mlua:
 ```rust ignore
 use tealr::TypeName;
-#[derive(Clone, tealr::MluaUserData, TypeName)]
+#[derive(Clone, tealr::mlu::UserData, TypeName)]
 struct ExampleMlua {}
 impl tealr::mlu::TealData for ExampleMlua {
     //implement your methods/functions
@@ -89,8 +89,6 @@ These allow you to easily create a type that is only one of the types you give.
 ```rust ignore
 use tealr::{
     create_union_mlua,
-    mlu::{mlua::{FromLua,Lua,ToLua}, TealData, TealDataMethods, TypedFunction},
-    MluaUserData, TypeName, TypeWalker,
 };
 create_union_mlua!(enum YourTypeName = i32 | String);
 ```
@@ -100,12 +98,12 @@ create_union_mlua!(enum YourTypeName = i32 | String);
 use mlua::ToLua;
 use tealr::{
     create_generic_mlua,
-    mlu::{mlua::FromLua, TealData, TealDataMethods, TypedFunction},
-    MluaUserData, TypeName, TypeWalker,
+    mlu::{mlua::FromLua, TealData, TealDataMethods, TypedFunction,UserData},
+    TypeName, TypeWalker,
 };
 
 create_generic_mlua!(X);
-#[derive(Clone, MluaUserData, TypeName)]
+#[derive(Clone, UserData, TypeName)]
 struct Example {}
 impl TealData for Example {
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
@@ -136,11 +134,11 @@ As a result of this and `tealr`'s focus on enabling a richer typed api causes th
 //set your type up with either rlua or mlua
 use tealr::{TypeName};
 #[cfg(feature = "mlua")]
-use tealr::{MluaUserData,mlu::TealData};
+use tealr::mlu::{TealData,UserData};
 #[cfg(feature = "rlua")]
-use tealr::{RluaUserData,rlu::TealData};
-#[cfg_attr(feature = "mlua", derive(MluaUserData, TypeName))]
-#[cfg_attr(feature = "rlua", derive(RluaUserData, TypeName))]
+use tealr::rlu::{TealData,UserData};
+#[derive(UserData, TypeName)]
+#[derive(UserData, TypeName)]
 struct Example {}
 impl TealData for Example {};
 
