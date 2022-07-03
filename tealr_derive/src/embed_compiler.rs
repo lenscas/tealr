@@ -92,7 +92,7 @@ fn get_version(version: String) -> String {
                     last = Checker::Dot;
                     return true;
                 }
-                chara.is_digit(10)
+                chara.is_ascii_digit()
             }
             Checker::Dot => {
                 if chara.is_ascii_digit() {
