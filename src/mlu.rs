@@ -77,3 +77,23 @@ impl<T: Send> MaybeSend for T {}
 pub trait MaybeSend {}
 #[cfg(not(feature = "mlua_send"))]
 impl<T> MaybeSend for T {}
+
+#[doc = include_str!("mlu/to_from_macro_doc.md")]
+#[cfg(feature = "derive")]
+pub use tealr_derive::MluaFromToLua as FromToLua;
+
+///Implement both [mlua::UserData](mlua::UserData) and [TypeName](tealr::TypeName).
+///
+///Look at [tealr_derive::MluaUserData](tealr_derive::MluaUserData) and [tealr_derive::TypeName](tealr_derive::TypeName)
+///for more information on how the implemented traits will behave.
+#[cfg(feature = "derive")]
+pub use tealr_derive::MluaTealDerive as TealDerive;
+
+///Implements [UserData](mlua::UserData) and [TypeBody](tealr::TypeBody)
+///
+///It wraps the [mlua::UserDataMethods](mlua::UserDataMethods) into [UserDataWrapper](tealr::mlu::UserDataWrapper)
+///and then passes it to `tealr::TealData::add_methods`.
+///
+///Type body is implemented in a similar way, where it uses the [TealData](tealr::mlu::TealData) implementation to get the types
+#[cfg(feature = "derive")]
+pub use tealr_derive::MluaUserData as UserData;
