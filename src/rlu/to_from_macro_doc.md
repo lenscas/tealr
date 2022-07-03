@@ -15,8 +15,8 @@ Using this macro on structs WILL make any private fields freely accessible to lu
 ## Example
 
 ```rust
-use tealr::{RluaFromToLua,TypeName,rlu::rlua::Lua};
-#[derive(RluaFromToLua,Clone,TypeName)]
+use tealr::{TypeName,rlu::{rlua::Lua,FromToLua}};
+#[derive(FromToLua,Clone,TypeName)]
 struct Example {
   test_field: String
 }
@@ -30,7 +30,7 @@ impl From<Example> for String {
       t.test_field
   }
 }
-#[derive(RluaFromToLua,Clone,TypeName)]
+#[derive(FromToLua,Clone,TypeName)]
 struct Example2 {
    #[tealr(remote = Example)]
    field1: String
@@ -110,8 +110,8 @@ The [TealData](crate::rlu::TealData) of this struct exposes the functions:
 ## Example
 
 ```rust
-use tealr::{RluaFromToLua,TypeName,rlu::{TealData,rlua::Lua}};
-#[derive(RluaFromToLua,Clone,TypeName)]
+use tealr::{FromToLua,TypeName,rlu::{TealData,rlua::Lua}};
+#[derive(FromToLua,Clone,TypeName)]
 struct ExampleStruct {
     test_field: String
  }
@@ -125,7 +125,7 @@ struct ExampleStruct {
         t.test_field
     }
  }
-#[derive(RluaFromToLua,Clone,TypeName)]
+#[derive(FromToLua,Clone,TypeName)]
 #[tealr(creator_name = ExampleMaker)]
 #[tealr(extend_methods = method_extension)]
 enum Example {

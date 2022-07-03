@@ -58,8 +58,8 @@ impl TypeWalker {
     #[cfg_attr(feature = "rlua", doc = " ```")]
     #[cfg_attr(not(feature = "rlua"), doc = " ```ignore")]
     ///# use rlua::{Lua, Result, UserDataMethods};
-    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker, RluaUserData,TypeName};
-    ///#[derive(RluaUserData,TypeName)]
+    ///# use tealr::{rlu::{TealData,UserData, TealDataMethods,UserDataWrapper}, TypeWalker, TypeName};
+    ///#[derive(UserData,TypeName)]
     ///struct Example {}
     ///impl TealData for Example {}
     ///let generated_string = TypeWalker::new().process_type::<Example>().generate("Examples",true);
@@ -132,8 +132,8 @@ impl TypeWalker {
     #[cfg_attr(feature = "rlua", doc = " ```")]
     #[cfg_attr(not(feature = "rlua"), doc = " ```ignore")]
     ///# use rlua::{Lua, Result, UserDataMethods};
-    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker, RluaUserData,TypeName};
-    ///#[derive(RluaUserData,TypeName)]
+    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper,UserData}, TypeWalker, TypeName};
+    ///#[derive(UserData,TypeName)]
     ///struct Example {}
     ///impl TealData for Example {}
     ///let generated_string = TypeWalker::new().process_type::<Example>().generate_global("Examples");
@@ -154,8 +154,8 @@ impl TypeWalker {
     #[cfg_attr(feature = "rlua", doc = " ```")]
     #[cfg_attr(not(feature = "rlua"), doc = " ```ignore")]
     ///# use rlua::{Lua, Result, UserDataMethods};
-    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker, RluaUserData,TypeName};
-    ///#[derive(RluaUserData,TypeName)]
+    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper,UserData,}, TypeWalker, TypeName};
+    ///#[derive(=UserData,TypeName)]
     ///struct Example {}
     ///impl TealData for Example {}
     ///let generated_string = TypeWalker::new().process_type::<Example>().generate_local("Examples");

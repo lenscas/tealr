@@ -15,8 +15,8 @@ Using this macro on structs WILL make any private fields freely accessible to lu
 ## Example
 
 ```rust
- use tealr::{MluaFromToLua,TypeName,mlu::mlua::Lua};
- #[derive(MluaFromToLua,Clone,TypeName)]
+ use tealr::{,TypeName,mlu::{FromToLua,mlua::Lua}};
+ #[derive(FromToLua,Clone,TypeName)]
  struct Example {
     test_field: String
  }
@@ -30,7 +30,7 @@ Using this macro on structs WILL make any private fields freely accessible to lu
         t.test_field
     }
  }
- #[derive(MluaFromToLua,Clone,TypeName)]
+ #[derive(FromToLua,Clone,TypeName)]
 struct Example2 {
     #[tealr(remote = Example)]
     field1: String
@@ -109,8 +109,8 @@ The [TealData](crate::mlu::TealData) of this struct exposes the functions:
 ## Example
 
 ```rust
-use tealr::{MluaFromToLua,TypeName,mlu::{TealData,mlua::Lua}};
-#[derive(MluaFromToLua,Clone,TypeName)]
+use tealr::{FromToLua,TypeName,mlu::{TealData,mlua::Lua}};
+#[derive(FromToLua,Clone,TypeName)]
 struct ExampleStruct {
     test_field: String
  }
@@ -124,7 +124,7 @@ struct ExampleStruct {
         t.test_field
     }
  }
-#[derive(MluaFromToLua,Clone,TypeName)]
+#[derive(FromToLua,Clone,TypeName)]
 #[tealr(creator_name = ExampleMaker)]
 #[tealr(extend_fields = field_extension)]
 #[tealr(extend_methods = method_extension)]
