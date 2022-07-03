@@ -15,7 +15,7 @@ Using this macro on structs WILL make any private fields freely accessible to lu
 ## Example
 
 ```rust
- use tealr::{,TypeName,mlu::{FromToLua,mlua::Lua}};
+ use tealr::{TypeName,mlu::{FromToLua,mlua::Lua}};
  #[derive(FromToLua,Clone,TypeName)]
  struct Example {
     test_field: String
@@ -109,7 +109,7 @@ The [TealData](crate::mlu::TealData) of this struct exposes the functions:
 ## Example
 
 ```rust
-use tealr::{FromToLua,TypeName,mlu::{TealData,mlua::Lua}};
+use tealr::{TypeName,mlu::{FromToLua,TealData,mlua::Lua}};
 #[derive(FromToLua,Clone,TypeName)]
 struct ExampleStruct {
     test_field: String

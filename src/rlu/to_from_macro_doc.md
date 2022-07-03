@@ -110,7 +110,7 @@ The [TealData](crate::rlu::TealData) of this struct exposes the functions:
 ## Example
 
 ```rust
-use tealr::{FromToLua,TypeName,rlu::{TealData,rlua::Lua}};
+use tealr::{TypeName,rlu::{FromToLua, TealData,rlua::Lua}};
 #[derive(FromToLua,Clone,TypeName)]
 struct ExampleStruct {
     test_field: String

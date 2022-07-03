@@ -138,7 +138,6 @@ use tealr::mlu::{TealData,UserData};
 #[cfg(feature = "rlua")]
 use tealr::rlu::{TealData,UserData};
 #[derive(UserData, TypeName)]
-#[derive(UserData, TypeName)]
 struct Example {}
 impl TealData for Example {};
 
