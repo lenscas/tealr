@@ -155,7 +155,7 @@ impl TypeWalker {
     #[cfg_attr(not(feature = "rlua"), doc = " ```ignore")]
     ///# use rlua::{Lua, Result, UserDataMethods};
     ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper,UserData,}, TypeWalker, TypeName};
-    ///#[derive(=UserData,TypeName)]
+    ///#[derive(UserData,TypeName)]
     ///struct Example {}
     ///impl TealData for Example {}
     ///let generated_string = TypeWalker::new().process_type::<Example>().generate_local("Examples");
