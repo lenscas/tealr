@@ -81,7 +81,7 @@ fn get_version(version: String) -> String {
         }
         match last {
             Checker::V => {
-                if chara.is_digit(10) {
+                if chara.is_ascii_digit() {
                     last = Checker::Number;
                     return true;
                 }
@@ -95,7 +95,7 @@ fn get_version(version: String) -> String {
                 chara.is_digit(10)
             }
             Checker::Dot => {
-                if chara.is_digit(10) {
+                if chara.is_ascii_digit() {
                     last = Checker::Number;
                     return true;
                 }
