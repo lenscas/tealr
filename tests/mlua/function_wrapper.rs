@@ -1,6 +1,6 @@
 use tealr::{
-    mlu::{TealData, TealDataMethods, TypedFunction},
-    type_parts_to_str, MluaUserData, TypeName,
+    mlu::{TealData, TealDataMethods, TypedFunction, UserData},
+    type_parts_to_str, TypeName,
 };
 #[test]
 fn generate_correct_type() {
@@ -18,7 +18,7 @@ fn generate_correct_type() {
 }
 #[test]
 fn try_to_use() -> mlua::Result<()> {
-    #[derive(Clone, MluaUserData, TypeName)]
+    #[derive(Clone, UserData, TypeName)]
     struct Test {}
     impl TealData for Test {
         fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
@@ -52,7 +52,7 @@ return test:test_function_as_parameter(add)
 
 #[test]
 fn pass_back() -> mlua::Result<()> {
-    #[derive(Clone, MluaUserData, TypeName)]
+    #[derive(Clone, UserData, TypeName)]
     struct Test {}
     impl TealData for Test {
         fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {

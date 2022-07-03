@@ -1,12 +1,13 @@
 use std::{
-    fs::{read_to_string, File},
+    fs::File,
     io::{Read, Write},
     path::Path,
-    process::Command,
 };
 
 use ureq::get;
 use zip::{read::ZipFile, ZipArchive};
+
+use super::load_from_disk::get_local_teal;
 
 pub(crate) fn download_teal(url: String, main_folder: String) -> String {
     let res = match get(&url).call() {
@@ -34,27 +35,12 @@ pub(crate) fn download_teal(url: String, main_folder: String) -> String {
 
     let tl = get_file_from_zip(&mut archive, format!("{}tl", main_folder));
     write_read_to_file(tl, &build_dir.path().join("tl"), &mut buffer);
-    let tl_lua = get_file_from_zip(&mut archive, format!("{}tl.lua", main_folder));
-    write_read_to_file(tl_lua, &build_dir.path().join("tl.lua"), &mut buffer);
     let tl_tl = get_file_from_zip(&mut archive, format!("{}tl.tl", main_folder));
 
     let teal_compiler_path = build_dir.path().join("tl.tl");
     write_read_to_file(tl_tl, &teal_compiler_path, &mut buffer);
 
-    let mut compiler = Command::new("lua")
-        .current_dir(build_dir.path())
-        .args(&["tl", "gen", "-o", "output.lua", "--skip-compat53"])
-        .arg(teal_compiler_path)
-        .spawn()
-        .expect("could not run lua to compile teal without compat");
-    if !compiler
-        .wait()
-        .expect("Could not wait for compiler")
-        .success()
-    {
-        panic!("Could not compile teal without compatibility library")
-    }
-    read_to_string(build_dir.path().join("output.lua")).expect("Could not read compiled compiler")
+    get_local_teal(teal_compiler_path.to_string_lossy().to_string())
 }
 
 pub(crate) fn download_teal_from_luarocks(version: String) -> String {
