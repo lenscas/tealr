@@ -4,8 +4,23 @@ use crate::{type_representation::KindOfType, NamePart, TypeName};
 
 ///Represents a type
 #[derive(Debug, PartialEq, Eq, Clone, Hash, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(
+    all(feature = "mlua", feature = "derive"),
+    derive(crate::mlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(feature = "rlua", feature = "derive"),
+    derive(crate::rlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    tealr(tealr_name = crate)
+)]
 pub struct TealType {
     ///Name of the type
+    #[cfg_attr(
+        all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+        tealr(remote =  String))]
     pub name: Cow<'static, str>,
     ///If the type is build in, a generic or from a library
     pub type_kind: KindOfType,

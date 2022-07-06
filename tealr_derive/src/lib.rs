@@ -27,7 +27,7 @@ use proc_macro::TokenStream;
 use venial::parse_declaration;
 
 #[cfg(feature = "derive")]
-#[proc_macro_derive(RluaUserData)]
+#[proc_macro_derive(RluaUserData, attributes(tealr))]
 pub fn rlua_user_data_derive(input: TokenStream) -> TokenStream {
     use user_data::impl_rlua_user_data_derive;
 
@@ -36,7 +36,7 @@ pub fn rlua_user_data_derive(input: TokenStream) -> TokenStream {
 }
 
 #[cfg(feature = "derive")]
-#[proc_macro_derive(MluaUserData)]
+#[proc_macro_derive(MluaUserData, attributes(tealr))]
 pub fn mlua_user_data_derive(input: TokenStream) -> TokenStream {
     use user_data::impl_mlua_user_data_derive;
 
@@ -45,7 +45,7 @@ pub fn mlua_user_data_derive(input: TokenStream) -> TokenStream {
 }
 
 #[cfg(feature = "derive")]
-#[proc_macro_derive(TypeName)]
+#[proc_macro_derive(TypeName, attributes(tealr))]
 pub fn type_representation_derive(input: TokenStream) -> TokenStream {
     use user_data::impl_type_representation_derive;
 
@@ -55,7 +55,7 @@ pub fn type_representation_derive(input: TokenStream) -> TokenStream {
 }
 
 #[cfg(feature = "derive")]
-#[proc_macro_derive(RluaTealDerive)]
+#[proc_macro_derive(RluaTealDerive, attributes(tealr))]
 pub fn rlua_teal_derive(input: TokenStream) -> TokenStream {
     use crate::user_data::{impl_rlua_user_data_derive, impl_type_representation_derive};
 
@@ -66,7 +66,7 @@ pub fn rlua_teal_derive(input: TokenStream) -> TokenStream {
 }
 
 #[cfg(feature = "derive")]
-#[proc_macro_derive(MluaTealDerive)]
+#[proc_macro_derive(MluaTealDerive, attributes(tealr))]
 pub fn mlua_teal_derive(input: TokenStream) -> TokenStream {
     use crate::user_data::impl_type_representation_derive;
     use user_data::impl_mlua_user_data_derive;

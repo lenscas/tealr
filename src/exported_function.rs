@@ -1,6 +1,6 @@
 use std::{borrow::Cow, collections::HashMap, string::FromUtf8Error};
 
-use crate::type_generator::NameContainer;
+use crate::{type_generator::NameContainer, NamePart};
 
 #[cfg(any(feature = "rlua", feature = "mlua"))]
 fn add_generics(v: &[crate::TealType], generics: &mut std::collections::HashSet<crate::NamePart>) {
@@ -20,12 +20,30 @@ fn add_generics(v: &[crate::TealType], generics: &mut std::collections::HashSet<
     })
 }
 
+type X = Vec<NamePart>;
+
 ///Contains the data needed to write down the type of a function
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(
+    all(feature = "mlua", feature = "derive"),
+    derive(crate::mlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(feature = "rlua", feature = "derive"),
+    derive(crate::rlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    tealr(tealr_name = crate)
+)]
 pub struct ExportedFunction {
     ///Name of the function
     pub name: NameContainer,
     ///The full signature of the function
+    #[cfg_attr(
+        all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+        tealr(remote = X)
+    )]
     pub signature: Cow<'static, [crate::NamePart]>,
     ///If this function is a meta_method
     pub is_meta_method: bool,
@@ -42,7 +60,7 @@ impl ExportedFunction {
         is_meta_method: bool,
         extra_self: Option<Cow<'static, [crate::NamePart]>>,
     ) -> Self {
-        use crate::{KindOfType, NamePart};
+        use crate::KindOfType;
         use std::collections::HashSet;
         let mut generics = HashSet::new();
         let params2 = A::get_types();
