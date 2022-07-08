@@ -3,13 +3,13 @@ use std::borrow::Cow;
 use mlua::ToLua;
 use tealr::{
     create_union_mlua,
-    mlu::{mlua::FromLua, TealData, TealDataMethods, TypedFunction},
-    MluaUserData, TypeName, TypeWalker,
+    mlu::{mlua::FromLua, TealData, TealDataMethods, TypedFunction, UserData},
+    TypeName, TypeWalker,
 };
 
 create_union_mlua!(enum X = String | f32 | bool);
 
-#[derive(Clone, MluaUserData, TypeName)]
+#[derive(Clone, UserData, TypeName)]
 struct Example {}
 
 //now, implement TealData. This tells mlua what methods are available and tealr what the types are

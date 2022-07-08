@@ -37,7 +37,7 @@ impl TypeWalker {
     ///
     ///When embedding teal/lua there is probably not really a reason to do so.
     ///However, it ***IS*** needed for the struct that gets exposed directly to teal when using mlua to make a lua/teal library.
-    pub fn process_type_inline<A: 'static + TypeName + TypeBody>(mut self) -> Self {
+    pub fn process_type_inline<A: TypeName + TypeBody>(mut self) -> Self {
         let mut x = <A as TypeBody>::get_type_body();
         match &mut x {
             TypeGenerator::Record(x) => {
@@ -49,7 +49,7 @@ impl TypeWalker {
         self
     }
     ///prepares a type to have a `.d.tl` file generated, and adds it to the list of types to generate.
-    pub fn process_type<A: 'static + TypeName + TypeBody>(mut self) -> Self {
+    pub fn process_type<A: TypeName + TypeBody>(mut self) -> Self {
         let x = <A as TypeBody>::get_type_body();
         self.given_types.push(x);
         self
@@ -58,8 +58,8 @@ impl TypeWalker {
     #[cfg_attr(feature = "rlua", doc = " ```")]
     #[cfg_attr(not(feature = "rlua"), doc = " ```ignore")]
     ///# use rlua::{Lua, Result, UserDataMethods};
-    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker, RluaUserData,TypeName};
-    ///#[derive(RluaUserData,TypeName)]
+    ///# use tealr::{rlu::{TealData,UserData, TealDataMethods,UserDataWrapper}, TypeWalker, TypeName};
+    ///#[derive(UserData,TypeName)]
     ///struct Example {}
     ///impl TealData for Example {}
     ///let generated_string = TypeWalker::new().process_type::<Example>().generate("Examples",true);
@@ -132,8 +132,8 @@ impl TypeWalker {
     #[cfg_attr(feature = "rlua", doc = " ```")]
     #[cfg_attr(not(feature = "rlua"), doc = " ```ignore")]
     ///# use rlua::{Lua, Result, UserDataMethods};
-    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker, RluaUserData,TypeName};
-    ///#[derive(RluaUserData,TypeName)]
+    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper,UserData}, TypeWalker, TypeName};
+    ///#[derive(UserData,TypeName)]
     ///struct Example {}
     ///impl TealData for Example {}
     ///let generated_string = TypeWalker::new().process_type::<Example>().generate_global("Examples");
@@ -154,8 +154,8 @@ impl TypeWalker {
     #[cfg_attr(feature = "rlua", doc = " ```")]
     #[cfg_attr(not(feature = "rlua"), doc = " ```ignore")]
     ///# use rlua::{Lua, Result, UserDataMethods};
-    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker, RluaUserData,TypeName};
-    ///#[derive(RluaUserData,TypeName)]
+    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper,UserData,}, TypeWalker, TypeName};
+    ///#[derive(UserData,TypeName)]
     ///struct Example {}
     ///impl TealData for Example {}
     ///let generated_string = TypeWalker::new().process_type::<Example>().generate_local("Examples");

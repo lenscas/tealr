@@ -12,7 +12,7 @@ fn run_find_command(is_local: bool) -> String {
     });
     let stdout = String::from_utf8(command.stdout).unwrap();
     if !command.status.success() {
-        if is_local {
+        if !is_local {
             return run_find_command(true);
         } else {
             panic!(
@@ -35,21 +35,41 @@ pub(crate) fn discover_tl_tl() -> String {
     run_find_command(true)
 }
 pub(crate) fn get_local_teal(path: String) -> String {
-    let build_dir = tempfile::tempdir().expect("Could not get temp dir to build teal");
+    let build_dir = tempfile::tempdir().expect("Could not get a temporary directory to build teal");
 
     let mut compiler = Command::new("tl")
         .current_dir(build_dir.path())
         .args(&["gen", "-o", "output.lua", "--skip-compat53"])
         .arg(path)
         .spawn()
-        .expect("could not run lua to compile teal without compat");
+        .map_err(|v| {
+            let x = match v.kind() {
+                std::io::ErrorKind::NotFound => "Could not compile teal. Command `tl` not found.",
+                std::io::ErrorKind::PermissionDenied => {
+                    "Permission denied when running the teal compiler."
+                }
+                _ => "Error while running teal. Is it available as `tl` in the path?",
+            };
+            panic!(
+                "Could not compile teal:{x}\nRaw error:{}\n{}",
+                v.raw_os_error()
+                    .map(|v| format!("Kind:{v}"))
+                    .unwrap_or_else(String::new),
+                v.kind()
+            )
+        })
+        .expect(
+            "Failed running the teal compiler. Is `tl` installed and accessible through the path?",
+        );
 
     if !compiler
         .wait()
         .expect("Could not wait for compiler")
         .success()
     {
-        panic!("Could not compile teal without compatibility library")
+        panic!(
+            "Could not compile teal without compatibility library. Is `tl` available in the path?"
+        )
     }
     read_to_string(build_dir.path().join("output.lua")).expect("Could not read compiled compiler")
 }

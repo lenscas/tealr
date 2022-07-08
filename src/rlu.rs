@@ -72,3 +72,23 @@ pub fn get_type_name(value: &rlua::Value) -> &'static str {
         Cow::Owned(_) => "any",
     }
 }
+
+///Implements [rlua::UserData](rlua::UserData) and `tealr::TypeBody`
+///
+///It wraps the [rlua::UserDataMethods](rlua::UserDataMethods) into `tealr::rlu::UserDataWrapper`
+///and then passes it to `tealr::rlu::TealData::add_methods`.
+///
+///Type body is implemented in a similar way, where it uses the `tealr::TealData` implementation to get the types
+#[cfg(feature = "derive")]
+pub use tealr_derive::RluaUserData as UserData;
+
+///Implement both [rlua::UserData](rlua::UserData) and `[TypeName](tealr::TypeName]`.
+///
+///Look at [tealr_derive::RluaUserData](tealr_derive::RluaUserData) and [tealr_derive::TypeName](tealr_derive::TypeName)
+///for more information on how the implemented traits will behave.
+#[cfg(feature = "derive")]
+pub use tealr_derive::RluaTealDerive as TealDerive;
+
+#[doc = include_str!("rlu/to_from_macro_doc.md")]
+#[cfg(all(feature = "derive"))]
+pub use tealr_derive::RluaFromToLua as FromToLua;

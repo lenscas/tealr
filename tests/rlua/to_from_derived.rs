@@ -1,6 +1,9 @@
-use tealr::{rlu::rlua::Lua, RluaFromToLua, TypeName, TypeWalker};
+use tealr::{
+    rlu::{rlua::Lua, FromToLua},
+    TypeName, TypeWalker,
+};
 
-#[derive(RluaFromToLua, TypeName, PartialEq, Debug, Clone)]
+#[derive(FromToLua, TypeName, PartialEq, Debug, Clone)]
 enum ExampleCStyleEnum {
     This,
     Is,
@@ -9,7 +12,7 @@ enum ExampleCStyleEnum {
     Example,
 }
 
-#[derive(RluaFromToLua, Clone, TypeName)]
+#[derive(FromToLua, Clone, TypeName)]
 struct V(String);
 impl From<String> for V {
     fn from(x: String) -> Self {
@@ -22,7 +25,7 @@ impl From<V> for String {
     }
 }
 
-#[derive(RluaFromToLua, Clone, TypeName)]
+#[derive(FromToLua, Clone, TypeName)]
 #[tealr(creator_name = TestCreatorOfDOOM)]
 pub(crate) enum Test2 {
     Amazing(#[tealr(remote = V)] String),
@@ -44,7 +47,7 @@ impl From<Test2> for String {
     }
 }
 
-#[derive(Clone, Debug, RluaFromToLua, TypeName, PartialEq)]
+#[derive(Clone, Debug, FromToLua, TypeName, PartialEq)]
 struct Example {
     #[tealr(remote = Test2)]
     field1: String,
