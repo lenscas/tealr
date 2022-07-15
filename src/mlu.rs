@@ -5,16 +5,16 @@ pub(crate) mod teal_data;
 mod teal_data_fields;
 pub(crate) mod teal_data_methods;
 mod typed_function;
-pub(crate) mod user_data_wrapper;
 pub mod user_data_proxy;
+pub(crate) mod user_data_wrapper;
 use std::borrow::Cow;
 
 pub use self::{
     teal_data::TealData,
     teal_data_methods::{set_global_env, ExportInstances, InstanceCollector, TealDataMethods},
     typed_function::TypedFunction,
-    user_data_wrapper::UserDataWrapper,
     user_data_proxy::UserDataProxy,
+    user_data_wrapper::UserDataWrapper,
 };
 pub use mlua;
 pub use teal_data_fields::TealDataFields;

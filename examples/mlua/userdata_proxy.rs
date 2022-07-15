@@ -7,7 +7,6 @@ use tealr::{
 };
 //this example shows how to expose a `proxy` type to enable calling static global functions from anywhere.
 
-
 //First, create the struct you want to export to lua.
 //instead of both deriving UserData and TypeName you can also
 //derive TealDerive, which does both. However you will still need to import
@@ -39,7 +38,6 @@ impl tealr::mlu::ExportInstances for Export {
         instance_collector.add_instance("Example".into(), |c| UserDataProxy::<Example>::new(c))
     }
 }
-
 
 fn main() -> Result<()> {
     //lets first generate the definition file
