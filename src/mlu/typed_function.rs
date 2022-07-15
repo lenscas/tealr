@@ -104,15 +104,14 @@ where
         fun.inner_function
     }
 }
-impl<'lua, 'callback, Params, Response> TypedFunction<'lua, Params, Response>
+impl<'lua, Params, Response> TypedFunction<'lua, Params, Response>
 where
-    'lua: 'callback,
-    Params: FromLuaMulti<'callback> + TealMultiValue,
-    Response: ToLuaMulti<'callback> + TealMultiValue,
+    Params: FromLuaMulti<'lua> + TealMultiValue,
+    Response: ToLuaMulti<'lua> + TealMultiValue,
 {
     ///make a typed function directly from a Rust one.
     pub fn from_rust<
-        Func: 'static + crate::mlu::MaybeSend + Fn(&'callback Lua, Params) -> mlua::Result<Response>,
+        Func: 'static + crate::mlu::MaybeSend + Fn(&'lua Lua, Params) -> mlua::Result<Response>,
     >(
         func: Func,
         lua: &'lua Lua,
@@ -125,7 +124,7 @@ where
     }
     ///make a typed function directly from a Rust one.
     pub fn from_rust_mut<
-        Func: 'static + crate::mlu::MaybeSend + FnMut(&'callback Lua, Params) -> mlua::Result<Response>,
+        Func: 'static + crate::mlu::MaybeSend + FnMut(&'lua Lua, Params) -> mlua::Result<Response>,
     >(
         func: Func,
         lua: &'lua Lua,
