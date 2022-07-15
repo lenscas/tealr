@@ -61,6 +61,7 @@ fn main() -> Result<()> {
 
     //how you pass this type to lua hasn't changed:
     let lua = Lua::new();
+    tealr::mlu::set_global_env::<Export>(&lua).unwrap();
     let globals = lua.globals();
     globals.set("test", Example {})?;
     let code = "
@@ -68,6 +69,7 @@ print(test:example_method(1))
 print(test:example_method_mut(2,\"test\"))
 print(test.example_function({}))
 print(test.example_function_mut(true))
+print(Example.example_function({}))
     ";
     lua.load(code).set_name("test?")?.eval()?;
     Ok(())
