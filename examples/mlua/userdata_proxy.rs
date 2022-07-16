@@ -14,7 +14,7 @@ use tealr::{
 //The clone is only needed because one of the example functions has it as a parameter
 #[derive(Clone, UserData, TypeName)]
 struct Example {
-    float : f32,
+    float: f32,
 }
 
 //now, implement TealData. This tells rlua what methods are available and tealr what the types are
@@ -30,12 +30,13 @@ impl TealData for Example {
     }
 
     fn add_fields<'lua, F: tealr::mlu::TealDataFields<'lua, Self>>(fields: &mut F) {
-        fields.add_field_method_get("example_field", |_,s : &Example| Ok(s.float));
-        fields.add_field_method_set("example_field_set", |_,s : &mut Example,v : f32| Ok(s.float = v));
-        fields.add_field_function_get("example_static_field", |_,_| Ok("my_field"));
-        fields.add_field_function_get("example_static_field_mut", |_,_| Ok("my_mut_field"));
+        fields.add_field_method_get("example_field", |_, s: &Example| Ok(s.float));
+        fields.add_field_method_set("example_field_set", |_, s: &mut Example, v: f32| {
+            Ok(s.float = v)
+        });
+        fields.add_field_function_get("example_static_field", |_, _| Ok("my_field"));
+        fields.add_field_function_get("example_static_field_mut", |_, _| Ok("my_mut_field"));
     }
-    
 }
 
 // document and expose the global proxy
@@ -76,7 +77,7 @@ fn main() -> Result<()> {
     let lua = Lua::new();
     tealr::mlu::set_global_env::<Export>(&lua).unwrap();
     let globals = lua.globals();
-    globals.set("test", Example {float: 42.0})?;
+    globals.set("test", Example { float: 42.0 })?;
     let code = "
 print(\" Calling from `test` :\")
 print(test:example_method(1))

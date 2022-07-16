@@ -1,5 +1,3 @@
-
-
 use crate::teal_multivalue::TealMultiValue;
 
 macro_rules! impl_type_name_life_time {
@@ -222,7 +220,8 @@ pub trait TypeName {
 
 use std::{
     borrow::Cow,
-    collections::{BTreeMap, HashMap}, fmt::Display,
+    collections::{BTreeMap, HashMap},
+    fmt::Display,
 };
 
 use crate::{TealType, TypeGenerator};
