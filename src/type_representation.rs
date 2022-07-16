@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 use crate::teal_multivalue::TealMultiValue;
 
 macro_rules! impl_type_name_life_time {
@@ -134,6 +136,13 @@ pub enum NamePart {
     //Appended(Cow<'static, [NamePart]>),
 }
 
+impl Display for NamePart {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_ref_str());
+        Ok(())
+    }
+}
+
 impl NamePart {
     ///Turn a NamePart into a `Cow<'static, str>`
     pub fn as_ref_str(&self) -> &Cow<'static, str> {
@@ -214,7 +223,7 @@ pub trait TypeName {
 
 use std::{
     borrow::Cow,
-    collections::{BTreeMap, HashMap},
+    collections::{BTreeMap, HashMap}, fmt::Display,
 };
 
 use crate::{TealType, TypeGenerator};

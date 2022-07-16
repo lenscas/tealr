@@ -45,6 +45,8 @@ impl tealr::mlu::ExportInstances for Export {
         instance_collector: &mut T,
     ) -> mlua::Result<()> {
         instance_collector.document_instance("Documentation for the exposed static proxy");
+
+        // note that the proxy type is NOT `Example` but a special mlua type, which is represented differnetly in .d.tl as well
         instance_collector.add_instance("Example".into(), UserDataProxy::<Example>::new)
     }
 }
