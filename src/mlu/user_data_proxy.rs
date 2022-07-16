@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use mlua::{AnyUserData, Error, Lua, ToLua, UserData};
 
-use crate::{TypeBody, TypeName};
+use crate::{TypeBody, TypeName, RecordGenerator, EnumGenerator};
 
 /// A userdata which can be used as a static proxy
 pub trait StaticUserdata: UserData + 'static {}
@@ -28,13 +28,47 @@ impl<'lua, T: StaticUserdata> UserDataProxy<'lua, T> {
 
 impl<T: StaticUserdata + TypeName> TypeName for UserDataProxy<'_, T> {
     fn get_type_parts() -> std::borrow::Cow<'static, [crate::NamePart]> {
-        T::get_type_parts()
+        let mut base = T::get_type_parts().to_vec();
+        let suffix = crate::NamePart::Symbol("Class".into());
+        base.push(suffix);
+        std::borrow::Cow::Owned(base)
     }
 }
 
-impl<T: StaticUserdata + TypeBody> TypeBody for UserDataProxy<'_, T> {
+impl<T: StaticUserdata + TypeBody + TypeName> TypeBody for UserDataProxy<'_, T> {
     fn get_type_body() -> crate::TypeGenerator {
-        T::get_type_body()
+        let generator = T::get_type_body();
+        // extract only "functions"
+        match generator {
+            crate::TypeGenerator::Record(record_generator) => {
+                crate::TypeGenerator::Record(
+                    Box::new(
+                        RecordGenerator{
+                            // TODO: deal with this to reflect this is the "Class" version 
+                            type_name: Self::get_type_parts(),
+                            // documentation: todo!(),
+                            // type_doc: todo!(),
+
+                            // we overwrite anything which is not static
+                            fields: Default::default(),
+                            methods: Default::default(),
+                            mut_methods: Default::default(),
+                            meta_method: Default::default(),
+                            meta_method_mut: Default::default(),
+                            ..record_generator.as_ref().clone()
+                        }
+                    )
+                )
+            },
+            crate::TypeGenerator::Enum(enum_generator) => {
+                crate::TypeGenerator::Enum(
+                    EnumGenerator{
+                        name: Self::get_type_parts(),
+                        ..enum_generator.clone()
+                    }
+                )
+            },
+        }
     }
 }
 

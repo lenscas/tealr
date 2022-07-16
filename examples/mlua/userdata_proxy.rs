@@ -13,7 +13,9 @@ use tealr::{
 //UserData and TypeName
 //The clone is only needed because one of the example functions has it as a parameter
 #[derive(Clone, UserData, TypeName)]
-struct Example {}
+struct Example {
+    float : f32,
+}
 
 //now, implement TealData. This tells rlua what methods are available and tealr what the types are
 impl TealData for Example {
@@ -26,6 +28,14 @@ impl TealData for Example {
             Ok(x)
         })
     }
+
+    fn add_fields<'lua, F: tealr::mlu::TealDataFields<'lua, Self>>(fields: &mut F) {
+        fields.add_field_method_get("example_field", |_,s : &Example| Ok(s.float));
+        fields.add_field_method_set("example_field_set", |_,s : &mut Example,v : f32| Ok(s.float = v));
+        fields.add_field_function_get("example_static_field", |_,_| Ok("my_field"));
+        fields.add_field_function_get("example_static_field_mut", |_,_| Ok("my_mut_field"));
+    }
+    
 }
 
 // document and expose the global proxy
@@ -45,6 +55,7 @@ fn main() -> Result<()> {
         //tells it that we want to generate Example
         //add more calls to process_type to generate more types in the same file
         .process_type::<Example>()
+        .process_type::<UserDataProxy<Example>>()
         // enable documenting the global
         .document_global_instance::<Export>()?
         //generate the file
@@ -63,12 +74,17 @@ fn main() -> Result<()> {
     let lua = Lua::new();
     tealr::mlu::set_global_env::<Export>(&lua).unwrap();
     let globals = lua.globals();
-    globals.set("test", Example {})?;
+    globals.set("test", Example {float: 42.0})?;
     let code = "
+print(\" Calling from `test` :\")
 print(test:example_method(1))
 print(test:example_method_mut(2,\"test\"))
 print(test.example_function({}))
 print(test.example_function_mut(true))
+print(test.example_field)
+print(test.example_static_field)
+print(\" Calling from global `Example` :\")
+print(Example.example_static_field)
 print(Example.example_function({}))
     ";
     lua.load(code).set_name("test?")?.eval()?;
