@@ -101,7 +101,7 @@ impl TypeGenerator {
 }
 
 ///contains all the information needed to create a teal enum.
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct EnumGenerator {
     ///the name of this enum
     pub name: Cow<'static, [NamePart]>,
@@ -136,7 +136,7 @@ impl EnumGenerator {
 }
 
 ///contains all the information needed to create a record
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Default, Clone, serde::Serialize, serde::Deserialize)]
 pub struct RecordGenerator {
     ///Represents if the type should be inlined or not.
     pub should_be_inlined: bool,
@@ -146,6 +146,8 @@ pub struct RecordGenerator {
     pub type_name: Cow<'static, [NamePart]>,
     ///The exposed fields and their types
     pub fields: Vec<(NameContainer, Cow<'static, [NamePart]>)>,
+    ///The exposed static fields and their types
+    pub static_fields: Vec<(NameContainer, Cow<'static, [NamePart]>)>,
     ///exported methods
     pub methods: Vec<ExportedFunction>,
     ///exported methods that mutate something
@@ -166,7 +168,7 @@ pub struct RecordGenerator {
     pub documentation: HashMap<NameContainer, String>,
     ///documentation for this type itself
     pub type_doc: String,
-    next_docs: Option<String>,
+    pub(crate) next_docs: Option<String>,
     ///if this type needs to get a `.help()` function
     pub should_generate_help_method: bool,
 }
@@ -183,19 +185,8 @@ impl RecordGenerator {
             should_be_inlined,
             is_user_data: false,
             type_name: A::get_type_parts(),
-            fields: Default::default(),
-            methods: Default::default(),
-            mut_methods: Default::default(),
-            functions: Default::default(),
-            mut_functions: Default::default(),
-            meta_method: Default::default(),
-            meta_method_mut: Default::default(),
-            meta_function: Default::default(),
-            meta_function_mut: Default::default(),
-            documentation: Default::default(),
             should_generate_help_method: true,
-            next_docs: Default::default(),
-            type_doc: Default::default(),
+            ..Default::default()
         }
     }
 
@@ -207,6 +198,7 @@ impl RecordGenerator {
         let fields: Vec<_> = self
             .fields
             .into_iter()
+            .chain(self.static_fields.into_iter())
             .filter(|(name, _)| duplicates.insert(name.0.clone()))
             .map(|(name, lua_type)| {
                 let doc = match documentation.get(&name) {
@@ -702,7 +694,7 @@ where
         F: 'static + MaybeSend + Fn(&'lua Lua, mlua::AnyUserData<'lua>) -> mlua::Result<R>,
     {
         self.copy_docs(name.as_ref());
-        self.fields
+        self.static_fields
             .push((name.as_ref().to_vec().into(), R::get_type_parts()));
     }
 
@@ -713,7 +705,7 @@ where
         F: 'static + MaybeSend + FnMut(&'lua Lua, mlua::AnyUserData<'lua>, A) -> mlua::Result<()>,
     {
         self.copy_docs(name.as_ref());
-        self.fields
+        self.static_fields
             .push((name.as_ref().to_vec().into(), A::get_type_parts()));
     }
 
@@ -725,7 +717,7 @@ where
         let x = Into::<MetaMethodM>::into(meta);
         let name: Cow<'_, str> = Cow::Owned(x.name().to_string());
         self.copy_docs(name.as_bytes());
-        self.fields
+        self.static_fields
             .push((NameContainer::from(name), R::get_type_parts()));
     }
 

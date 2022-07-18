@@ -134,6 +134,12 @@ pub enum NamePart {
     //Appended(Cow<'static, [NamePart]>),
 }
 
+impl Display for NamePart {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_ref_str())
+    }
+}
+
 impl NamePart {
     ///Turn a NamePart into a `Cow<'static, str>`
     pub fn as_ref_str(&self) -> &Cow<'static, str> {
@@ -215,6 +221,7 @@ pub trait TypeName {
 use std::{
     borrow::Cow,
     collections::{BTreeMap, HashMap},
+    fmt::Display,
 };
 
 use crate::{TealType, TypeGenerator};

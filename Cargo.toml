@@ -49,8 +49,8 @@ rlua_system-lua54 = ["rlua/system-lua54"]
 [dependencies]
 bstr = {version = "0.2", default_features = false, features = ["std"]}
 itertools = "0.10.3"
-mlua = {version = "0.7.4", optional = true, default_features = false}
-rlua = {version = "0.19.1", optional = true, default_features = false}
+mlua = {version = "0.8.1", optional = true, default_features = false}
+rlua = {version = "0.19.2", optional = true, default_features = false}
 serde = {version = "1.0.136", features = ["derive"]}
 tealr_derive = {version = "0.8.0", optional = true, path = "./tealr_derive"}
 
@@ -178,6 +178,11 @@ required-features = ["mlua"]
 [[example]]
 name = "mlua_manual_documentation"
 path = "examples/mlua/manual_documentation.rs"
+required-features = ["mlua"]
+
+[[example]]
+name = "mlua_userdata_proxy"
+path = "examples/mlua/userdata_proxy.rs"
 required-features = ["mlua"]
 
 [package.metadata.docs.rs]

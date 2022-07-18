@@ -5,6 +5,8 @@ pub(crate) mod teal_data;
 mod teal_data_fields;
 pub(crate) mod teal_data_methods;
 mod typed_function;
+/// Module containing functionality to do with user data proxies
+pub mod user_data_proxy;
 pub(crate) mod user_data_wrapper;
 use std::borrow::Cow;
 
@@ -12,6 +14,7 @@ pub use self::{
     teal_data::TealData,
     teal_data_methods::{set_global_env, ExportInstances, InstanceCollector, TealDataMethods},
     typed_function::TypedFunction,
+    user_data_proxy::UserDataProxy,
     user_data_wrapper::UserDataWrapper,
 };
 pub use mlua;
