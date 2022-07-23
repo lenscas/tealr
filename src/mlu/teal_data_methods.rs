@@ -134,5 +134,8 @@ impl<'lua> InstanceCollector<'lua> for (mlua::Table<'lua>, &'lua mlua::Lua) {
 ///implement this to easily document what global instances are exposed to lua
 pub trait ExportInstances: Default {
     ///adds the instances
-    fn add_instances<'lua, T: InstanceCollector<'lua>>(instance_collector: &mut T) -> Result<()>;
+    fn add_instances<'lua, T: InstanceCollector<'lua>>(
+        self,
+        instance_collector: &mut T,
+    ) -> Result<()>;
 }
