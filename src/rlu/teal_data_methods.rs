@@ -78,7 +78,7 @@ pub trait TealDataMethods<'lua, T> {
 ///collets every instance that needs to be exposed to lua
 pub trait InstanceCollector<'lua> {
     ///adds an instance
-    fn add_instance<T: TypeName + ToLua<'lua>, F: Fn(Context<'lua>) -> rlua::Result<T>>(
+    fn add_instance<T: TypeName + ToLua<'lua>, F: FnOnce(Context<'lua>) -> rlua::Result<T>>(
         &mut self,
         global_name: Cow<'static, str>,
         instance: F,
@@ -95,7 +95,7 @@ pub fn set_global_env<T: ExportInstances>(context: rlua::Context) -> rlua::Resul
 }
 
 impl<'lua> InstanceCollector<'lua> for (rlua::Table<'lua>, rlua::Context<'lua>) {
-    fn add_instance<T: TypeName + ToLua<'lua>, F: Fn(Context<'lua>) -> rlua::Result<T>>(
+    fn add_instance<T: TypeName + ToLua<'lua>, F: FnOnce(Context<'lua>) -> rlua::Result<T>>(
         &mut self,
         global_name: Cow<'static, str>,
         instance: F,

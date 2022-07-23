@@ -8,7 +8,7 @@ pub(crate) struct InstanceWalker {
 }
 #[cfg(feature = "mlua")]
 impl<'lua> crate::mlu::InstanceCollector<'lua> for InstanceWalker {
-    fn add_instance<T: TypeName, F: Fn(&'lua mlua::Lua) -> Result<T, mlua::Error>>(
+    fn add_instance<T: TypeName, F: FnOnce(&'lua mlua::Lua) -> Result<T, mlua::Error>>(
         &mut self,
         global_name: Cow<'static, str>,
         _: F,
@@ -23,7 +23,7 @@ impl<'lua> crate::mlu::InstanceCollector<'lua> for InstanceWalker {
 
 #[cfg(feature = "rlua")]
 impl<'lua> crate::rlu::InstanceCollector<'lua> for InstanceWalker {
-    fn add_instance<T: TypeName, F: Fn(rlua::Context<'lua>) -> rlua::Result<T>>(
+    fn add_instance<T: TypeName, F: FnOnce(rlua::Context<'lua>) -> rlua::Result<T>>(
         &mut self,
         global_name: Cow<'static, str>,
         _: F,

@@ -4,7 +4,7 @@ use crate::{type_parts_to_str, NamePart, TypeBody, TypeGenerator, TypeName};
 
 type V = Vec<NamePart>;
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 ///Used to document what global instances get made by the module
 #[cfg_attr(
     all(feature = "mlua", feature = "derive"),
