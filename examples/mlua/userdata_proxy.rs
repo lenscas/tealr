@@ -40,9 +40,11 @@ impl TealData for Example {
 }
 
 // document and expose the global proxy
+#[derive(Default)]
 struct Export;
 impl tealr::mlu::ExportInstances for Export {
     fn add_instances<'lua, T: tealr::mlu::InstanceCollector<'lua>>(
+        self,
         instance_collector: &mut T,
     ) -> mlua::Result<()> {
         instance_collector.document_instance("Documentation for the exposed static proxy");

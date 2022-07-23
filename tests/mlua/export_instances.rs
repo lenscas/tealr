@@ -30,6 +30,7 @@ impl TealData for Example {
 struct Export;
 impl tealr::mlu::ExportInstances for Export {
     fn add_instances<'lua, T: tealr::mlu::InstanceCollector<'lua>>(
+        self,
         instance_collector: &mut T,
     ) -> mlua::Result<()> {
         instance_collector.add_instance(Cow::Borrowed("test"), |_| Ok(Example {}))?;
