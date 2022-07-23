@@ -26,6 +26,7 @@ impl TealData for Example {
     }
 }
 
+#[derive(Default)]
 struct Export;
 impl tealr::mlu::ExportInstances for Export {
     fn add_instances<'lua, T: tealr::mlu::InstanceCollector<'lua>>(
