@@ -114,7 +114,7 @@ pub trait InstanceCollector<'lua> {
 ///used to export instances to lua
 pub fn set_global_env<T: ExportInstances>(lua: &mlua::Lua) -> Result<()> {
     let globals = lua.globals();
-    T::add_instances(&mut (globals, lua))?;
+    T::default().add_instances(&mut (globals, lua))?;
     Ok(())
 }
 
@@ -132,7 +132,7 @@ impl<'lua> InstanceCollector<'lua> for (mlua::Table<'lua>, &'lua mlua::Lua) {
 }
 
 ///implement this to easily document what global instances are exposed to lua
-pub trait ExportInstances {
+pub trait ExportInstances: Default {
     ///adds the instances
     fn add_instances<'lua, T: InstanceCollector<'lua>>(instance_collector: &mut T) -> Result<()>;
 }

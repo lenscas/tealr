@@ -213,7 +213,7 @@ impl TypeWalker {
         mut self,
     ) -> rlua::Result<Self> {
         let mut collector = crate::export_instance::InstanceWalker::new();
-        T::add_instances(&mut collector)?;
+        T::default().add_instances(&mut collector)?;
         self.global_instances_off.append(&mut collector.instances);
         Ok(self)
     }
@@ -226,7 +226,7 @@ impl TypeWalker {
         mut self,
     ) -> mlua::Result<Self> {
         let mut collector = crate::export_instance::InstanceWalker::new();
-        T::add_instances(&mut collector)?;
+        T::default().add_instances(&mut collector)?;
         self.global_instances_off.append(&mut collector.instances);
         Ok(self)
     }

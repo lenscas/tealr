@@ -26,9 +26,11 @@ impl TealData for Example {
     }
 }
 
+#[derive(Default)]
 struct Export;
 impl tealr::rlu::ExportInstances for Export {
     fn add_instances<'lua, T: tealr::rlu::InstanceCollector<'lua>>(
+        self,
         instance_collector: &mut T,
     ) -> rlua::Result<()> {
         instance_collector.add_instance(Cow::Borrowed("test"), |_| Ok(Example {}))?;
