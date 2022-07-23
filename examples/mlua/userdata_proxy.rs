@@ -77,7 +77,7 @@ fn main() -> Result<()> {
 
     //how you pass this type to lua hasn't changed:
     let lua = Lua::new();
-    tealr::mlu::set_global_env::<Export>(&lua).unwrap();
+    tealr::mlu::set_global_env(Export::default(), &lua).unwrap();
     let globals = lua.globals();
     globals.set("test", Example { float: 42.0 })?;
     let code = "
