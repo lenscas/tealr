@@ -2,12 +2,32 @@ use std::{borrow::Cow, string::FromUtf8Error};
 
 use crate::{type_parts_to_str, NamePart, TypeBody, TypeGenerator, TypeName};
 
-#[derive(serde::Serialize, serde::Deserialize)]
+type V = Vec<NamePart>;
+
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 ///Used to document what global instances get made by the module
+#[cfg_attr(
+    all(feature = "mlua", feature = "derive"),
+    derive(crate::mlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(feature = "rlua", feature = "derive"),
+    derive(crate::rlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    tealr(tealr_name = crate)
+)]
 pub struct GlobalInstance {
     ///name of the global
+    #[cfg_attr(
+        all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+        tealr(remote =  String))]
     pub name: Cow<'static, str>,
     ///the type
+    #[cfg_attr(
+        all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+        tealr(remote =  V))]
     pub teal_type: Cow<'static, [NamePart]>,
     ///if the type is external
     pub is_external: bool,
@@ -17,6 +37,18 @@ pub struct GlobalInstance {
 
 ///This generates the .d.tl files
 #[derive(Default, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(
+    all(feature = "mlua", feature = "derive"),
+    derive(crate::mlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(feature = "rlua", feature = "derive"),
+    derive(crate::rlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    tealr(tealr_name = crate)
+)]
 pub struct TypeWalker {
     ///All the types that are currently registered by the TypeWalker
     pub given_types: Vec<TypeGenerator>,
@@ -181,7 +213,7 @@ impl TypeWalker {
         mut self,
     ) -> rlua::Result<Self> {
         let mut collector = crate::export_instance::InstanceWalker::new();
-        T::add_instances(&mut collector)?;
+        T::default().add_instances(&mut collector)?;
         self.global_instances_off.append(&mut collector.instances);
         Ok(self)
     }
@@ -194,7 +226,7 @@ impl TypeWalker {
         mut self,
     ) -> mlua::Result<Self> {
         let mut collector = crate::export_instance::InstanceWalker::new();
-        T::add_instances(&mut collector)?;
+        T::default().add_instances(&mut collector)?;
         self.global_instances_off.append(&mut collector.instances);
         Ok(self)
     }

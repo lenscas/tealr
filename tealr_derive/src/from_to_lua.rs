@@ -2,6 +2,12 @@ use proc_macro2::{Literal, Span, TokenStream, TokenTree};
 use quote::ToTokens;
 use venial::{parse_declaration, Struct};
 
+pub(crate) fn get_tealr_name(attributes: &[venial::Attribute]) -> TokenStream {
+    find_tag_with_value("tealr_name", attributes)
+        .map(Into::into)
+        .unwrap_or_else(|| quote!(::tealr))
+}
+
 #[cfg(feature = "debug_macros")]
 fn debug_macro(ts: TokenStream) -> TokenStream {
     let hopefully_unique = {
@@ -78,6 +84,7 @@ struct BasicConfig {
     user_data_methods_location: TokenStream,
     teal_data_methods_location: TokenStream,
     invalid_enum_variant_error: TokenStream,
+    typename_macro: TokenStream,
     is_mlua: bool,
 }
 
@@ -128,8 +135,8 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
                                 gen
                                     .fields
                                     .push(
-                                        (::std::borrow::Cow::Borrowed(stringify!(#key_as_str)).into(),
-                                        <(#type_name) as #type_name_path>::get_type_parts())
+                                        ::std::convert::From::from((::std::borrow::Cow::Borrowed(stringify!(#key_as_str)).into(),
+                                        <(#type_name) as #type_name_path>::get_type_parts()))
                                     );
                             },
                         ),
@@ -166,8 +173,8 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
                                 gen
                                     .fields
                                     .push(
-                                        (::std::borrow::Cow::Borrowed(stringify!(#name)).into(),
-                                        <(#type_name) as #type_name_path>::get_type_parts())
+                                        ::std::convert::From::from((::std::borrow::Cow::Borrowed(stringify!(#name)).into(),
+                                        <(#type_name) as #type_name_path>::get_type_parts()))
                                     );
                             },
                         ),
@@ -224,6 +231,8 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
     let user_data_methods_location = config.user_data_methods_location;
     let teal_data_methods_location = config.teal_data_methods_location;
     let record_generator_loc = config.record_generator_loc;
+    let type_name_macro = config.typename_macro;
+
     let (add_fields_user_data, add_fields_teal_data, add_fields_type_body) = config
         .has_userdata_fields
         .then(|| {
@@ -387,7 +396,14 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
         .vis_marker
         .map(|v| v.to_token_stream())
         .unwrap_or_else(|| quote! {});
+    let attributes = enumeration
+        .attributes
+        .iter()
+        .map(|v| v.to_token_stream())
+        .collect::<TokenStream>();
     let creator_struct_stream = quote! {
+        #[derive(#type_name_macro)]
+        #attributes
         #visibility struct #creator_struct_name {}
     };
     let parsed = venial::parse_declaration(creator_struct_stream.clone());
@@ -396,7 +412,7 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
     } else {
         crate::user_data::impl_rlua_user_data_derive(&parsed)
     };
-    let with_type_name = crate::user_data::impl_type_representation_derive(&parsed);
+    //let with_type_name = crate::user_data::impl_type_representation_derive(&parsed);
     let with_clone = quote! {
         impl ::std::clone::Clone for #creator_struct_name {
             fn clone(&self) -> Self {
@@ -424,7 +440,6 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
         }
     };
     trait_impls.extend(Some(creator_struct_stream));
-    trait_impls.extend(with_type_name);
     trait_impls.extend(Some(with_userdata));
     trait_impls.extend(Some(with_clone));
     trait_impls.extend(Some(with_teal_data));
@@ -495,43 +510,46 @@ fn implement_for_c_enum(enumeration: venial::Enum, config: BasicConfig) -> Token
 }
 
 pub(crate) fn mlua_from_to_lua(input: TokenStream) -> TokenStream {
+    let parsed = parse_declaration(input);
+    let tealr_name = get_tealr_name(parsed.attributes());
     let config = BasicConfig {
-        to_location: quote! {::tealr::mlu::mlua::ToLua<'lua>},
-        from_location: quote! {::tealr::mlu::mlua::FromLua<'lua>},
+        to_location: quote! {#tealr_name::mlu::mlua::ToLua<'lua>},
+        from_location: quote! {#tealr_name::mlu::mlua::FromLua<'lua>},
         create_table: quote! {lua.create_table},
-        result_location_to: quote! {::tealr::mlu::mlua::Result<::tealr::mlu::mlua::Value<'lua>>},
-        result_location_from: quote! {::tealr::mlu::mlua::Result<Self>},
-        lua_type: quote! {lua: &'lua ::tealr::mlu::mlua::Lua},
-        lua_value: quote! {::tealr::mlu::mlua::Value},
+        result_location_to: quote! {#tealr_name::mlu::mlua::Result<#tealr_name::mlu::mlua::Value<'lua>>},
+        result_location_from: quote! {#tealr_name::mlu::mlua::Result<Self>},
+        lua_type: quote! {lua: &'lua #tealr_name::mlu::mlua::Lua},
+        lua_value: quote! {#tealr_name::mlu::mlua::Value},
         error_message: quote! {
-            ::tealr::mlu::mlua::Error::FromLuaConversionError{
+            #tealr_name::mlu::mlua::Error::FromLuaConversionError{
                 from: x.type_name(),
                 to: "unknown",
                 message:None
             }
         },
-        type_name_path: quote! {::tealr::TypeName},
-        type_body_loc: quote! {::tealr::TypeBody},
-        type_generator_loc: quote! {::tealr::TypeGenerator},
-        record_generator_loc: quote! {::tealr::RecordGenerator},
-        enum_generator_loc: quote! {::tealr::EnumGenerator},
-        user_data_location: quote! {::tealr::mlu::mlua::UserData},
-        teal_data_location: quote! {::tealr::mlu::TealData},
+        type_name_path: quote! {#tealr_name::TypeName},
+        type_body_loc: quote! {#tealr_name::TypeBody},
+        type_generator_loc: quote! {#tealr_name::TypeGenerator},
+        record_generator_loc: quote! {#tealr_name::RecordGenerator},
+        enum_generator_loc: quote! {#tealr_name::EnumGenerator},
+        user_data_location: quote! {#tealr_name::mlu::mlua::UserData},
+        teal_data_location: quote! {#tealr_name::mlu::TealData},
         has_userdata_fields: true,
-        user_data_fields_location: quote! {::tealr::mlu::mlua::UserDataFields},
-        teal_data_fields_location: quote! {::tealr::mlu::TealDataFields},
-        user_data_wrapper_location: quote! {::tealr::mlu::UserDataWrapper},
-        user_data_methods_location: quote! {::tealr::mlu::mlua::UserDataMethods},
-        teal_data_methods_location: quote! {::tealr::mlu::TealDataMethods},
-        invalid_enum_variant_error: quote! {::tealr::mlu::mlua::Error::FromLuaConversionError {
+        user_data_fields_location: quote! {#tealr_name::mlu::mlua::UserDataFields},
+        teal_data_fields_location: quote! {#tealr_name::mlu::TealDataFields},
+        user_data_wrapper_location: quote! {#tealr_name::mlu::UserDataWrapper},
+        user_data_methods_location: quote! {#tealr_name::mlu::mlua::UserDataMethods},
+        teal_data_methods_location: quote! {#tealr_name::mlu::TealDataMethods},
+        invalid_enum_variant_error: quote! {#tealr_name::mlu::mlua::Error::FromLuaConversionError {
             from: "String",
             to:"unknown",
             message:None
         } },
         is_mlua: true,
+        typename_macro: quote! {#tealr_name::TypeName},
     };
 
-    match parse_declaration(input) {
+    match parsed {
         venial::Declaration::Struct(x) => implement_for_struct(x, config),
         venial::Declaration::Enum(x) => implement_for_enum(x, config),
         _ => venial::Error::new("Only structs and enums are supported").to_compile_error(),
@@ -539,43 +557,46 @@ pub(crate) fn mlua_from_to_lua(input: TokenStream) -> TokenStream {
 }
 
 pub(crate) fn rlua_from_to_lua(input: TokenStream) -> TokenStream {
+    let parsed = parse_declaration(input);
+    let tealr_name = get_tealr_name(parsed.attributes());
     let config = BasicConfig {
-        to_location: quote! {::tealr::rlu::rlua::ToLua<'lua>},
-        from_location: quote! {::tealr::rlu::rlua::FromLua<'lua>},
+        to_location: quote! {#tealr_name::rlu::rlua::ToLua<'lua>},
+        from_location: quote! {#tealr_name::rlu::rlua::FromLua<'lua>},
         create_table: quote! {lua.create_table},
-        result_location_to: quote! {::tealr::rlu::rlua::Result<::tealr::rlu::rlua::Value<'lua>>},
-        result_location_from: quote! {::tealr::rlu::rlua::Result<Self>},
-        lua_type: quote! {lua: ::tealr::rlu::rlua::Context<'lua>},
-        lua_value: quote! {::tealr::rlu::rlua::Value},
+        result_location_to: quote! {#tealr_name::rlu::rlua::Result<#tealr_name::rlu::rlua::Value<'lua>>},
+        result_location_from: quote! {#tealr_name::rlu::rlua::Result<Self>},
+        lua_type: quote! {lua: #tealr_name::rlu::rlua::Context<'lua>},
+        lua_value: quote! {#tealr_name::rlu::rlua::Value},
         error_message: quote! {
-            ::tealr::rlu::rlua::Error::FromLuaConversionError{
+            #tealr_name::rlu::rlua::Error::FromLuaConversionError{
                 from: x. type_name(),
                 to: "unknown",
                 message:None
             }
         },
-        type_name_path: quote! {::tealr::TypeName},
-        type_body_loc: quote! {::tealr::TypeBody},
-        type_generator_loc: quote! {::tealr::TypeGenerator},
-        record_generator_loc: quote! {::tealr::RecordGenerator},
-        enum_generator_loc: quote! {::tealr::EnumGenerator},
-        user_data_location: quote! {::tealr::rlu::rlua::UserData},
-        teal_data_location: quote! {::tealr::rlu::TealData},
+        type_name_path: quote! {#tealr_name::TypeName},
+        type_body_loc: quote! {#tealr_name::TypeBody},
+        type_generator_loc: quote! {#tealr_name::TypeGenerator},
+        record_generator_loc: quote! {#tealr_name::RecordGenerator},
+        enum_generator_loc: quote! {#tealr_name::EnumGenerator},
+        user_data_location: quote! {#tealr_name::rlu::rlua::UserData},
+        teal_data_location: quote! {#tealr_name::rlu::TealData},
         has_userdata_fields: false,
         user_data_fields_location: quote! {},
-        teal_data_fields_location: quote! {::tealr::rlu::TealDataFields},
-        user_data_wrapper_location: quote! {::tealr::rlu::UserDataWrapper},
-        user_data_methods_location: quote! {::tealr::rlu::rlua::UserDataMethods},
-        teal_data_methods_location: quote! {::tealr::rlu::TealDataMethods},
-        invalid_enum_variant_error: quote! {::tealr::rlu::rlua::Error::FromLuaConversionError {
+        teal_data_fields_location: quote! {#tealr_name::rlu::TealDataFields},
+        user_data_wrapper_location: quote! {#tealr_name::rlu::UserDataWrapper},
+        user_data_methods_location: quote! {#tealr_name::rlu::rlua::UserDataMethods},
+        teal_data_methods_location: quote! {#tealr_name::rlu::TealDataMethods},
+        invalid_enum_variant_error: quote! {#tealr_name::rlu::rlua::Error::FromLuaConversionError {
             from: "String",
             to:"unknown",
             message:None
         } },
         is_mlua: false,
+        typename_macro: quote! {#tealr_name::TypeName},
     };
 
-    debug_macro(match parse_declaration(input) {
+    debug_macro(match parsed {
         venial::Declaration::Struct(x) => implement_for_struct(x, config),
         venial::Declaration::Enum(x) => implement_for_enum(x, config),
         _ => venial::Error::new("Only structs and enums are supported").to_compile_error(),

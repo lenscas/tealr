@@ -41,6 +41,18 @@ macro_rules! impl_type_name {
 
 ///Keeps track of any special treatment a type needs to get
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(
+    all(feature = "mlua", feature = "derive"),
+    derive(crate::mlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(feature = "rlua", feature = "derive"),
+    derive(crate::rlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    tealr(tealr_name = crate)
+)]
 pub enum KindOfType {
     ///The type is build in to teal.
     ///
@@ -123,11 +135,28 @@ macro_rules! new_type {
     };
 }
 #[derive(Debug, Clone, PartialEq, Hash, Eq, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(
+    all(feature = "mlua", feature = "derive"),
+    derive(crate::mlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(feature = "rlua", feature = "derive"),
+    derive(crate::rlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    tealr(tealr_name = crate)
+)]
 ///The parts that a name consists of
 pub enum NamePart {
     ///A piece of normal text that is part of the type.
     ///An example could be the `function(` part inside `function(integer):string`
-    Symbol(Cow<'static, str>),
+    Symbol(
+        #[cfg_attr(
+        all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+        tealr(remote =  String))]
+        Cow<'static, str>,
+    ),
     ///A piece of the type that is actually a full type.
     ///An example could be the part `integer` part inside of `function(integer):string`
     Type(TealType),

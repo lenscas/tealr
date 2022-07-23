@@ -78,7 +78,7 @@ pub trait TealDataMethods<'lua, T> {
 ///collets every instance that needs to be exposed to lua
 pub trait InstanceCollector<'lua> {
     ///adds an instance
-    fn add_instance<T: TypeName + ToLua<'lua>, F: Fn(Context<'lua>) -> rlua::Result<T>>(
+    fn add_instance<T: TypeName + ToLua<'lua>, F: FnOnce(Context<'lua>) -> rlua::Result<T>>(
         &mut self,
         global_name: Cow<'static, str>,
         instance: F,
@@ -87,14 +87,14 @@ pub trait InstanceCollector<'lua> {
     fn document_instance(&mut self, doc: &'static str);
 }
 ///used to export instances to lua
-pub fn set_global_env<T: ExportInstances>(context: rlua::Context) -> rlua::Result<()> {
+pub fn set_global_env<T: ExportInstances>(env: T, context: rlua::Context) -> rlua::Result<()> {
     let globals = context.globals();
-    T::add_instances::<_>(&mut (globals, context))?;
+    env.add_instances::<_>(&mut (globals, context))?;
     Ok(())
 }
 
 impl<'lua> InstanceCollector<'lua> for (rlua::Table<'lua>, rlua::Context<'lua>) {
-    fn add_instance<T: TypeName + ToLua<'lua>, F: Fn(Context<'lua>) -> rlua::Result<T>>(
+    fn add_instance<T: TypeName + ToLua<'lua>, F: FnOnce(Context<'lua>) -> rlua::Result<T>>(
         &mut self,
         global_name: Cow<'static, str>,
         instance: F,
@@ -107,7 +107,10 @@ impl<'lua> InstanceCollector<'lua> for (rlua::Table<'lua>, rlua::Context<'lua>) 
 }
 
 ///implement this to easily document what global instances are exposed to lua
-pub trait ExportInstances {
+pub trait ExportInstances: Default {
     ///adds the instances
-    fn add_instances<'lua, T: InstanceCollector<'lua>>(instance_collector: &mut T) -> Result<()>;
+    fn add_instances<'lua, T: InstanceCollector<'lua>>(
+        self,
+        instance_collector: &mut T,
+    ) -> Result<()>;
 }

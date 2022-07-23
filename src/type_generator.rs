@@ -11,7 +11,7 @@ use crate::rlu::{
 };
 #[cfg(feature = "rlua")]
 use rlua::{
-    Context, FromLuaMulti as FromLuaMultiR, MetaMethod as MetaMethodR, Result as ResultR,
+    Context, FromLua, FromLuaMulti as FromLuaMultiR, MetaMethod as MetaMethodR, Result as ResultR,
     ToLuaMulti as ToLuaMultiR, UserData as UserDataR,
 };
 use serde::{Deserialize, Serialize};
@@ -23,8 +23,8 @@ use crate::mlu::{
 };
 #[cfg(feature = "mlua")]
 use mlua::{
-    FromLuaMulti as FromLuaMultiM, Lua, MetaMethod as MetaMethodM, Result as ResultM,
-    ToLuaMulti as ToLuaMultiM, UserData as UserDataM,
+    FromLua, FromLuaMulti as FromLuaMultiM, Lua, MetaMethod as MetaMethodM, Result as ResultM,
+    ToLua, ToLuaMulti as ToLuaMultiM, UserData as UserDataM,
 };
 
 use crate::{exported_function::ExportedFunction, type_parts_to_str, NamePart, TypeName};
@@ -41,6 +41,37 @@ impl Deref for NameContainer {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+#[cfg(feature = "rlua")]
+impl<'lua> FromLua<'lua> for NameContainer {
+    fn from_lua(lua_value: rlua::Value<'lua>, lua: Context<'lua>) -> ResultR<Self> {
+        Ok(String::from_lua(lua_value, lua)?.into_bytes().into())
+    }
+}
+#[cfg(feature = "rlua")]
+impl<'lua> crate::rlu::rlua::ToLua<'lua> for NameContainer {
+    fn to_lua(self, lua: Context<'lua>) -> ResultR<rlua::Value<'lua>> {
+        lua.create_string(&self.0).and_then(|x| lua.pack(x))
+    }
+}
+
+impl TypeName for NameContainer {
+    fn get_type_parts() -> Cow<'static, [NamePart]> {
+        crate::new_type!(string, BuiltIn)
+    }
+}
+
+#[cfg(feature = "mlua")]
+impl<'lua> FromLua<'lua> for NameContainer {
+    fn from_lua(lua_value: mlua::Value<'lua>, lua: &'lua Lua) -> ResultM<Self> {
+        Ok(String::from_lua(lua_value, lua)?.into_bytes().into())
+    }
+}
+#[cfg(feature = "mlua")]
+impl<'lua> ToLua<'lua> for NameContainer {
+    fn to_lua(self, lua: &'lua Lua) -> ResultM<mlua::Value<'lua>> {
+        lua.create_string(&self.0).and_then(|x| x.to_lua(lua))
     }
 }
 
@@ -83,10 +114,27 @@ pub(crate) fn get_method_data<A: TealMultiValue, R: TealMultiValue, S: ?Sized + 
     ExportedFunction::new::<A, R, _>(name, is_meta_method, extra_self)
 }
 ///Container of all the information needed to create the `.d.tl` file for your type.
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, Clone)]
+#[cfg_attr(
+    all(feature = "mlua", feature = "derive"),
+    derive(crate::mlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(feature = "rlua", feature = "derive"),
+    derive(crate::rlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    tealr(tealr_name = crate)
+)]
 pub enum TypeGenerator {
     ///the type should be represented as a struct
-    Record(Box<RecordGenerator>),
+    Record(
+        #[cfg_attr(
+        all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+        tealr(remote =  RecordGenerator))]
+        Box<RecordGenerator>,
+    ),
     ///the type should be represented as an enum
     Enum(EnumGenerator),
 }
@@ -100,10 +148,28 @@ impl TypeGenerator {
     }
 }
 
+type V = Vec<NamePart>;
 ///contains all the information needed to create a teal enum.
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(
+    all(feature = "mlua", feature = "derive"),
+    derive(crate::mlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(feature = "rlua", feature = "derive"),
+    derive(crate::rlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    tealr(tealr_name = crate)
+)]
+
 pub struct EnumGenerator {
     ///the name of this enum
+    #[cfg_attr(
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    tealr(remote = V)
+)]
     pub name: Cow<'static, [NamePart]>,
     ///the variants that make up this enum.
     pub variants: Vec<NameContainer>,
@@ -135,19 +201,75 @@ impl EnumGenerator {
     }
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Clone)]
+#[cfg_attr(
+    all(feature = "mlua", feature = "derive"),
+    derive(crate::mlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(feature = "rlua", feature = "derive"),
+    derive(crate::rlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    tealr(tealr_name = crate)
+)]
+
+///Represents a field, containing both the name and its type
+pub struct Field {
+    ///the name of the field
+    pub name: NameContainer,
+
+    ///the type of the field
+    #[cfg_attr(
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    tealr(remote = V)
+)]
+    pub teal_type: Cow<'static, [NamePart]>,
+}
+
+impl From<(NameContainer, Cow<'static, [NamePart]>)> for Field {
+    fn from((name, teal_type): (NameContainer, Cow<'static, [NamePart]>)) -> Self {
+        Self { name, teal_type }
+    }
+}
+
+impl From<Field> for (NameContainer, Cow<'static, [NamePart]>) {
+    fn from(x: Field) -> Self {
+        (x.name, x.teal_type)
+    }
+}
+
 ///contains all the information needed to create a record
 #[derive(Default, Clone, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(
+    all(feature = "mlua", feature = "derive"),
+    derive(crate::mlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(feature = "rlua", feature = "derive"),
+    derive(crate::rlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    tealr(tealr_name = crate)
+)]
+
 pub struct RecordGenerator {
     ///Represents if the type should be inlined or not.
     pub should_be_inlined: bool,
     ///Represents if the type is UserData
     pub is_user_data: bool,
     ///The name of the type in teal
+    #[cfg_attr(
+        all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+        tealr(remote = V)
+    )]
     pub type_name: Cow<'static, [NamePart]>,
     ///The exposed fields and their types
-    pub fields: Vec<(NameContainer, Cow<'static, [NamePart]>)>,
+    pub fields: Vec<Field>,
     ///The exposed static fields and their types
-    pub static_fields: Vec<(NameContainer, Cow<'static, [NamePart]>)>,
+    pub static_fields: Vec<Field>,
     ///exported methods
     pub methods: Vec<ExportedFunction>,
     ///exported methods that mutate something
@@ -178,6 +300,13 @@ impl From<RecordGenerator> for TypeGenerator {
         TypeGenerator::Record(Box::new(a))
     }
 }
+
+impl From<Box<RecordGenerator>> for RecordGenerator {
+    fn from(x: Box<RecordGenerator>) -> Self {
+        *x
+    }
+}
+
 impl RecordGenerator {
     ///creates a new RecordGenerator
     pub fn new<A: TypeName>(should_be_inlined: bool) -> Self {
@@ -199,8 +328,10 @@ impl RecordGenerator {
             .fields
             .into_iter()
             .chain(self.static_fields.into_iter())
-            .filter(|(name, _)| duplicates.insert(name.0.clone()))
-            .map(|(name, lua_type)| {
+            .filter(|field| duplicates.insert(field.name.0.clone()))
+            .map(|field| {
+                let name = field.name;
+                let lua_type = field.teal_type;
                 let doc = match documentation.get(&name) {
                     Some(x) => x.lines().map(|v| format!("--{v}\n")).collect::<String>(),
                     None => String::from(""),
@@ -673,7 +804,7 @@ where
     {
         self.copy_docs(name.as_ref());
         self.fields
-            .push((name.as_ref().to_vec().into(), R::get_type_parts()));
+            .push((name.as_ref().to_vec().into(), R::get_type_parts()).into());
     }
 
     fn add_field_method_set<S, A, M>(&mut self, name: &S, _: M)
@@ -684,7 +815,7 @@ where
     {
         self.copy_docs(name.as_ref());
         self.fields
-            .push((name.as_ref().to_vec().into(), A::get_type_parts()));
+            .push((name.as_ref().to_vec().into(), A::get_type_parts()).into());
     }
 
     fn add_field_function_get<S, R, F>(&mut self, name: &S, _: F)
@@ -695,7 +826,7 @@ where
     {
         self.copy_docs(name.as_ref());
         self.static_fields
-            .push((name.as_ref().to_vec().into(), R::get_type_parts()));
+            .push((name.as_ref().to_vec().into(), R::get_type_parts()).into());
     }
 
     fn add_field_function_set<S, A, F>(&mut self, name: &S, _: F)
@@ -706,7 +837,7 @@ where
     {
         self.copy_docs(name.as_ref());
         self.static_fields
-            .push((name.as_ref().to_vec().into(), A::get_type_parts()));
+            .push((name.as_ref().to_vec().into(), A::get_type_parts()).into());
     }
 
     fn add_meta_field_with<R, F>(&mut self, meta: MetaMethodM, _: F)
@@ -718,7 +849,7 @@ where
         let name: Cow<'_, str> = Cow::Owned(x.name().to_string());
         self.copy_docs(name.as_bytes());
         self.static_fields
-            .push((NameContainer::from(name), R::get_type_parts()));
+            .push((NameContainer::from(name), R::get_type_parts()).into());
     }
 
     fn document(&mut self, documentation: &str) {

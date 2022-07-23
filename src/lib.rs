@@ -25,7 +25,7 @@ pub use teal_multivalue::{TealMultiValue, TealType};
 #[cfg(feature = "derive")]
 pub use tealr_derive::TypeName;
 
-pub use type_generator::{EnumGenerator, NameContainer, RecordGenerator, TypeGenerator};
+pub use type_generator::{EnumGenerator, Field, NameContainer, RecordGenerator, TypeGenerator};
 pub use type_representation::{type_parts_to_str, KindOfType, NamePart, TypeBody, TypeName};
 pub use type_walker::{GlobalInstance, TypeWalker};
 
