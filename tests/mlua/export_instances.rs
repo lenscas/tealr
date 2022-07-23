@@ -54,7 +54,7 @@ fn test_limited() {
 
     assert_eq!(file_contents, "global record Test\n\trecord Example\n\t\tuserdata\n\n\t\t-- Pure methods\n\t\tlimited_callback: function(Example,function(string | number | boolean):(string | number | boolean)):(string | number | boolean)\n\n\t\tlimited_array: function(Example,{string | number | boolean}):({string | number | boolean})\n\n\t\tlimited_simple: function(Example,string | number | boolean):(string | number | boolean)\n\n\n\tend\nend\nglobal test: Test.Example\n--a simple function that does a + 1\n\n--it is just for testing purposes\n\nglobal example_a: function(integer):(integer)\nreturn Test");
     let lua = mlua::Lua::new();
-    tealr::mlu::set_global_env::<Export>(&lua).unwrap();
+    tealr::mlu::set_global_env(Export::default(), &lua).unwrap();
     let code = "
             assert(example_a(2) == 3)
         return test:limited_simple(true)

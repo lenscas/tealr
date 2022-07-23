@@ -87,10 +87,9 @@ pub trait InstanceCollector<'lua> {
     fn document_instance(&mut self, doc: &'static str);
 }
 ///used to export instances to lua
-pub fn set_global_env<T: ExportInstances>(context: rlua::Context) -> rlua::Result<()> {
+pub fn set_global_env<T: ExportInstances>(env: T, context: rlua::Context) -> rlua::Result<()> {
     let globals = context.globals();
-    let instance = T::default();
-    instance.add_instances::<_>(&mut (globals, context))?;
+    env.add_instances::<_>(&mut (globals, context))?;
     Ok(())
 }
 
