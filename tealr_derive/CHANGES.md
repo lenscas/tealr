@@ -13,6 +13,10 @@ All notable changes to this project are documented in this file.
 
 ## upcoming
 
+## 0.9.0
+- Move away from syn to use venial instead for most macro's.
+- Macros now accept the attribute `[tealr(tealr_name = "some_name")]` to tell macro's what name to use instead of tealr
+- Add RluaFromTo and MluaFromTo macro. 
 ## 0.8.0
 - Update macros to work with tealr changes
 ## 0.6.0-preview1

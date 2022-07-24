@@ -17,6 +17,17 @@ All notable changes to this project are documented in this file.
 - [`0.0.1`](#001)
 
 ## upcoming
+## 0.9.0
+- **BREAKING** changed location of the derive macros that are specific to either rlua or mlua
+- **BREAKING** updated mlua and rlua
+- **BREAKING** replaced tuple to store fields with Field type
+- **BREAKING** Also have support for C style enums
+- **BREAKING** remove useless 'static constraint for typewalker.
+- **BREAKING** Fix typoe in __sub metamethod
+- Make typeinformation available to lua if feature `derive` is set
+- Add support for mlua static userdata fields/functions
+- Add way to document available globals
+
 ## 0.8.0
 - Improved readme
 - Add ability to document the api
