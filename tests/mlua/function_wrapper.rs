@@ -36,7 +36,7 @@ end
 
 global test: Test
 
-function add(a:integer,b:integer):integer
+local function add(a:integer,b:integer):integer
     return a + b
 end
 return test:test_function_as_parameter(add)
@@ -70,7 +70,7 @@ end
 
 global test: Test
 
-function add(a:integer,b:integer):integer
+global function add(a:integer,b:integer):integer
     return a + b
 end
 return test:test_function_as_parameter(add)(10,20)
