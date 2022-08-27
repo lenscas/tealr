@@ -36,7 +36,7 @@ pub struct GlobalInstance {
 }
 
 ///This generates the .d.tl files
-#[derive(Default, serde::Serialize, serde::Deserialize)]
+#[derive(Default, Clone, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
     all(feature = "mlua", feature = "derive"),
     derive(crate::mlu::FromToLua, crate::TypeName)
