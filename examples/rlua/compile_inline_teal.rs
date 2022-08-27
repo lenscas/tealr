@@ -13,8 +13,8 @@ fn main() -> Result<()> {
     lua.context(|lua_ctx| {
         let code = compile_inline_teal!(
             "
-function add(param1 :number, param2:number):number
-return param1 + param2
+local function add(param1 :number, param2:number):number
+    return param1 + param2
 end
 local concat = require('examples/rlua/basic_type').concat
 print(concat('a','b'))
