@@ -39,6 +39,10 @@ impl tealr::mlu::ExportInstances for Export {
         instance_collector.add_instance(Cow::Borrowed("example_a"), |context| {
             tealr::mlu::TypedFunction::from_rust(|_, a: i32| Ok(a + 1), context)
         })?;
+        instance_collector.document_instance("A simple generic function to make sure generic functions in global context stay working");
+        instance_collector.add_instance("example_generic".into(), |context| {
+            tealr::mlu::TypedFunction::from_rust(|_, a: tealr::mlu::generics::X| Ok(a), context)
+        })?;
         Ok(())
     }
 }
@@ -52,7 +56,7 @@ fn test_limited() {
         .generate_global("Test")
         .expect("oh no :(");
 
-    assert_eq!(file_contents, "global record Test\n\trecord Example\n\t\tuserdata\n\n\t\t-- Pure methods\n\t\tlimited_callback: function(Example,function(string | number | boolean):(string | number | boolean)):(string | number | boolean)\n\n\t\tlimited_array: function(Example,{string | number | boolean}):({string | number | boolean})\n\n\t\tlimited_simple: function(Example,string | number | boolean):(string | number | boolean)\n\n\n\tend\nend\nglobal test: Test.Example\n--a simple function that does a + 1\n\n--it is just for testing purposes\n\nglobal example_a: function(integer):(integer)\nreturn Test");
+    assert_eq!(file_contents, "global record Test\n\trecord Example\n\t\tuserdata\n\n\t\t-- Pure methods\n\t\tlimited_callback: function(Example,function(string | number | boolean):(string | number | boolean)):(string | number | boolean)\n\n\t\tlimited_array: function(Example,{string | number | boolean}):({string | number | boolean})\n\n\t\tlimited_simple: function(Example,string | number | boolean):(string | number | boolean)\n\n\n\tend\nend\nglobal test: Test.Example\n--a simple function that does a + 1\n\n--it is just for testing purposes\n\nglobal example_a: function(integer):(integer)\n--A simple generic function to make sure generic functions in global context stay working\n\nglobal example_generic: function<X>(X):(X)\nreturn Test");
     let lua = mlua::Lua::new();
     tealr::mlu::set_global_env(Export::default(), &lua).unwrap();
     let code = "

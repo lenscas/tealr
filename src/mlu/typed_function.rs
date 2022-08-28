@@ -67,6 +67,39 @@ where
         v.push(")".into());
         Cow::Owned(v)
     }
+    fn get_type_parts_as_global() -> Cow<'static, [NamePart]> {
+        let mut generics = Vec::new();
+        let params = Params::get_types();
+        let returns = Response::get_types();
+        params
+            .iter()
+            .chain(returns.iter())
+            .for_each(|param| match param {
+                NamePart::Symbol(_) => (),
+                NamePart::Type(x) => {
+                    if x.type_kind.is_generic() && !generics.contains(x) {
+                        generics.push(x.clone())
+                    }
+                }
+            });
+        if generics.is_empty() {
+            return Self::get_type_parts();
+        }
+        let mut type_name = vec!["function<".into()];
+        let last = generics.len() - 1;
+        for (key, generic) in generics.into_iter().enumerate() {
+            type_name.push(NamePart::Type(generic));
+            if key != last {
+                type_name.push(",".into())
+            }
+        }
+        type_name.push(">(".into());
+        type_name.extend(params);
+        type_name.push("):(".into());
+        type_name.extend(returns);
+        type_name.push(")".into());
+        Cow::Owned(type_name)
+    }
 }
 impl<'lua, Params, Response> TypedFunction<'lua, Params, Response>
 where

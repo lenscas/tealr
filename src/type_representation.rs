@@ -232,6 +232,15 @@ pub fn type_parts_to_str(x: Cow<'static, [NamePart]>) -> Cow<'static, str> {
 pub trait TypeName {
     ///returns the type name as how it should show up in the generated `.d.tl` file
     fn get_type_parts() -> Cow<'static, [NamePart]>;
+    /// Generates the typename when used to describe a global value.
+    ///
+    /// Sometimes (for example in the case of lambda's with types marked as generic)
+    /// you want an altered representation of the type if it is used as a global instance or is part of something else.
+    ///
+    /// You almost never want this though so you should probably think twice before altering the implementation.
+    fn get_type_parts_as_global() -> Cow<'static, [NamePart]> {
+        Self::get_type_parts()
+    }
     ///This method tells the generator if this type is builtin to teal/lua, if it comes from somewhere else or if it stands in as a generic
     ///
     ///In almost all cases you want to return `KindOfType::External`
@@ -340,7 +349,7 @@ impl<'lua> TypeName for rlua::String<'lua> {
 
 fn get_pars_any_func() -> Cow<'static, [NamePart]> {
     Cow::Borrowed(&[
-        NamePart::Symbol(Cow::Borrowed("function(...")),
+        NamePart::Symbol(Cow::Borrowed("function(...:")),
         NamePart::Type(TealType {
             name: Cow::Borrowed("any"),
             type_kind: KindOfType::Builtin,
