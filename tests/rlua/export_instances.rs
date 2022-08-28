@@ -39,6 +39,9 @@ impl tealr::rlu::ExportInstances for Export {
         instance_collector.add_instance(Cow::Borrowed("example_a"), |context| {
             tealr::rlu::TypedFunction::from_rust(|_, a: i32| Ok(a + 1), context)
         })?;
+        instance_collector.add_instance("example_generic".into(), |context| {
+            tealr::rlu::TypedFunction::from_rust(|_, a: tealr::rlu::generics::X| Ok(a), context)
+        })?;
         Ok(())
     }
 }
@@ -52,7 +55,7 @@ fn test_limited() {
         .generate_global("Test")
         .expect("oh no :(");
 
-    assert_eq!(file_contents, "global record Test\n\trecord Example\n\t\tuserdata\n\n\t\t-- Pure methods\n\t\tlimited_callback: function(Example,function(string | number | boolean):(string | number | boolean)):(string | number | boolean)\n\n\t\tlimited_array: function(Example,{string | number | boolean}):({string | number | boolean})\n\n\t\tlimited_simple: function(Example,string | number | boolean):(string | number | boolean)\n\n\n\tend\nend\nglobal test: Test.Example\n--a simple function that does a + 1\n\n--it is just for testing purposes\n\nglobal example_a: function(integer):(integer)\nreturn Test");
+    assert_eq!(file_contents, "global record Test\n\trecord Example\n\t\tuserdata\n\n\t\t-- Pure methods\n\t\tlimited_callback: function(Example,function(string | number | boolean):(string | number | boolean)):(string | number | boolean)\n\n\t\tlimited_array: function(Example,{string | number | boolean}):({string | number | boolean})\n\n\t\tlimited_simple: function(Example,string | number | boolean):(string | number | boolean)\n\n\n\tend\nend\nglobal test: Test.Example\n--a simple function that does a + 1\n\n--it is just for testing purposes\n\nglobal example_a: function(integer):(integer)\nglobal example_generic: function<X>(X):(X)\nreturn Test");
     let res: bool = rlua::Lua::new()
         .context(|ctx| {
             tealr::rlu::set_global_env(Export::default(), ctx)?;
