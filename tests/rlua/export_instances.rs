@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use rlua::ToLua;
 use tealr::{
     create_union_rlua,
@@ -33,13 +31,13 @@ impl tealr::rlu::ExportInstances for Export {
         self,
         instance_collector: &mut T,
     ) -> rlua::Result<()> {
-        instance_collector.add_instance(Cow::Borrowed("test"), |_| Ok(Example {}))?;
+        instance_collector.add_instance("test", |_| Ok(Example {}))?;
         instance_collector.document_instance("a simple function that does a + 1");
         instance_collector.document_instance("it is just for testing purposes");
-        instance_collector.add_instance(Cow::Borrowed("example_a"), |context| {
+        instance_collector.add_instance("example_a", |context| {
             tealr::rlu::TypedFunction::from_rust(|_, a: i32| Ok(a + 1), context)
         })?;
-        instance_collector.add_instance("example_generic".into(), |context| {
+        instance_collector.add_instance("example_generic", |context| {
             tealr::rlu::TypedFunction::from_rust(|_, a: tealr::rlu::generics::X| Ok(a), context)
         })?;
         Ok(())
