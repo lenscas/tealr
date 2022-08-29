@@ -8,17 +8,18 @@ pub(crate) struct InstanceWalker {
 }
 #[cfg(feature = "mlua")]
 impl<'lua> crate::mlu::InstanceCollector<'lua> for InstanceWalker {
-    fn add_instance<P, T, F>(&mut self, global_name: P, _: F) -> Result<(), mlua::Error>
+    fn add_instance<P, T, F>(&mut self, global_name: P, _: F) -> Result<&mut Self, mlua::Error>
     where
         P: Into<Cow<'static, str>>,
         T: TypeName,
         F: FnOnce(&'lua mlua::Lua) -> Result<T, mlua::Error>,
     {
         self.add_instance::<T>(global_name.into());
-        Ok(())
+        Ok(self)
     }
-    fn document_instance(&mut self, doc: &'static str) {
-        self.document_instance(doc)
+    fn document_instance(&mut self, doc: &'static str) -> &mut Self {
+        self.document_instance(doc);
+        self
     }
 }
 
@@ -32,12 +33,13 @@ impl<'lua> crate::rlu::InstanceCollector<'lua> for InstanceWalker {
         &mut self,
         global_name: P,
         _: F,
-    ) -> Result<(), rlua::Error> {
+    ) -> Result<&mut Self, rlua::Error> {
         self.add_instance::<T>(global_name.into());
-        Ok(())
+        Ok(self)
     }
-    fn document_instance(&mut self, doc: &'static str) {
-        self.document_instance(doc)
+    fn document_instance(&mut self, doc: &'static str) -> &mut Self {
+        self.document_instance(doc);
+        self
     }
 }
 

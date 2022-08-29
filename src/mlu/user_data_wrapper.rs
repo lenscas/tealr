@@ -260,8 +260,9 @@ where
         self.cont.add_async_function(name, function)
     }
 
-    fn document(&mut self, documentation: &str) {
-        self.document(documentation)
+    fn document(&mut self, documentation: &str) -> &mut Self {
+        self.document(documentation);
+        self
     }
     fn generate_help(&mut self) {
         let help = self.documentation.clone();
@@ -295,9 +296,10 @@ where
         })
     }
 
-    fn document_type(&mut self, documentation: &str) {
+    fn document_type(&mut self, documentation: &str) -> &mut Self {
         self.type_doc.push_str(documentation);
-        self.type_doc.push('\n')
+        self.type_doc.push('\n');
+        self
     }
 }
 

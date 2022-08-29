@@ -613,8 +613,9 @@ where
             None,
         ))
     }
-    fn document(&mut self, documentation: &str) {
-        self.document(documentation)
+    fn document(&mut self, documentation: &str) -> &mut Self {
+        self.document(documentation);
+        self
     }
     fn generate_help(&mut self) {
         self.functions
@@ -623,10 +624,11 @@ where
             ))
     }
 
-    fn document_type(&mut self, documentation: &str) {
+    fn document_type(&mut self, documentation: &str) -> &mut Self {
         self.type_doc.push_str(documentation);
         self.type_doc.push('\n');
         self.type_doc.push('\n');
+        self
     }
 }
 
@@ -782,13 +784,15 @@ where
                 "help", false, None,
             ))
     }
-    fn document(&mut self, documentation: &str) {
-        self.document(documentation)
+    fn document(&mut self, documentation: &str) -> &mut Self {
+        self.document(documentation);
+        self
     }
-    fn document_type(&mut self, documentation: &str) {
+    fn document_type(&mut self, documentation: &str) -> &mut Self {
         self.type_doc.push_str(documentation);
         self.type_doc.push('\n');
         self.type_doc.push('\n');
+        self
     }
 }
 #[cfg(feature = "mlua")]
