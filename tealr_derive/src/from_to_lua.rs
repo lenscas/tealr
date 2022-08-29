@@ -375,6 +375,7 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
             fn add_methods<'lua, T: #teal_data_methods_location<'lua, Self>>(methods: &mut T) {
                 #variant_functions
                 #call_methods
+                #creator_functions
             }
         }
         impl #type_body_loc for #name {
