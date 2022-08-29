@@ -126,7 +126,7 @@ impl<'lua> InstanceCollector<'lua> for (mlua::Table<'lua>, &'lua mlua::Lua) {
         F: FnOnce(&'lua mlua::Lua) -> Result<T>,
     {
         let instance = instance(self.1)?;
-        self.0.set(global_name, instance)?;
+        self.0.set(global_name.into(), instance)?;
         Ok(())
     }
     fn document_instance(&mut self, _: &'static str) {}
