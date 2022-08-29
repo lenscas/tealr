@@ -154,7 +154,7 @@ where
         self.copy_docs(get_meta_name(meta).as_bytes());
         self.cont.add_meta_function_mut(meta, function)
     }
-    fn document(&mut self, documentation: &str) {
+    fn document(&mut self, documentation: &str) -> &mut Self {
         match &mut self.next_docs {
             Some(x) => {
                 x.push('\n');
@@ -162,6 +162,7 @@ where
             }
             None => self.next_docs = Some(documentation.to_owned()),
         };
+        self
     }
     fn generate_help(&mut self) {
         let help = self.documentation.clone();
@@ -194,9 +195,10 @@ where
         })
     }
 
-    fn document_type(&mut self, documentation: &str) {
+    fn document_type(&mut self, documentation: &str) -> &mut Self {
         self.type_doc.push_str(documentation);
-        self.type_doc.push('\n')
+        self.type_doc.push('\n');
+        self
     }
 }
 // impl<'a, 'lua, Container, T> DocumentationCollector for UserDataWrapper<'a, 'lua, Container, T>
