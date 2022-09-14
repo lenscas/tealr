@@ -31,7 +31,7 @@ use venial::parse_declaration;
 pub fn rlua_user_data_derive(input: TokenStream) -> TokenStream {
     use user_data::impl_rlua_user_data_derive;
 
-    let ast = parse_declaration(input.into());
+    let ast = parse_declaration(input.into()).unwrap();
     impl_rlua_user_data_derive(&ast).into()
 }
 
@@ -40,7 +40,7 @@ pub fn rlua_user_data_derive(input: TokenStream) -> TokenStream {
 pub fn mlua_user_data_derive(input: TokenStream) -> TokenStream {
     use user_data::impl_mlua_user_data_derive;
 
-    let ast = parse_declaration(input.into());
+    let ast = parse_declaration(input.into()).unwrap();
     impl_mlua_user_data_derive(&ast).into()
 }
 
@@ -49,7 +49,7 @@ pub fn mlua_user_data_derive(input: TokenStream) -> TokenStream {
 pub fn type_representation_derive(input: TokenStream) -> TokenStream {
     use user_data::impl_type_representation_derive;
 
-    let ast = parse_declaration(input.into());
+    let ast = parse_declaration(input.into()).unwrap();
 
     impl_type_representation_derive(&ast).into()
 }
@@ -59,7 +59,7 @@ pub fn type_representation_derive(input: TokenStream) -> TokenStream {
 pub fn rlua_teal_derive(input: TokenStream) -> TokenStream {
     use crate::user_data::{impl_rlua_user_data_derive, impl_type_representation_derive};
 
-    let ast = parse_declaration(input.into());
+    let ast = parse_declaration(input.into()).unwrap();
     let mut stream = impl_type_representation_derive(&ast);
     stream.extend(impl_rlua_user_data_derive(&ast));
     stream.into()
@@ -71,7 +71,7 @@ pub fn mlua_teal_derive(input: TokenStream) -> TokenStream {
     use crate::user_data::impl_type_representation_derive;
     use user_data::impl_mlua_user_data_derive;
 
-    let ast = parse_declaration(input.into());
+    let ast = parse_declaration(input.into()).unwrap();
 
     let mut stream = impl_type_representation_derive(&ast);
     stream.extend(impl_mlua_user_data_derive(&ast));
@@ -154,13 +154,13 @@ pub fn embed_compiler(input: TokenStream) -> TokenStream {
     stream.into()
 }
 #[cfg(feature = "derive")]
-#[proc_macro_derive(MluaFromToLua, attributes(tealr))]
+#[proc_macro_derive(MluaFromToLua, attributes(tealr, lua_doc, tealr_doc))]
 pub fn mlua_from_to_lua(input: TokenStream) -> TokenStream {
     crate::from_to_lua::mlua_from_to_lua(input.into()).into()
 }
 
 #[cfg(feature = "derive")]
-#[proc_macro_derive(RluaFromToLua, attributes(tealr))]
+#[proc_macro_derive(RluaFromToLua, attributes(tealr, lua_doc, tealr_doc))]
 pub fn rlua_from_to_lua(input: TokenStream) -> TokenStream {
     crate::from_to_lua::rlua_from_to_lua(input.into()).into()
 }
