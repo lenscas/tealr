@@ -1,14 +1,28 @@
 Implements the needed traits to make this trait convertible to and from lua values.
 It does this differently for structs and enums but will implement the [TypeBody](crate::TypeBody) trait in both cases.
+
+The macro will also add documentation to the [TypeBody](crate::TypeBody) implementation based on the existing doc comments. In addition, the tags `lua_doc` or `tealr_doc` can be used like `#[tealr_doc = "your comment"]` to add documentation that is only picked up by tealr 
 # Structs
 Structs implement the [FromLua](rlua::FromLua) and [ToLua](rlua::ToLua) directly.
 These trait implementations convert the struct directly to and from a table. This table contains every filed INCLUDING private fields.
 ## Attributes
-### Field attributes
+### Type level attributes:
+- `tealr_doc`: used as `#[tealr_doc = "your documentation"]
+
+    Allows you to add documentation to the given type
+
+- `lua_doc`: Alias for `tealr_doc`
+### Field level attributes
 - `remote`: used as `#[tealr(remote = OtherType)]`
     
     Allows you to specify that a given field should be converted to and from `OtherType` before passing and receiving it to and from lua.
     This is done using the [From<T>](std::convert::From) trait.
+
+- `tealr_doc`: used as `#[tealr_doc = "your documentation"]
+
+    Allows you to add documentation to the given field
+
+- `lua_doc`: Alias for `tealr_doc`
 # Warning:
 Using this macro on structs WILL make any private fields freely accessible to lua.
 
@@ -88,11 +102,7 @@ The [TealData](crate::rlu::TealData) of this struct exposes the functions:
     
     It returns a new instance of this enum of the given variant.
 ## Attributes
-### type level attributes
- - `extend_fields` : Used as `#[tealr(extend_fields = function_name)]`
-
-    calls the given function when adding fields to the [TealData](crate::rlu::TealData) of the enum
-
+### Type level attributes
  - `extend_methods` : Used as `#[tealr(extend_methods = function_name)]`
 
     calls the given function when adding methods to the [TealData](crate::rlu::TealData) of the enum
@@ -100,6 +110,12 @@ The [TealData](crate::rlu::TealData) of this struct exposes the functions:
 - `creator_name` : Used as ``#[tealr(creator_name = NewTypeForCreatorType)]`
 
     Uses the given name for the enum creator struct
+
+- `tealr_doc`: used as `#[tealr_doc = "your documentation"]
+
+    Allows you to add documentation to the given type
+
+- `lua_doc`: Alias for `tealr_doc`
 
  ### Field level attributes
 

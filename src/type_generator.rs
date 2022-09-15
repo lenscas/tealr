@@ -173,6 +173,8 @@ pub struct EnumGenerator {
     pub name: Cow<'static, [NamePart]>,
     ///the variants that make up this enum.
     pub variants: Vec<NameContainer>,
+    ///documentation for this enum
+    pub type_doc: String,
 }
 impl From<EnumGenerator> for TypeGenerator {
     fn from(a: EnumGenerator) -> Self {
@@ -185,7 +187,15 @@ impl EnumGenerator {
         Self {
             name: A::get_type_parts(),
             variants: Default::default(),
+            type_doc: Default::default(),
         }
+    }
+    ///Add type level documentation to this enum
+    pub fn document_type(&mut self, documentation: &str) -> &mut Self {
+        self.type_doc.push_str(documentation);
+        self.type_doc.push('\n');
+        self.type_doc.push('\n');
+        self
     }
     pub(crate) fn generate(self) -> String {
         let variants = self
@@ -472,7 +482,9 @@ impl RecordGenerator {
 }
 
 impl RecordGenerator {
-    fn copy_docs(&mut self, to: &[u8]) {
+    /// copies the documentation stored in "next_docs" to be linked to the given name
+    /// Shouldn't be called manually unless you add the fields/methods by hand rather than using the functions for this.
+    pub fn copy_docs(&mut self, to: &[u8]) {
         if let Some(docs) = self.next_docs.take() {
             match self.documentation.entry(to.to_owned().into()) {
                 std::collections::hash_map::Entry::Vacant(x) => {
@@ -487,7 +499,8 @@ impl RecordGenerator {
             }
         }
     }
-    fn document(&mut self, documentation: &str) {
+    ///adds documentation to the next field.
+    pub fn document(&mut self, documentation: &str) {
         match &mut self.next_docs {
             Some(x) => {
                 x.push('\n');
@@ -496,6 +509,13 @@ impl RecordGenerator {
             }
             None => self.next_docs = Some(documentation.to_owned()),
         };
+    }
+    ///adds documentation to the type itself
+    pub fn document_type(&mut self, documentation: &str) -> &mut Self {
+        self.type_doc.push_str(documentation);
+        self.type_doc.push('\n');
+        self.type_doc.push('\n');
+        self
     }
 }
 
@@ -625,10 +645,7 @@ where
     }
 
     fn document_type(&mut self, documentation: &str) -> &mut Self {
-        self.type_doc.push_str(documentation);
-        self.type_doc.push('\n');
-        self.type_doc.push('\n');
-        self
+        self.document_type(documentation)
     }
 }
 
@@ -789,10 +806,7 @@ where
         self
     }
     fn document_type(&mut self, documentation: &str) -> &mut Self {
-        self.type_doc.push_str(documentation);
-        self.type_doc.push('\n');
-        self.type_doc.push('\n');
-        self
+        self.document_type(documentation)
     }
 }
 #[cfg(feature = "mlua")]

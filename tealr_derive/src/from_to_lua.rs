@@ -1,4 +1,4 @@
-use proc_macro2::{Literal, Span, TokenStream, TokenTree};
+use proc_macro2::{Literal, Span, TokenStream};
 use quote::ToTokens;
 use venial::{parse_declaration, Struct};
 
@@ -31,27 +31,42 @@ fn debug_macro(ts: TokenStream) -> TokenStream {
     ts
 }
 
-fn find_tag_with_value(to_find: &str, tags: &[venial::Attribute]) -> Option<TokenTree> {
+fn find_tag_with_value(to_find: &str, tags: &[venial::Attribute]) -> Option<TokenStream> {
     tags.iter()
         .find(|v| v.path.iter().cloned().collect::<TokenStream>().to_string() == "tealr")
-        .and_then(|v| {
-            match &v.value {
-                Some(value) => value.first().map(|v| match v {
-                    proc_macro2::TokenTree::Ident(x) => x == to_find,
-                    _ => false,
-                }),
-                None => None,
+        .and_then(|v| match &v.value {
+            venial::AttributeValue::Empty => None,
+            venial::AttributeValue::Group(_, y) => {
+                if y.get(0).map(|v| v.to_string() == to_find).unwrap_or(false) {
+                    y.get(2).map(|v| v.clone().into_token_stream())
+                } else {
+                    None
+                }
             }
-            .and_then(|x| {
-                x.then(|| {
-                    v.value
-                        .clone()
-                        .and_then(|v| v.get(2).map(ToOwned::to_owned))
-                })
-            })
-            .flatten()
+            venial::AttributeValue::Equals(_, _) => None,
         })
 }
+
+fn find_doc_tags<'a>(tags: &'a [venial::Attribute]) -> impl Iterator<Item = String> + '_ {
+    tags.iter()
+        .filter(|v| {
+            let name = v.path.iter().cloned().collect::<TokenStream>().to_string();
+            name == "lua_doc" || name == "doc" || name == "tealr_doc"
+        })
+        .filter_map(|v| match &v.value {
+            venial::AttributeValue::Group(_, _) => None,
+            venial::AttributeValue::Equals(_, y) => Some(
+                y.iter()
+                    .flat_map(|v| {
+                        let z = v.to_string();
+                        z.get(1..(z.len() - 1)).map(|v| v.to_string())
+                    })
+                    .collect::<String>(),
+            ),
+            venial::AttributeValue::Empty => None,
+        })
+}
+
 fn add_commas(mut v: Vec<TokenStream>) -> TokenStream {
     let mut push_into = Vec::new();
     for value in v.drain(0..(v.len() - 1)) {
@@ -127,11 +142,15 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
                             .unwrap_or_else(|| {
                                 (quote! {self.#key_as_str}, quote! {get(#key)?}, quote! {#ty})
                             });
+                    let docs = find_doc_tags(&x.0.attributes).map(|v|quote!{
+                        gen.document(#v);
+                    }).collect::<TokenStream>();
                     (
                         quote! {table.set(#key,#set_value)?;},
                         (
                             quote! {#key_as_str: as_table.#get_value,},
                             quote! {
+                                #docs
                                 gen
                                     .fields
                                     .push(
@@ -165,23 +184,31 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
                                     quote! {#ty},
                                 )
                             });
+                    let docs = find_doc_tags(&field.attributes).map(|v|quote!{
+                        gen.document(#v);
+                    }).collect::<TokenStream>();
                     (
                         quote! { table.set(stringify!(#name),#set_value)?;},
                         (
                             quote! {#name: as_table.#get_value,},
                             quote! {
+                                #docs
                                 gen
                                     .fields
                                     .push(
                                         ::std::convert::From::from((::std::borrow::Cow::Borrowed(stringify!(#name)).into(),
                                         <(#type_name) as #type_name_path>::get_type_parts()))
                                     );
+                                gen.copy_docs(stringify!(#name).as_bytes());
                             },
                         ),
                     )
                 })
                 .unzip(),
         };
+    let document_type = find_doc_tags(&structure.attributes)
+        .map(|v| quote! {gen.document_type(#v);})
+        .collect::<TokenStream>();
     quote! {
         impl<'lua> #to_loc for #name {
             fn to_lua(self, #lua_location) -> #result_location_to {
@@ -204,6 +231,7 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
         impl #type_body_loc for #name {
             fn get_type_body()-> #type_generator_loc {
                 let mut gen = #record_generator_loc::new::<Self>(false);
+                #document_type
                 #type_body
                 <#type_generator_loc as ::std::convert::From<_>>::from(gen)
             }
@@ -299,7 +327,6 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
                             .map(|(v, field)| (quote! {#v}, field))
                             .map(|(v, field)| {
                                 let (to_with_from_conversion,to_as_type) = find_tag_with_value("remote", &field.attributes)
-                                    .map(|v| TokenTree::to_token_stream(&v))
                                     .or_else(|| {
                                         let name = field.ty;
                                         Some(quote! {#name})
@@ -362,6 +389,9 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
         .unzip();
     let variant_functions: TokenStream = variant_functions.into_iter().flatten().collect();
     let creator_functions: TokenStream = creator_functions.into_iter().flatten().collect();
+    let document_type = find_doc_tags(&enumeration.attributes)
+        .map(|v| quote! {gen.document_type(#v);})
+        .collect::<TokenStream>();
     let mut trait_impls = quote! {
         impl #user_data_location for #name {
             #add_fields_user_data
@@ -382,6 +412,7 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
             fn get_type_body() -> #type_generator_loc {
                 let mut gen = #record_generator_loc::new::<Self>(false);
                 gen.is_user_data = true;
+                #document_type
                 #add_fields_type_body;
                 <Self as #teal_data_location>::add_methods(&mut gen);
                 <#type_generator_loc as ::std::convert::From<_>>::from(gen)
@@ -407,7 +438,7 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
         #attributes
         #visibility struct #creator_struct_name {}
     };
-    let parsed = venial::parse_declaration(creator_struct_stream.clone());
+    let parsed = venial::parse_declaration(creator_struct_stream.clone()).unwrap();
     let with_userdata = if config.is_mlua {
         crate::user_data::impl_mlua_user_data_derive(&parsed)
     } else {
@@ -461,6 +492,10 @@ fn implement_for_c_enum(enumeration: venial::Enum, config: BasicConfig) -> Token
     let enum_generator_loc = config.enum_generator_loc;
     let invalid_enum_variant_error = config.invalid_enum_variant_error;
 
+    let document_type = find_doc_tags(&enumeration.attributes)
+        .map(|v| quote! {gen.document_type(#v);})
+        .collect::<TokenStream>();
+
     let (to_branches, (from_branches, variants)): (TokenStream, (TokenStream, TokenStream)) =
         enumeration
             .variants
@@ -482,6 +517,7 @@ fn implement_for_c_enum(enumeration: venial::Enum, config: BasicConfig) -> Token
                 )
             })
             .unzip();
+
     quote! {
         impl<'lua> #to_loc for #name {
             fn to_lua(self, #lua_location) -> #result_location_to {
@@ -503,6 +539,7 @@ fn implement_for_c_enum(enumeration: venial::Enum, config: BasicConfig) -> Token
         impl #type_body_loc for #name {
             fn get_type_body()-> #type_generator_loc {
                 let mut gen = #enum_generator_loc::new::<Self>();
+                #document_type;
                 #variants;
                 <#type_generator_loc as ::std::convert::From<_>>::from(gen)
             }
@@ -511,7 +548,7 @@ fn implement_for_c_enum(enumeration: venial::Enum, config: BasicConfig) -> Token
 }
 
 pub(crate) fn mlua_from_to_lua(input: TokenStream) -> TokenStream {
-    let parsed = parse_declaration(input);
+    let parsed = parse_declaration(input).unwrap();
     let tealr_name = get_tealr_name(parsed.attributes());
     let config = BasicConfig {
         to_location: quote! {#tealr_name::mlu::mlua::ToLua<'lua>},
@@ -558,7 +595,7 @@ pub(crate) fn mlua_from_to_lua(input: TokenStream) -> TokenStream {
 }
 
 pub(crate) fn rlua_from_to_lua(input: TokenStream) -> TokenStream {
-    let parsed = parse_declaration(input);
+    let parsed = parse_declaration(input).unwrap();
     let tealr_name = get_tealr_name(parsed.attributes());
     let config = BasicConfig {
         to_location: quote! {#tealr_name::rlu::rlua::ToLua<'lua>},
