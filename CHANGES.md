@@ -3,6 +3,8 @@
 All notable changes to this project are documented in this file.
 
 ## Overview
+- [`0.9.0-alpha2`](#090-alpha2)
+- [`0.9.0-alpha1`](#090-alpha1)
 - [`0.8.0`](#080)
 - [`0.7.0`](#070)
 - [`0.6.0`](#060)
@@ -17,14 +19,24 @@ All notable changes to this project are documented in this file.
 - [`0.0.1`](#001)
 
 ## upcoming
-## 0.9.0
+
+## 0.9.0-alpha2
+- Add support for doc comments to the FromToLua macro
+- **BREAKING** Allow chaining of `.document()` calls
+- **BREAKING** Reduce need to manually wrap documentation in Cow
+- FromToLua macro also adds method to create enum variants to the enum
+- Allow `TypeName` to special case the name when type is instanced as global
+- Fix missing generics in signature if a generic function is made available as a global rather than used as a parameter/return type
+- Fix signature of `rlua::Function` and `mlua::Function` to use correct teal syntax
+
+## 0.9.0-alpha1
 - **BREAKING** changed location of the derive macros that are specific to either rlua or mlua
 - **BREAKING** updated mlua and rlua
 - **BREAKING** replaced tuple to store fields with Field type
 - **BREAKING** Also have support for C style enums
 - **BREAKING** remove useless 'static constraint for typewalker.
-- **BREAKING** Fix typoe in __sub metamethod
-- Make typeinformation available to lua if feature `derive` is set
+- **BREAKING** Fix typo in __sub metamethod
+- Make type information available to lua if feature `derive` is set
 - Add support for mlua static userdata fields/functions
 - Add way to document available globals
 
