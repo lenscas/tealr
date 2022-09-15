@@ -42,15 +42,15 @@ macro_rules! impl_type_name {
 ///Keeps track of any special treatment a type needs to get
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    all(feature = "mlua", feature = "derive", not(feature = "rlua")),
     derive(crate::mlu::FromToLua, crate::TypeName)
 )]
 #[cfg_attr(
-    all(feature = "rlua", feature = "derive"),
+    all(feature = "rlua", feature = "derive", not(feature = "mlua")),
     derive(crate::rlu::FromToLua, crate::TypeName)
 )]
 #[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua")) ),
     tealr(tealr_name = crate)
 )]
 pub enum KindOfType {
@@ -136,15 +136,15 @@ macro_rules! new_type {
 }
 #[derive(Debug, Clone, PartialEq, Hash, Eq, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    all(feature = "mlua", feature = "derive", not(feature = "rlua")),
     derive(crate::mlu::FromToLua, crate::TypeName)
 )]
 #[cfg_attr(
-    all(feature = "rlua", feature = "derive"),
+    all(feature = "rlua", feature = "derive", not(feature = "mlua")),
     derive(crate::rlu::FromToLua, crate::TypeName)
 )]
 #[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
     tealr(tealr_name = crate)
 )]
 ///The parts that a name consists of
@@ -153,7 +153,7 @@ pub enum NamePart {
     ///An example could be the `function(` part inside `function(integer):string`
     Symbol(
         #[cfg_attr(
-        all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+        all(any(feature = "rlua", feature = "mlua"), feature = "derive",not(all(feature = "rlua", feature = "mlua"))),
         tealr(remote =  String))]
         Cow<'static, str>,
     ),

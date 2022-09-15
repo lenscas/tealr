@@ -11,8 +11,8 @@ use crate::rlu::{
 };
 #[cfg(feature = "rlua")]
 use rlua::{
-    Context, FromLua, FromLuaMulti as FromLuaMultiR, MetaMethod as MetaMethodR, Result as ResultR,
-    ToLuaMulti as ToLuaMultiR, UserData as UserDataR,
+    Context, FromLua as FromLuaR, FromLuaMulti as FromLuaMultiR, MetaMethod as MetaMethodR,
+    Result as ResultR, ToLuaMulti as ToLuaMultiR, UserData as UserDataR,
 };
 use serde::{Deserialize, Serialize};
 
@@ -23,8 +23,8 @@ use crate::mlu::{
 };
 #[cfg(feature = "mlua")]
 use mlua::{
-    FromLua, FromLuaMulti as FromLuaMultiM, Lua, MetaMethod as MetaMethodM, Result as ResultM,
-    ToLua, ToLuaMulti as ToLuaMultiM, UserData as UserDataM,
+    FromLua as FromLuaM, FromLuaMulti as FromLuaMultiM, Lua, MetaMethod as MetaMethodM,
+    Result as ResultM, ToLua as ToLuaM, ToLuaMulti as ToLuaMultiM, UserData as UserDataM,
 };
 
 use crate::{exported_function::ExportedFunction, type_parts_to_str, NamePart, TypeName};
@@ -44,7 +44,7 @@ impl Deref for NameContainer {
     }
 }
 #[cfg(feature = "rlua")]
-impl<'lua> FromLua<'lua> for NameContainer {
+impl<'lua> FromLuaR<'lua> for NameContainer {
     fn from_lua(lua_value: rlua::Value<'lua>, lua: Context<'lua>) -> ResultR<Self> {
         Ok(String::from_lua(lua_value, lua)?.into_bytes().into())
     }
@@ -63,13 +63,13 @@ impl TypeName for NameContainer {
 }
 
 #[cfg(feature = "mlua")]
-impl<'lua> FromLua<'lua> for NameContainer {
+impl<'lua> FromLuaM<'lua> for NameContainer {
     fn from_lua(lua_value: mlua::Value<'lua>, lua: &'lua Lua) -> ResultM<Self> {
         Ok(String::from_lua(lua_value, lua)?.into_bytes().into())
     }
 }
 #[cfg(feature = "mlua")]
-impl<'lua> ToLua<'lua> for NameContainer {
+impl<'lua> ToLuaM<'lua> for NameContainer {
     fn to_lua(self, lua: &'lua Lua) -> ResultM<mlua::Value<'lua>> {
         lua.create_string(&self.0).and_then(|x| x.to_lua(lua))
     }
@@ -116,22 +116,22 @@ pub(crate) fn get_method_data<A: TealMultiValue, R: TealMultiValue, S: ?Sized + 
 ///Container of all the information needed to create the `.d.tl` file for your type.
 #[derive(serde::Serialize, serde::Deserialize, Clone)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    all(feature = "mlua", feature = "derive", not(feature = "rlua")),
     derive(crate::mlu::FromToLua, crate::TypeName)
 )]
 #[cfg_attr(
-    all(feature = "rlua", feature = "derive"),
+    all(feature = "rlua", feature = "derive", not(feature = "mlua")),
     derive(crate::rlu::FromToLua, crate::TypeName)
 )]
 #[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "mlua", feature="rlua"))),
     tealr(tealr_name = crate)
 )]
 pub enum TypeGenerator {
     ///the type should be represented as a struct
     Record(
         #[cfg_attr(
-        all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+        all(any(feature = "rlua", feature = "mlua"), feature = "derive",not(all(feature = "rlua", feature = "mlua"))),
         tealr(remote =  RecordGenerator))]
         Box<RecordGenerator>,
     ),
@@ -152,22 +152,22 @@ type V = Vec<NamePart>;
 ///contains all the information needed to create a teal enum.
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    all(feature = "mlua", feature = "derive", not(feature = "rlua")),
     derive(crate::mlu::FromToLua, crate::TypeName)
 )]
 #[cfg_attr(
-    all(feature = "rlua", feature = "derive"),
+    all(feature = "rlua", feature = "derive", not(feature = "mlua")),
     derive(crate::rlu::FromToLua, crate::TypeName)
 )]
 #[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
     tealr(tealr_name = crate)
 )]
 
 pub struct EnumGenerator {
     ///the name of this enum
     #[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
     tealr(remote = V)
 )]
     pub name: Cow<'static, [NamePart]>,
@@ -213,15 +213,15 @@ impl EnumGenerator {
 
 #[derive(serde::Serialize, serde::Deserialize, Clone)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    all(feature = "mlua", feature = "derive", not(feature = "rlua")),
     derive(crate::mlu::FromToLua, crate::TypeName)
 )]
 #[cfg_attr(
-    all(feature = "rlua", feature = "derive"),
+    all(feature = "rlua", feature = "derive", not(feature = "mlua")),
     derive(crate::rlu::FromToLua, crate::TypeName)
 )]
 #[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
     tealr(tealr_name = crate)
 )]
 
@@ -232,7 +232,7 @@ pub struct Field {
 
     ///the type of the field
     #[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
     tealr(remote = V)
 )]
     pub teal_type: Cow<'static, [NamePart]>,
@@ -253,15 +253,15 @@ impl From<Field> for (NameContainer, Cow<'static, [NamePart]>) {
 ///contains all the information needed to create a record
 #[derive(Default, Clone, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    all(feature = "mlua", feature = "derive", not(feature = "rlua")),
     derive(crate::mlu::FromToLua, crate::TypeName)
 )]
 #[cfg_attr(
-    all(feature = "rlua", feature = "derive"),
+    all(feature = "rlua", feature = "derive", not(feature = "mlua")),
     derive(crate::rlu::FromToLua, crate::TypeName)
 )]
 #[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
     tealr(tealr_name = crate)
 )]
 
@@ -272,7 +272,7 @@ pub struct RecordGenerator {
     pub is_user_data: bool,
     ///The name of the type in teal
     #[cfg_attr(
-        all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+        all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
         tealr(remote = V)
     )]
     pub type_name: Cow<'static, [NamePart]>,

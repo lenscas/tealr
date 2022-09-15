@@ -19,7 +19,7 @@ mod type_walker;
 pub use exported_function::ExportedFunction;
 pub use teal_multivalue::{TealMultiValue, TealType};
 
-///Implements [TypeName](tealr::TypeName).
+///Implements [TypeName](crate::TypeName).
 ///
 ///`TypeName::get_type_name` will return the name of the rust type.
 #[cfg(feature = "derive")]

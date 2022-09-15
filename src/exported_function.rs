@@ -25,15 +25,15 @@ type X = Vec<NamePart>;
 ///Contains the data needed to write down the type of a function
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    all(feature = "mlua", feature = "derive", not(feature = "rlua")),
     derive(crate::mlu::FromToLua, crate::TypeName)
 )]
 #[cfg_attr(
-    all(feature = "rlua", feature = "derive"),
+    all(feature = "rlua", feature = "derive", not(feature = "mlua")),
     derive(crate::rlu::FromToLua, crate::TypeName)
 )]
 #[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive",not(all(feature = "rlua", feature = "mlua"))),
     tealr(tealr_name = crate)
 )]
 pub struct ExportedFunction {
@@ -41,7 +41,7 @@ pub struct ExportedFunction {
     pub name: NameContainer,
     ///The full signature of the function
     #[cfg_attr(
-        all(any(feature = "rlua", feature = "mlua"), feature = "derive"),
+        all(any(feature = "rlua", feature = "mlua"), feature = "derive",not(all(feature = "rlua", feature = "mlua"))),
         tealr(remote = X)
     )]
     pub signature: Cow<'static, [crate::NamePart]>,

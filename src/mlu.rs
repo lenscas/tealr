@@ -85,18 +85,18 @@ impl<T> MaybeSend for T {}
 #[cfg(feature = "derive")]
 pub use tealr_derive::MluaFromToLua as FromToLua;
 
-///Implement both [mlua::UserData](mlua::UserData) and [TypeName](tealr::TypeName).
+///Implement both [mlua::UserData](mlua::UserData) and [TypeName](crate::TypeName).
 ///
 ///Look at [tealr_derive::MluaUserData](tealr_derive::MluaUserData) and [tealr_derive::TypeName](tealr_derive::TypeName)
 ///for more information on how the implemented traits will behave.
 #[cfg(feature = "derive")]
 pub use tealr_derive::MluaTealDerive as TealDerive;
 
-///Implements [UserData](mlua::UserData) and [TypeBody](tealr::TypeBody)
+///Implements [UserData](mlua::UserData) and [TypeBody](crate::TypeBody)
 ///
-///It wraps the [mlua::UserDataMethods](mlua::UserDataMethods) into [UserDataWrapper](tealr::mlu::UserDataWrapper)
-///and then passes it to `tealr::TealData::add_methods`.
+///It wraps the [mlua::UserDataMethods](mlua::UserDataMethods) into [UserDataWrapper](crate::mlu::UserDataWrapper)
+///and then passes it to `crate::TealData::add_methods`.
 ///
-///Type body is implemented in a similar way, where it uses the [TealData](tealr::mlu::TealData) implementation to get the types
+///Type body is implemented in a similar way, where it uses the [TealData](crate::mlu::TealData) implementation to get the types
 #[cfg(feature = "derive")]
 pub use tealr_derive::MluaUserData as UserData;

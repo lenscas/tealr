@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 name = "tealr"
 readme = "README.md"
 repository = "https://github.com/lenscas/tealr/"
-version = "0.9.0-alpha2"
+version = "0.9.0-alpha3"
 
 [workspace]
 members = [
@@ -52,7 +52,7 @@ itertools = "0.10.3"
 mlua = {version = "0.8.1", optional = true, default_features = false}
 rlua = {version = "0.19.2", optional = true, default_features = false}
 serde = {version = "1.0.136", features = ["derive"]}
-tealr_derive = {version = "0.9.0-alpha2", optional = true, path = "./tealr_derive"}
+tealr_derive = {version = "0.9.0-alpha3", optional = true, path = "./tealr_derive"}
 
 # Rlua tests
 [[test]]
@@ -186,4 +186,5 @@ path = "examples/mlua/userdata_proxy.rs"
 required-features = ["mlua"]
 
 [package.metadata.docs.rs]
-features = ["mlua", "rlua", "rlua_builtin-lua54", "mlua_lua54", "mlua_vendored", "mlua_async", "mlua_serialize", "rlua_builtin-lua"]
+features = ["mlua", "rlua", "rlua_builtin-lua54", "mlua_lua54", "mlua_vendored", "mlua_async", "mlua_serialize"]
+rustdoc-args = ["--cfg", "docsrs"]
