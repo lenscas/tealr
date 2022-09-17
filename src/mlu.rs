@@ -11,6 +11,7 @@ pub(crate) mod user_data_wrapper;
 use std::borrow::Cow;
 
 pub use self::{
+    picker_macro::FromLuaExact,
     teal_data::TealData,
     teal_data_methods::{set_global_env, ExportInstances, InstanceCollector, TealDataMethods},
     typed_function::TypedFunction,
