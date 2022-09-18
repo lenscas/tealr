@@ -1,5 +1,6 @@
 ///this module holds some pre made types that can be used to create generics.
 pub mod generics;
+mod named_parameters;
 mod picker_macro;
 pub(crate) mod teal_data;
 mod teal_data_fields;
@@ -17,6 +18,10 @@ pub use self::{
     typed_function::TypedFunction,
     user_data_proxy::UserDataProxy,
     user_data_wrapper::UserDataWrapper,
+};
+pub use crate::{
+    create_generic_mlua as create_generic, create_union_mlua as create_union,
+    mlua_create_named_parameters as create_named_parameters,
 };
 pub use mlua;
 pub use teal_data_fields::TealDataFields;
