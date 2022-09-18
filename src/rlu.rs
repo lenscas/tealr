@@ -1,5 +1,6 @@
 ///this module holds some pre made types that can be used to create generics.
 pub mod generics;
+mod named_parameters;
 mod picker_macro;
 pub(crate) mod teal_data;
 pub(crate) mod teal_data_methods;
@@ -15,6 +16,11 @@ pub use self::{
     teal_data_methods::{set_global_env, ExportInstances, InstanceCollector, TealDataMethods},
     typed_function::TypedFunction,
     user_data_wrapper::UserDataWrapper,
+};
+
+pub use crate::{
+    create_generic_rlua as create_generic, create_union_rlua as create_union,
+    rlua_create_named_parameters as create_named_parameters,
 };
 
 pub(crate) fn get_meta_name(name: rlua::MetaMethod) -> &'static str {

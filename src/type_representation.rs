@@ -163,6 +163,13 @@ pub enum NamePart {
     //Appended(Cow<'static, [NamePart]>),
 }
 
+impl NamePart {
+    /// an easier way to create a [NamePart::Symbol], which does the Cow wrapping for you.
+    pub fn symbol(symbol: impl Into<Cow<'static, str>>) -> Self {
+        Self::Symbol(symbol.into())
+    }
+}
+
 impl Display for NamePart {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.as_ref_str())

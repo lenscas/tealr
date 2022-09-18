@@ -32,7 +32,8 @@ impl TealData for Example {
     fn add_fields<'lua, F: tealr::mlu::TealDataFields<'lua, Self>>(fields: &mut F) {
         fields.add_field_method_get("example_field", |_, s: &Example| Ok(s.float));
         fields.add_field_method_set("example_field_set", |_, s: &mut Example, v: f32| {
-            Ok(s.float = v)
+            s.float = v;
+            Ok(())
         });
         fields.add_field_function_get("example_static_field", |_, _| Ok("my_field"));
         fields.add_field_function_get("example_static_field_mut", |_, _| Ok("my_mut_field"));

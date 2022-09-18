@@ -4,7 +4,7 @@ proc-macro = true
 [package]
 authors = ["Lenscas <lenscas@gmail.com>"]
 description = "Derive/Proc macro's to reduce boilerplate when using tealr."
-edition = "2018"
+edition = "2021"
 keywords = ["derive", "macro", "teal", "lua", "tealr"]
 license = "MIT OR Apache-2.0"
 name = "tealr_derive"
