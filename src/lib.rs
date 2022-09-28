@@ -37,3 +37,10 @@ pub use tealr_derive::compile_inline_teal;
     feature = "embed_compiler_from_download"
 ))]
 pub use tealr_derive::embed_compiler;
+
+/// Gets the current version of tealr.
+///
+/// Useful when consuming the .json files to check if it is a supported version
+pub fn get_tealr_versions() -> &'static str {
+    env!("CARGO_PKG_VERSION")
+}
