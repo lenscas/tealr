@@ -47,7 +47,7 @@ fn find_tag_with_value(to_find: &str, tags: &[venial::Attribute]) -> Option<Toke
         })
 }
 
-fn find_doc_tags<'a>(tags: &'a [venial::Attribute]) -> impl Iterator<Item = String> + '_ {
+fn find_doc_tags(tags: &[venial::Attribute]) -> impl Iterator<Item = String> + '_ {
     tags.iter()
         .filter(|v| {
             let name = v.path.iter().cloned().collect::<TokenStream>().to_string();
