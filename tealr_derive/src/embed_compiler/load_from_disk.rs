@@ -39,7 +39,7 @@ pub(crate) fn get_local_teal(path: String) -> String {
 
     let mut compiler = Command::new("tl")
         .current_dir(build_dir.path())
-        .args(&["gen", "-o", "output.lua", "--skip-compat53"])
+        .args(["gen", "-o", "output.lua", "--skip-compat53"])
         .arg(path)
         .spawn()
         .map_err(|v| {
