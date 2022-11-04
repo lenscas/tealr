@@ -229,7 +229,7 @@ pub fn type_parts_to_str(x: Cow<'static, [NamePart]>) -> Cow<'static, str> {
         Cow::Owned(
             x.iter()
                 .map(|v| v.as_ref_str())
-                .map(|v| v.to_owned())
+                .cloned()
                 .collect::<String>(),
         )
     }

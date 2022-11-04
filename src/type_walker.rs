@@ -60,7 +60,7 @@ pub struct TypeWalker {
 impl Default for TypeWalker {
     fn default() -> Self {
         Self {
-            tealr_version_used: crate::get_tealr_versions().to_string(),
+            tealr_version_used: crate::get_tealr_version().to_string(),
             given_types: Default::default(),
             global_instances_off: Default::default(),
         }
@@ -214,6 +214,15 @@ impl TypeWalker {
     ///```
     pub fn generate_local(self, outer_name: &str) -> std::result::Result<String, FromUtf8Error> {
         self.generate(outer_name, false)
+    }
+
+    /// Checks if the version of tealr to create this [TypeWalker] is the same version as the current [tealr](crate) version
+    pub fn check_correct_version(&self) -> bool {
+        self.tealr_version_used == crate::get_tealr_version()
+    }
+    /// Gets the version of [tealr](crate) that was used to create this [TypeWalker]
+    pub fn get_tealr_version_used(&self) -> &str {
+        &self.tealr_version_used
     }
 }
 

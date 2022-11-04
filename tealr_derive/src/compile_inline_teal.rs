@@ -69,7 +69,7 @@ pub(crate) fn compile_inline_teal(input: TokenStream) -> TokenStream {
         .expect("Could not write teal source file");
 
     let mut command = Command::new("tl")
-        .args(&[
+        .args([
             OsStr::new("check"),
             OsStr::new("-I"),
             path.as_os_str(),
@@ -88,7 +88,7 @@ pub(crate) fn compile_inline_teal(input: TokenStream) -> TokenStream {
     }
 
     let mut command = Command::new("tl")
-        .args(&[
+        .args([
             OsStr::new("gen"),
             OsStr::new("-o"),
             OsStr::new("output.lua"),
