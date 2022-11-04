@@ -36,7 +36,7 @@ pub struct GlobalInstance {
 }
 
 ///This generates the .d.tl files
-#[derive(Default, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
     all(feature = "mlua", feature = "derive", not(feature = "rlua")),
     derive(crate::mlu::FromToLua, crate::TypeName)
@@ -50,10 +50,21 @@ pub struct GlobalInstance {
     tealr(tealr_name = crate)
 )]
 pub struct TypeWalker {
+    tealr_version_used: String,
     ///All the types that are currently registered by the TypeWalker
     pub given_types: Vec<TypeGenerator>,
     ///list of items that
     pub global_instances_off: Vec<GlobalInstance>,
+}
+
+impl Default for TypeWalker {
+    fn default() -> Self {
+        Self {
+            tealr_version_used: crate::get_tealr_versions().to_string(),
+            given_types: Default::default(),
+            global_instances_off: Default::default(),
+        }
+    }
 }
 
 impl TypeWalker {
