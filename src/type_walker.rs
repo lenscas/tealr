@@ -35,6 +35,27 @@ pub struct GlobalInstance {
     pub doc: String,
 }
 
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+///Used to document what global instances get made by the module
+#[cfg_attr(
+    all(feature = "mlua", feature = "derive", not(feature = "rlua")),
+    derive(crate::mlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(feature = "rlua", feature = "derive", not(feature = "mlua")),
+    derive(crate::rlu::FromToLua, crate::TypeName)
+)]
+#[cfg_attr(
+    all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
+    tealr(tealr_name = crate)
+)]
+pub struct ExtraPage {
+    ///The name of the extra page
+    pub name: String,
+    ///The markdown content of the extra page.
+    pub content: String,
+}
+
 ///This generates the .d.tl files
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
@@ -55,6 +76,8 @@ pub struct TypeWalker {
     pub given_types: Vec<TypeGenerator>,
     ///list of items that
     pub global_instances_off: Vec<GlobalInstance>,
+    ///list of extra pages that need to be generated.
+    pub extra_page: Vec<ExtraPage>,
 }
 
 impl Default for TypeWalker {
@@ -63,6 +86,7 @@ impl Default for TypeWalker {
             tealr_version_used: crate::get_tealr_version().to_string(),
             given_types: Default::default(),
             global_instances_off: Default::default(),
+            extra_page: Default::default(),
         }
     }
 }
@@ -71,6 +95,21 @@ impl TypeWalker {
     ///creates the TypeWalker
     pub fn new() -> Self {
         Default::default()
+    }
+    ///Adds a new page that should be included in the documentation
+    pub fn add_page(mut self, name: String, content: String) -> Self {
+        self.extra_page.push(ExtraPage { name, content });
+        self
+    }
+    ///reads a file and adds it as an extra page
+    pub fn add_page_from(
+        &mut self,
+        name: String,
+        location: impl AsRef<std::path::Path>,
+    ) -> Result<&mut Self, std::io::Error> {
+        let content = std::fs::read_to_string(location)?;
+        self.extra_page.push(ExtraPage { name, content });
+        Ok(self)
     }
     ///gives an iterator back over every type
     pub fn iter(&self) -> std::slice::Iter<'_, TypeGenerator> {

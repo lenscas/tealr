@@ -27,7 +27,7 @@ pub use tealr_derive::TypeName;
 
 pub use type_generator::{EnumGenerator, Field, NameContainer, RecordGenerator, TypeGenerator};
 pub use type_representation::{type_parts_to_str, KindOfType, NamePart, TypeBody, TypeName};
-pub use type_walker::{GlobalInstance, TypeWalker};
+pub use type_walker::{ExtraPage, GlobalInstance, TypeWalker};
 
 #[cfg(feature = "compile")]
 pub use tealr_derive::compile_inline_teal;
