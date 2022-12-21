@@ -27,13 +27,13 @@ impl CompileConfig {
         match input.next() {
             Some(TokenTree::Punct(x)) => {
                 if x.as_char() != ',' {
-                    return Err(venial::Error::new(&format!(
+                    return Err(venial::Error::new(format!(
                         "Expected `,` got `{}`.",
                         x.as_char()
                     )));
                 }
             }
-            Some(x) => return Err(venial::Error::new(&format!("Expected `,` got `{}`.", x))),
+            Some(x) => return Err(venial::Error::new(format!("Expected `,` got `{}`.", x))),
             None => (),
         }
         let path_extra = match input.next() {

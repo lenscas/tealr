@@ -282,11 +282,12 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
             )
         })
         .unwrap_or_else(|| (quote! {}, quote! {}, quote! {}));
-    let (variant_functions,creator_functions): (Vec<_>,Vec<_>) = enumeration
+    let (variant_functions,(creator_functions,is_of_branches)): (Vec<_>,(Vec<_>,TokenStream)) = enumeration
         .variants
         .iter()
         .map(|(variant, _)| {
             let variant_name = variant.name.clone();
+            let variant_as_text = variant_name.to_string();
             let is_method_name = format!("Is{}", variant_name);
             let new_variant = format!("New{}",variant_name);
             if variant.is_empty_variant() || matches!(variant.contents, venial::StructFields::Unit)
@@ -299,12 +300,17 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
                             _ => Ok(false)
                         }
                     );
-                }],vec![quote! {
-                    methods.add_function(
-                        #new_variant,
-                        |_,()| Ok(#name::#variant_name)
-                    );
-                }])
+                }],(
+                    vec![quote! {
+                        methods.add_function(
+                            #new_variant,
+                            |_,()| Ok(#name::#variant_name)
+                        );
+                    }],
+                    quote!{
+                        #name::#variant_name => #variant_as_text,
+                    }
+                ))
             } else {
                 match &variant.contents {
                     venial::StructFields::Unit => unreachable!(),
@@ -352,6 +358,7 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
                         let get_or_nill_method_name = format!("Get{variant_name}OrNil");
                         let new_variant_from = format!("New{variant_name}From");
                         let convert_back = add_commas(field_names.into_iter().map(|(name,_,_)|quote!{<_ as ::std::convert::From<_>>::from(#name)}).collect::<Vec<TokenStream>>());
+
                         (vec![quote! {
                             methods.add_method(
                                 #is_method_name,
@@ -374,13 +381,16 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
                                     _ => Ok((#combined_none))
                                 }
                             );
-                        }],vec![quote!{
-                            methods.add_function(
-                                #new_variant_from,
-                                |_, (#fields):(#to_as_types)|
-                                    Ok(#name::#variant_name(#convert_back))
-                            );
-                        }])
+                        }],(
+                            vec![quote!{
+                                methods.add_function(
+                                    #new_variant_from,
+                                    |_, (#fields):(#to_as_types)|
+                                        Ok(#name::#variant_name(#convert_back))
+                                );
+                        }],quote!{
+                            #name::#variant_name(..) => #variant_as_text,
+                        }))
                     }
                     venial::StructFields::Named(_) => todo!(),
                 }
@@ -405,6 +415,11 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
             fn add_methods<'lua, T: #teal_data_methods_location<'lua, Self>>(methods: &mut T) {
                 #variant_functions
                 #call_methods
+                methods.add_method("GetTypeName",|_,this,()|{
+                    Ok(match this {
+                        #is_of_branches
+                    }.to_string())
+                });
                 #creator_functions
             }
         }
