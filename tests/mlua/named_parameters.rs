@@ -25,10 +25,13 @@ impl TealData for Example {
 fn main() -> Result<()> {
     let file_contents = TypeWalker::new()
         .process_type::<Example>()
-        .generate_global("test")
+        .to_json()
         .expect("oh no :(");
 
-    assert_eq!(file_contents, "global record test\n\trecord Example\n\t\tuserdata\n\n\t\t-- Pure methods\n\t\texample_method: function(Example,field_1 : string , field_2 : integer):((string),(integer))\n\n\n\tend\nend\nreturn test");
+    let new_value: serde_json::Value = serde_json::from_str(&file_contents).unwrap();
+    let old_value: serde_json::Value =
+        serde_json::from_str(include_str!("./named_parameters.json")).unwrap();
+    assert_eq!(new_value, old_value);
 
     let lua = Lua::new();
     let globals = lua.globals();

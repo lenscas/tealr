@@ -31,8 +31,11 @@ impl TealData for Example {
 fn make_generic() {
     let file_contents = TypeWalker::new()
         .process_type::<Example>()
-        .generate_global("test")
-        .expect("oh no :(");
+        .to_json_pretty()
+        .unwrap();
 
-    assert_eq!(file_contents, "global record test\n\trecord Example\n\t\tuserdata\n\n\t\t-- Pure methods\n\t\tgeneric_function_callback: function<X>(Example,function(X):(X)):(X)\n\n\t\tgeneric_array: function<X>(Example,{X}):({X})\n\n\t\tgeneric_hashmap: function<X>(Example,{string:X}):(({string:X}),(integer))\n\n\t\tjust_generics: function<X>(Example,X):(X)\n\n\t\tnon_generic_container: function(Example,{string}):({string})\n\n\n\tend\nend\nreturn test");
+    let new_value: serde_json::Value = serde_json::from_str(&file_contents).unwrap();
+    let old_value: serde_json::Value =
+        serde_json::from_str(include_str!("./generics.json")).unwrap();
+    assert_eq!(new_value, old_value);
 }

@@ -60,7 +60,7 @@ fn pieces() -> Result<(), mlua::Error> {
         //create .d.tl file
         let _file_contents = TypeWalker::new()
             .process_type::<ExampleMlua>()
-            .generate_global("test")
+            .to_json()
             .expect("oh no :(");
 
         //compile inline teal
@@ -71,6 +71,8 @@ fn pieces() -> Result<(), mlua::Error> {
         let code = compiler("example/basic_teal_file");
         let lua = tealr::mlu::mlua::Lua::new();
         let _res: u8 = lua.load(&code).set_name("embedded_compiler")?.eval()?;
+        let add_1 = TypedFunction::<u8, u8>::from_rust(|_lua, x| Ok(x + 1), &lua)?;
+        assert_eq!(add_1.call(2)?, 3);
     }
 
     Ok(())

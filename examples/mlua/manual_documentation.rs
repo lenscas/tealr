@@ -82,15 +82,13 @@ impl TypeBody for Example {
     }
 }
 fn main() -> Result<()> {
-    let file_contents = TypeWalker::new() //creates the generator
-        //tells it that we want to generate Example
-        //add more calls to process_type to generate more types in the same file
+    let file_contents = TypeWalker::new()
+        //tells it that you want to include the Example type
+        //chain extra calls to include more types
         .process_type::<Example>()
         //generate the file
-        .generate_global("test")
-        //due to how the typings work, we technically can get an error.
-        //this is however rather unlikely, so using a .expect is probably fine
-        .expect("oh no :(");
+        .to_json()
+        .expect("serde_json failed to serialize our data");
     //normally you would now save the file somewhere.
     //however for this example we just print it.
     println!("{}\n ", file_contents);
@@ -109,6 +107,7 @@ print(test:example_method_mut(2,\"test\"))
 print(test.example_function({}))
 print(test.example_function_mut(true))
         ";
-    let x = lua.load(code).set_name("test?")?.eval();
-    x
+
+    lua.load(code).set_name("test?")?.eval()?;
+    Ok(())
 }

@@ -35,10 +35,10 @@ fn pieces() -> Result<(), rlua::Error> {
     //the functionality of these pieces of code are already being tested at other places
     //This is just to make sure the examples in the readme keep working
     if false {
-        //create .d.tl file
+        //create the json file
         let _file_contents = TypeWalker::new()
             .process_type::<ExampleRlua>()
-            .generate_global("test")
+            .to_json()
             .expect("oh no :(");
 
         //compile inline teal

@@ -51,10 +51,12 @@ fn test_limited() {
         .process_type::<Example>()
         .document_global_instance::<Export>()
         .unwrap()
-        .generate_global("Test")
+        .to_json()
         .expect("oh no :(");
-
-    assert_eq!(file_contents, "global record Test\n\trecord Example\n\t\tuserdata\n\n\t\t-- Pure methods\n\t\tlimited_callback: function(Example,function(string | number | boolean):(string | number | boolean)):(string | number | boolean)\n\n\t\tlimited_array: function(Example,{string | number | boolean}):({string | number | boolean})\n\n\t\tlimited_simple: function(Example,string | number | boolean):(string | number | boolean)\n\n\n\tend\nend\nglobal test: Test.Example\n--a simple function that does a + 1\n\n--it is just for testing purposes\n\nglobal example_a: function(integer):(integer)\nglobal example_generic: function<X>(X):(X)\nreturn Test");
+    let generated: serde_json::Value = serde_json::from_str(&file_contents).unwrap();
+    let original: serde_json::Value =
+        serde_json::from_str(include_str!("./export_instance.json")).unwrap();
+    assert_eq!(generated, original);
     let res: bool = rlua::Lua::new()
         .context(|ctx| {
             tealr::rlu::set_global_env(Export::default(), ctx)?;

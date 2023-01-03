@@ -57,22 +57,16 @@ impl tealr::mlu::ExportInstances for Export {
 }
 
 fn main() -> Result<()> {
-    //lets first generate the definition file
-    let file_contents = TypeWalker::new() //creates the generator
+    let file_contents = TypeWalker::new()
         //tells it that we want to generate Example
-        //add more calls to process_type to generate more types in the same file
         .process_type::<Example>()
+        //generate the documentation for our proxy, allowing us to
         .process_type::<UserDataProxy<Example>>()
-        // enable documenting the global
+        // enable documenting the globals
         .document_global_instance::<Export>()?
         //generate the file
-        .generate_global("test")
-        //the name parameter for TealDataMethods::{add_method,add_method_mut,add_function,add_function_mut}
-        //takes anything that can be used as a &[u8]
-        //this is to match the types from UserDataMethods
-        //however, as we turn it back into a string it is technically possible to get an error
-        //in this case, as &str's where used it can't happen though, so the .expect is fine
-        .expect("oh no :(");
+        .to_json()
+        .expect("serde_json failed to serialize our data");
 
     //normally you would now save the file somewhere.
     println!("{}\n ", file_contents);
