@@ -1,0 +1,331 @@
+{
+    "tealr_version_used": "0.9.0-alpha3",
+    "given_types": [
+        {
+            "Record": {
+                "should_be_inlined": false,
+                "is_user_data": true,
+                "type_name": [
+                    {
+                        "Type": {
+                            "name": "Example",
+                            "type_kind": "External",
+                            "generics": null
+                        }
+                    }
+                ],
+                "fields": [],
+                "static_fields": [],
+                "methods": [
+                    {
+                        "name": "limited_callback",
+                        "signature": [
+                            {
+                                "Symbol": "function"
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Type": {
+                                    "name": "Example",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ","
+                            },
+                            {
+                                "Symbol": "function("
+                            },
+                            {
+                                "Type": {
+                                    "name": "string",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": " | "
+                            },
+                            {
+                                "Type": {
+                                    "name": "number",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": " | "
+                            },
+                            {
+                                "Type": {
+                                    "name": "boolean",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": "):("
+                            },
+                            {
+                                "Type": {
+                                    "name": "string",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": " | "
+                            },
+                            {
+                                "Type": {
+                                    "name": "number",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": " | "
+                            },
+                            {
+                                "Type": {
+                                    "name": "boolean",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ")"
+                            },
+                            {
+                                "Symbol": "):("
+                            },
+                            {
+                                "Type": {
+                                    "name": "string",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": " | "
+                            },
+                            {
+                                "Type": {
+                                    "name": "number",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": " | "
+                            },
+                            {
+                                "Type": {
+                                    "name": "boolean",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ")"
+                            }
+                        ],
+                        "is_meta_method": false
+                    },
+                    {
+                        "name": "limited_array",
+                        "signature": [
+                            {
+                                "Symbol": "function"
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Type": {
+                                    "name": "Example",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ","
+                            },
+                            {
+                                "Symbol": "{"
+                            },
+                            {
+                                "Type": {
+                                    "name": "string",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": " | "
+                            },
+                            {
+                                "Type": {
+                                    "name": "number",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": " | "
+                            },
+                            {
+                                "Type": {
+                                    "name": "boolean",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": "}"
+                            },
+                            {
+                                "Symbol": "):("
+                            },
+                            {
+                                "Symbol": "{"
+                            },
+                            {
+                                "Type": {
+                                    "name": "string",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": " | "
+                            },
+                            {
+                                "Type": {
+                                    "name": "number",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": " | "
+                            },
+                            {
+                                "Type": {
+                                    "name": "boolean",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": "}"
+                            },
+                            {
+                                "Symbol": ")"
+                            }
+                        ],
+                        "is_meta_method": false
+                    },
+                    {
+                        "name": "limited_simple",
+                        "signature": [
+                            {
+                                "Symbol": "function"
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Type": {
+                                    "name": "Example",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ","
+                            },
+                            {
+                                "Type": {
+                                    "name": "string",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": " | "
+                            },
+                            {
+                                "Type": {
+                                    "name": "number",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": " | "
+                            },
+                            {
+                                "Type": {
+                                    "name": "boolean",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": "):("
+                            },
+                            {
+                                "Type": {
+                                    "name": "string",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": " | "
+                            },
+                            {
+                                "Type": {
+                                    "name": "number",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": " | "
+                            },
+                            {
+                                "Type": {
+                                    "name": "boolean",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ")"
+                            }
+                        ],
+                        "is_meta_method": false
+                    }
+                ],
+                "mut_methods": [],
+                "functions": [],
+                "mut_functions": [],
+                "meta_method": [],
+                "meta_method_mut": [],
+                "meta_function": [],
+                "meta_function_mut": [],
+                "documentation": {},
+                "type_doc": "",
+                "next_docs": null,
+                "should_generate_help_method": true
+            }
+        }
+    ],
+    "global_instances_off": [],
+    "extra_page": []
+}

@@ -28,10 +28,12 @@ impl TealData for Example {
 fn test_limited() {
     let file_contents = TypeWalker::new()
         .process_type::<Example>()
-        .generate_global("test")
-        .expect("oh no :(");
-
-    assert_eq!(file_contents, "global record test\n\trecord Example\n\t\tuserdata\n\n\t\t-- Pure methods\n\t\tlimited_callback: function(Example,function(string | number | boolean):(string | number | boolean)):(string | number | boolean)\n\n\t\tlimited_array: function(Example,{string | number | boolean}):({string | number | boolean})\n\n\t\tlimited_simple: function(Example,string | number | boolean):(string | number | boolean)\n\n\n\tend\nend\nreturn test");
+        .to_json_pretty()
+        .unwrap();
+    let new_value: serde_json::Value = serde_json::from_str(&file_contents).unwrap();
+    let old_value: serde_json::Value =
+        serde_json::from_str(include_str!("./type_picker.json")).unwrap();
+    assert_eq!(new_value, old_value);
     let res: bool = rlua::Lua::new()
         .context(|ctx| {
             let globals = ctx.globals();

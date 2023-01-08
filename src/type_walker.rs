@@ -155,6 +155,10 @@ impl TypeWalker {
     ///return Examples"
     ///)));
     ///```
+    #[deprecated(
+        since = "0.9.0",
+        note = "Generation of .d.tl files has been moved to tealr_doc_gen. Use TypeWaller::to_json() instead to get json parsable by tealr_doc_gen."
+    )]
     pub fn generate(
         self,
         outer_name: &str,
@@ -229,7 +233,12 @@ impl TypeWalker {
     ///return Examples"
     ///)));
     ///```
+    #[deprecated(
+        since = "0.9.0",
+        note = "Generation of .d.tl files has been moved to tealr_doc_gen. Use TypeWaller::to_json() instead to get json parsable by tealr_doc_gen."
+    )]
     pub fn generate_global(self, outer_name: &str) -> std::result::Result<String, FromUtf8Error> {
+        #[allow(deprecated)]
         self.generate(outer_name, true)
     }
     ///Same as calling [Typewalker::generate(outer_name,false)](crate::TypeWalker::generate).
@@ -251,10 +260,27 @@ impl TypeWalker {
     ///return Examples"
     ///)));
     ///```
+    #[deprecated(
+        since = "0.9.0",
+        note = "Generation of .d.tl files has been moved to tealr_doc_gen. Use TypeWaller::to_json() instead to get json parsable by tealr_doc_gen."
+    )]
     pub fn generate_local(self, outer_name: &str) -> std::result::Result<String, FromUtf8Error> {
+        #[allow(deprecated)]
         self.generate(outer_name, false)
     }
-
+    /// Generates the json needed by [tealr_doc_gen](https://crates.io/crates/tealr_doc_gen) to generate the documentation.
+    ///
+    /// It is up to you to store it properly
+    pub fn to_json(&self) -> serde_json::Result<String> {
+        serde_json::to_string(self)
+    }
+    /// Generates the json needed by [tealr_doc_gen](https://crates.io/crates/tealr_doc_gen) to generate the documentation in a pretty-printed way.
+    ///
+    /// It is up to you to store it properly.
+    ///
+    pub fn to_json_pretty(&self) -> serde_json::Result<String> {
+        serde_json::to_string_pretty(self)
+    }
     /// Checks if the version of tealr to create this [TypeWalker] is the same version as the current [tealr](crate) version
     pub fn check_correct_version(&self) -> bool {
         self.tealr_version_used == crate::get_tealr_version()

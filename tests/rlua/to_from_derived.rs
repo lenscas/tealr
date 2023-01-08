@@ -64,14 +64,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .process_type::<TestCreatorOfDOOM>()
         .process_type::<Test2>()
         .process_type::<Example>()
-        .generate_global("test")
+        .to_json_pretty()
         .expect("oh no :(");
 
-    assert_eq!(
-        "global record test\n\trecord V\n\n\t\t-- Fields\n\t\t0 : string\n\n\n\tend\n\tenum ExampleCStyleEnum\n\t\t\"This\"\n\t\t\"Is\"\n\t\t\"A\"\n\t\t\"Basic\"\n\t\t\"Example\"\n\tend\n\trecord TestCreatorOfDOOM\n\t\tuserdata\n\n\t\t-- Pure functions\n\t\tNewAmazingFrom: function(V):(Test2)\n\n\t\tNewLessSo: function():(Test2)\n\n\t\tNewOWowADoubleFrom: function((string),(integer)):(Test2)\n\n\n\tend\n\trecord Test2\n\t\tuserdata\n\n\t\t-- Pure methods\n\t\tIsAmazing: function(Test2):(boolean)\n\n\t\tGetAmazing: function(Test2):((boolean),(V))\n\n\t\tGetAmazingOrNil: function(Test2):(V)\n\n\t\tIsLessSo: function(Test2):(boolean)\n\n\t\tIsOWowADouble: function(Test2):(boolean)\n\n\t\tGetOWowADouble: function(Test2):((boolean),(string),(integer))\n\n\t\tGetOWowADoubleOrNil: function(Test2):((string),(integer))\n\n\t\tGetTypeName: function(Test2):(string)\n\n\t\t-- Pure functions\n\t\tNewAmazingFrom: function(V):(Test2)\n\n\t\tNewLessSo: function():(Test2)\n\n\t\tNewOWowADoubleFrom: function((string),(integer)):(Test2)\n\n\n\tend\n\trecord Example\n\n\t\t-- Fields\n\t\tfield1 : Test2\n\n\t\tnice : integer\n\n\t\tv : ExampleCStyleEnum\n\n\n\tend\nend\nreturn test",
-        file_contents
-    );
-
+    let new_value: serde_json::Value = serde_json::from_str(&file_contents).unwrap();
+    let old_value: serde_json::Value =
+        serde_json::from_str(include_str!("./to_from_derived.json")).unwrap();
+    assert_eq!(new_value, old_value);
     let mut to_pass = Example {
         field1: String::from("nice"),
         nice: 2,

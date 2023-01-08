@@ -33,8 +33,11 @@ fn make_inline_type() {
     let file_contents = TypeWalker::new()
         .process_type_inline::<Example>()
         .process_type::<Example>()
-        .generate_global("test")
+        .to_json_pretty()
         .expect("oh no :(");
 
-    assert_eq!(file_contents,"global record test\n\t-- Example\n\n\t\t-- Pure methods\n\t\texample_method: function(Example,integer):(integer)\n\n\t\t-- Mutating methods\n\t\texample_method_mut: function(Example,(integer),(string)):(string)\n\n\t\t-- Pure functions\n\t\texample_function: function({string}):(({string}),(integer))\n\n\t\t-- Mutating functions\n\t\texample_function_mut: function((boolean),(Example)):((boolean),(Example))\n\n\n\n\trecord Example\n\t\tuserdata\n\n\t\t-- Pure methods\n\t\texample_method: function(Example,integer):(integer)\n\n\t\t-- Mutating methods\n\t\texample_method_mut: function(Example,(integer),(string)):(string)\n\n\t\t-- Pure functions\n\t\texample_function: function({string}):(({string}),(integer))\n\n\t\t-- Mutating functions\n\t\texample_function_mut: function((boolean),(Example)):((boolean),(Example))\n\n\n\tend\nend\nreturn test");
+    let new_value: serde_json::Value = serde_json::from_str(&file_contents).unwrap();
+    let old_value: serde_json::Value =
+        serde_json::from_str(include_str!("./inlined_type.json")).unwrap();
+    assert_eq!(new_value, old_value);
 }

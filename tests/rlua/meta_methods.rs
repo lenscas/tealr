@@ -24,7 +24,10 @@ fn test() {
     //create .d.tl file and compare against expected
     let file_contents = TypeWalker::new()
         .process_type::<Example>()
-        .generate_global("test")
-        .expect("oh no :(");
-    assert_eq!(file_contents, "global record test\n\trecord Example\n\t\tuserdata\n\n\t\t-- Meta methods\n\t\t__add: function(Example,integer):(Example)\n\n\n\tend\nend\nreturn test");
+        .to_json_pretty()
+        .unwrap();
+    let new_value: serde_json::Value = serde_json::from_str(&file_contents).unwrap();
+    let old_value: serde_json::Value =
+        serde_json::from_str(include_str!("./meta_methods.json")).unwrap();
+    assert_eq!(new_value, old_value);
 }

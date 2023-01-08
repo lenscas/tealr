@@ -1,0 +1,721 @@
+{
+    "tealr_version_used": "0.9.0-alpha3",
+    "given_types": [
+        {
+            "Record": {
+                "should_be_inlined": false,
+                "is_user_data": false,
+                "type_name": [
+                    {
+                        "Type": {
+                            "name": "V",
+                            "type_kind": "External",
+                            "generics": null
+                        }
+                    }
+                ],
+                "fields": [
+                    {
+                        "name": "0",
+                        "teal_type": [
+                            {
+                                "Type": {
+                                    "name": "string",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "static_fields": [],
+                "methods": [],
+                "mut_methods": [],
+                "functions": [],
+                "mut_functions": [],
+                "meta_method": [],
+                "meta_method_mut": [],
+                "meta_function": [],
+                "meta_function_mut": [],
+                "documentation": {},
+                "type_doc": "",
+                "next_docs": null,
+                "should_generate_help_method": true
+            }
+        },
+        {
+            "Enum": {
+                "name": [
+                    {
+                        "Type": {
+                            "name": "ExampleCStyleEnum",
+                            "type_kind": "External",
+                            "generics": null
+                        }
+                    }
+                ],
+                "variants": [
+                    "This",
+                    "Is",
+                    "A",
+                    "Basic",
+                    "Example"
+                ],
+                "type_doc": ""
+            }
+        },
+        {
+            "Record": {
+                "should_be_inlined": false,
+                "is_user_data": true,
+                "type_name": [
+                    {
+                        "Type": {
+                            "name": "TestCreatorOfDOOM",
+                            "type_kind": "External",
+                            "generics": null
+                        }
+                    }
+                ],
+                "fields": [],
+                "static_fields": [],
+                "methods": [],
+                "mut_methods": [],
+                "functions": [
+                    {
+                        "name": "NewAmazingFrom",
+                        "signature": [
+                            {
+                                "Symbol": "function"
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Type": {
+                                    "name": "V",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": "):("
+                            },
+                            {
+                                "Type": {
+                                    "name": "Test2",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ")"
+                            }
+                        ],
+                        "is_meta_method": false
+                    },
+                    {
+                        "name": "NewLessSo",
+                        "signature": [
+                            {
+                                "Symbol": "function"
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Symbol": "):("
+                            },
+                            {
+                                "Type": {
+                                    "name": "Test2",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ")"
+                            }
+                        ],
+                        "is_meta_method": false
+                    },
+                    {
+                        "name": "NewOWowADoubleFrom",
+                        "signature": [
+                            {
+                                "Symbol": "function"
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Type": {
+                                    "name": "string",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": "),("
+                            },
+                            {
+                                "Type": {
+                                    "name": "integer",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ")"
+                            },
+                            {
+                                "Symbol": "):("
+                            },
+                            {
+                                "Type": {
+                                    "name": "Test2",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ")"
+                            }
+                        ],
+                        "is_meta_method": false
+                    }
+                ],
+                "mut_functions": [],
+                "meta_method": [],
+                "meta_method_mut": [],
+                "meta_function": [],
+                "meta_function_mut": [],
+                "documentation": {},
+                "type_doc": "",
+                "next_docs": null,
+                "should_generate_help_method": true
+            }
+        },
+        {
+            "Record": {
+                "should_be_inlined": false,
+                "is_user_data": true,
+                "type_name": [
+                    {
+                        "Type": {
+                            "name": "Test2",
+                            "type_kind": "External",
+                            "generics": null
+                        }
+                    }
+                ],
+                "fields": [],
+                "static_fields": [],
+                "methods": [
+                    {
+                        "name": "IsAmazing",
+                        "signature": [
+                            {
+                                "Symbol": "function"
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Type": {
+                                    "name": "Test2",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": "):("
+                            },
+                            {
+                                "Type": {
+                                    "name": "boolean",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ")"
+                            }
+                        ],
+                        "is_meta_method": false
+                    },
+                    {
+                        "name": "GetAmazing",
+                        "signature": [
+                            {
+                                "Symbol": "function"
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Type": {
+                                    "name": "Test2",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": "):("
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Type": {
+                                    "name": "boolean",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": "),("
+                            },
+                            {
+                                "Type": {
+                                    "name": "V",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ")"
+                            },
+                            {
+                                "Symbol": ")"
+                            }
+                        ],
+                        "is_meta_method": false
+                    },
+                    {
+                        "name": "GetAmazingOrNil",
+                        "signature": [
+                            {
+                                "Symbol": "function"
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Type": {
+                                    "name": "Test2",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": "):("
+                            },
+                            {
+                                "Type": {
+                                    "name": "V",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ")"
+                            }
+                        ],
+                        "is_meta_method": false
+                    },
+                    {
+                        "name": "IsLessSo",
+                        "signature": [
+                            {
+                                "Symbol": "function"
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Type": {
+                                    "name": "Test2",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": "):("
+                            },
+                            {
+                                "Type": {
+                                    "name": "boolean",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ")"
+                            }
+                        ],
+                        "is_meta_method": false
+                    },
+                    {
+                        "name": "IsOWowADouble",
+                        "signature": [
+                            {
+                                "Symbol": "function"
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Type": {
+                                    "name": "Test2",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": "):("
+                            },
+                            {
+                                "Type": {
+                                    "name": "boolean",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ")"
+                            }
+                        ],
+                        "is_meta_method": false
+                    },
+                    {
+                        "name": "GetOWowADouble",
+                        "signature": [
+                            {
+                                "Symbol": "function"
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Type": {
+                                    "name": "Test2",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": "):("
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Type": {
+                                    "name": "boolean",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": "),("
+                            },
+                            {
+                                "Type": {
+                                    "name": "string",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": "),("
+                            },
+                            {
+                                "Type": {
+                                    "name": "integer",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ")"
+                            },
+                            {
+                                "Symbol": ")"
+                            }
+                        ],
+                        "is_meta_method": false
+                    },
+                    {
+                        "name": "GetOWowADoubleOrNil",
+                        "signature": [
+                            {
+                                "Symbol": "function"
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Type": {
+                                    "name": "Test2",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": "):("
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Type": {
+                                    "name": "string",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": "),("
+                            },
+                            {
+                                "Type": {
+                                    "name": "integer",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ")"
+                            },
+                            {
+                                "Symbol": ")"
+                            }
+                        ],
+                        "is_meta_method": false
+                    },
+                    {
+                        "name": "GetTypeName",
+                        "signature": [
+                            {
+                                "Symbol": "function"
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Type": {
+                                    "name": "Test2",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": "):("
+                            },
+                            {
+                                "Type": {
+                                    "name": "string",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ")"
+                            }
+                        ],
+                        "is_meta_method": false
+                    }
+                ],
+                "mut_methods": [],
+                "functions": [
+                    {
+                        "name": "NewAmazingFrom",
+                        "signature": [
+                            {
+                                "Symbol": "function"
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Type": {
+                                    "name": "V",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": "):("
+                            },
+                            {
+                                "Type": {
+                                    "name": "Test2",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ")"
+                            }
+                        ],
+                        "is_meta_method": false
+                    },
+                    {
+                        "name": "NewLessSo",
+                        "signature": [
+                            {
+                                "Symbol": "function"
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Symbol": "):("
+                            },
+                            {
+                                "Type": {
+                                    "name": "Test2",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ")"
+                            }
+                        ],
+                        "is_meta_method": false
+                    },
+                    {
+                        "name": "NewOWowADoubleFrom",
+                        "signature": [
+                            {
+                                "Symbol": "function"
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Symbol": "("
+                            },
+                            {
+                                "Type": {
+                                    "name": "string",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": "),("
+                            },
+                            {
+                                "Type": {
+                                    "name": "integer",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ")"
+                            },
+                            {
+                                "Symbol": "):("
+                            },
+                            {
+                                "Type": {
+                                    "name": "Test2",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            },
+                            {
+                                "Symbol": ")"
+                            }
+                        ],
+                        "is_meta_method": false
+                    }
+                ],
+                "mut_functions": [],
+                "meta_method": [],
+                "meta_method_mut": [],
+                "meta_function": [],
+                "meta_function_mut": [],
+                "documentation": {},
+                "type_doc": "",
+                "next_docs": null,
+                "should_generate_help_method": true
+            }
+        },
+        {
+            "Record": {
+                "should_be_inlined": false,
+                "is_user_data": false,
+                "type_name": [
+                    {
+                        "Type": {
+                            "name": "Example",
+                            "type_kind": "External",
+                            "generics": null
+                        }
+                    }
+                ],
+                "fields": [
+                    {
+                        "name": "field1",
+                        "teal_type": [
+                            {
+                                "Type": {
+                                    "name": "Test2",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "nice",
+                        "teal_type": [
+                            {
+                                "Type": {
+                                    "name": "integer",
+                                    "type_kind": "Builtin",
+                                    "generics": null
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "v",
+                        "teal_type": [
+                            {
+                                "Type": {
+                                    "name": "ExampleCStyleEnum",
+                                    "type_kind": "External",
+                                    "generics": null
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "static_fields": [],
+                "methods": [],
+                "mut_methods": [],
+                "functions": [],
+                "mut_functions": [],
+                "meta_method": [],
+                "meta_method_mut": [],
+                "meta_function": [],
+                "meta_function_mut": [],
+                "documentation": {},
+                "type_doc": "",
+                "next_docs": null,
+                "should_generate_help_method": true
+            }
+        }
+    ],
+    "global_instances_off": [],
+    "extra_page": []
+}

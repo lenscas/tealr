@@ -24,11 +24,13 @@ impl TealData for Example {
 }
 
 fn main() -> Result<()> {
-    //lets first generate the definition file
-    let file_contents = TypeWalker::new() //creates the generator
+    let file_contents = TypeWalker::new()
+        //tells it that you want to include the Example type
+        //chain extra calls to include more types
         .process_type::<Example>()
-        .generate_global("test")
-        .expect("oh no :(");
+        //generate the file
+        .to_json()
+        .expect("serde_json failed to serialize our data");
 
     //normally you would now save the file somewhere.
     println!("{}\n ", file_contents);
