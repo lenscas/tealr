@@ -777,7 +777,7 @@ dependencies = [
 
 [[package]]
 name = "tealr"
-version = "0.9.0-alpha3"
+version = "0.9.0-alpha4"
 dependencies = [
  "bstr",
  "itertools",
@@ -790,7 +790,7 @@ dependencies = [
 
 [[package]]
 name = "tealr_derive"
-version = "0.9.0-alpha3"
+version = "0.9.0-alpha4"
 dependencies = [
  "proc-macro2",
  "quote",
