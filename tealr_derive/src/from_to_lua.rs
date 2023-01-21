@@ -446,6 +446,12 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
     let attributes = enumeration
         .attributes
         .iter()
+        .filter(|x| {
+            x.path
+                .iter()
+                .map(|x| x.to_string())
+                .any(|x| x.contains("tealr"))
+        })
         .map(|v| v.to_token_stream())
         .collect::<TokenStream>();
     let creator_struct_stream = quote! {
