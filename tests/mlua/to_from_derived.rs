@@ -25,7 +25,7 @@ impl From<V> for String {
     }
 }
 
-#[derive(FromToLua, Clone, TypeName)]
+#[derive(FromToLua, Clone, TypeName, serde::Deserialize)]
 #[tealr(creator_name = TestCreatorOfDOOM)]
 #[serde(deny_unknown_fields)]
 pub(crate) enum Test2 {
