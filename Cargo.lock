@@ -367,6 +367,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "luau0-src"
+version = "0.5.1+luau558"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e0869ba31f9b152c28bb604ecee6deaa2103a97365bb219781ac137bd487626"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "memchr"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -395,6 +404,7 @@ dependencies = [
  "futures-util",
  "lua-src",
  "luajit-src",
+ "luau0-src",
  "mlua_derive",
  "num-traits",
  "once_cell",

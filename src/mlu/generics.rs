@@ -24,6 +24,8 @@ macro_rules! create_generic_mlua {
             Thread($crate::mlu::mlua::Thread<'lua>),
             UserData($crate::mlu::mlua::AnyUserData<'lua>),
             Error($crate::mlu::mlua::Error),
+            #[cfg(feature = "mlua_luau")]
+            Vector(f32,f32,f32)
         }
         impl<'lua> $crate::mlu::mlua::FromLua<'lua> for $type_name<'lua> {
             fn from_lua(value: $crate::mlu::mlua::Value<'lua>, _: &'lua $crate::mlu::mlua::Lua) -> ::std::result::Result<Self, $crate::mlu::mlua::Error> {
@@ -50,6 +52,8 @@ macro_rules! create_generic_mlua {
                     Thread(x) => $type_name::Thread(x),
                     UserData(x) => $type_name::UserData(x),
                     Error(x) => $type_name::Error(x),
+                    #[cfg(feature = "mlua_luau")]
+                    Vector(x,y,z) => $type_name::Vector(x,y,z)
                 }
             }
         }
@@ -68,6 +72,8 @@ macro_rules! create_generic_mlua {
                     Thread(x) => $crate::mlu::mlua::Value::Thread(x),
                     UserData(x) => $crate::mlu::mlua::Value::UserData(x),
                     Error(x) => $crate::mlu::mlua::Value::Error(x),
+                    #[cfg(feature = "mlua_luau")]
+                    Vector(x,y,z) => $crate::mlu::mlua::Value::Vector(x,y,z)
                 }
             }
         }
@@ -91,6 +97,8 @@ macro_rules! create_generic_mlua {
                     ($type_name::Function(a), $crate::mlu::mlua::Value::Function(b)) => a == b,
                     ($type_name::Thread(a), $crate::mlu::mlua::Value::Thread(b)) => a == b,
                     ($type_name::UserData(a), $crate::mlu::mlua::Value::UserData(b)) => a == b,
+                    #[cfg(feature = "mlua_luau")]
+                    ($type_name::Vector(x,y,z), $crate::mlu::mlua::Value::Vector(x2,y2,z2)) => x == x2 && y == y2 && z == z2,
                     _ => false,
                 }
             }
@@ -110,6 +118,8 @@ macro_rules! create_generic_mlua {
                     ($type_name::Function(a), $type_name::Function(b)) => a == b,
                     ($type_name::Thread(a), $type_name::Thread(b)) => a == b,
                     ($type_name::UserData(a), $type_name::UserData(b)) => a == b,
+                    #[cfg(feature = "mlua_luau")]
+                    ($type_name::Vector(x,y,z), $type_name::Vector(x2,y2,z2)) => x == x2 && y == y2 && z == z2,
                     _ => false,
                 }
             }
