@@ -1,7 +1,7 @@
 use mlua::{Lua, Result};
 use tealr::{
     mlu::{TealData, TealDataMethods, UserData},
-    TypeName, TypeWalker,
+    ToTypename, TypeWalker,
 };
 //this example shows how the new traits allow you to generate the .d.tl file
 //and shows how to use them to share data with lua

@@ -1,4 +1,4 @@
-#[cfg(any(feature = "embed_compiler_from_download"))]
+#[cfg(feature = "embed_compiler_from_download")]
 pub mod download_compiler;
 
 #[cfg(any(

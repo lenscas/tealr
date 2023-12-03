@@ -2,12 +2,11 @@ use rlua::ToLua;
 use tealr::{
     create_union_rlua,
     rlu::{rlua::FromLua, TealData, TealDataMethods, TypedFunction, UserData},
-    TypeName, TypeWalker,
+    ToTypename, TypeWalker,
 };
-
 create_union_rlua!(enum X = String | f32 | bool);
 
-#[derive(Clone, UserData, TypeName)]
+#[derive(Clone, UserData, ToTypename)]
 struct Example {}
 
 //now, implement TealData. This tells mlua what methods are available and tealr what the types are
@@ -56,10 +55,11 @@ fn test_limited() {
     let generated: serde_json::Value = serde_json::from_str(&file_contents).unwrap();
     let original: serde_json::Value =
         serde_json::from_str(include_str!("./export_instance.json")).unwrap();
+
     assert_eq!(generated, original);
     let res: bool = rlua::Lua::new()
         .context(|ctx| {
-            tealr::rlu::set_global_env(Export::default(), ctx)?;
+            tealr::rlu::set_global_env(Export {}, ctx)?;
 
             let code = "
             assert(example_a(2) == 3)

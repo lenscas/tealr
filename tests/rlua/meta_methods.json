@@ -31,6 +31,12 @@
                 "Symbol": "("
               },
               {
+                "Symbol": "self"
+              },
+              {
+                "Symbol": ":"
+              },
+              {
                 "Type": {
                   "name": "Example",
                   "type_kind": "External",
@@ -38,7 +44,7 @@
                 }
               },
               {
-                "Symbol": ","
+                "Symbol": " , "
               },
               {
                 "Type": {
@@ -48,7 +54,10 @@
                 }
               },
               {
-                "Symbol": "):("
+                "Symbol": ")"
+              },
+              {
+                "Symbol": ":"
               },
               {
                 "Type": {
@@ -56,9 +65,34 @@
                   "type_kind": "External",
                   "generics": null
                 }
+              }
+            ],
+            "params": [
+              {
+                "param_name": "self",
+                "ty": {
+                  "Single": {
+                    "name": "Example",
+                    "kind": "External"
+                  }
+                }
               },
               {
-                "Symbol": ")"
+                "param_name": null,
+                "ty": {
+                  "Single": {
+                    "name": "integer",
+                    "kind": "Builtin"
+                  }
+                }
+              }
+            ],
+            "returns": [
+              {
+                "Single": {
+                  "name": "Example",
+                  "kind": "External"
+                }
               }
             ],
             "is_meta_method": false

@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{type_walker::GlobalInstance, KindOfType, TypeName};
+use crate::{type_walker::GlobalInstance, KindOfType, ToTypename, TypeName};
 
 pub(crate) struct InstanceWalker {
     doc: String,
@@ -11,7 +11,7 @@ impl<'lua> crate::mlu::InstanceCollector<'lua> for InstanceWalker {
     fn add_instance<P, T, F>(&mut self, global_name: P, _: F) -> Result<&mut Self, mlua::Error>
     where
         P: Into<Cow<'static, str>>,
-        T: TypeName,
+        T: ToTypename,
         F: FnOnce(&'lua mlua::Lua) -> Result<T, mlua::Error>,
     {
         self.add_instance::<T>(global_name.into());
@@ -27,7 +27,7 @@ impl<'lua> crate::mlu::InstanceCollector<'lua> for InstanceWalker {
 impl<'lua> crate::rlu::InstanceCollector<'lua> for InstanceWalker {
     fn add_instance<
         P: Into<Cow<'static, str>>,
-        T: TypeName,
+        T: ToTypename,
         F: FnOnce(rlua::Context<'lua>) -> rlua::Result<T>,
     >(
         &mut self,

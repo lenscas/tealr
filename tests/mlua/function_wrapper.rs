@@ -1,24 +1,27 @@
 use tealr::{
     mlu::{TealData, TealDataMethods, TypedFunction, UserData},
-    type_parts_to_str, TypeName,
+    type_parts_to_str, ToTypename,
 };
 #[test]
 fn generate_correct_type() {
     assert_eq!(
-        type_parts_to_str(TypedFunction::<String, String>::get_type_parts()),
-        "function(string):(string)"
+        type_parts_to_str(
+            #[allow(deprecated)]
+            TypedFunction::<String, String>::to_old_type_parts()
+        ),
+        "function(string):string"
     );
     assert_eq!(
-        type_parts_to_str(TypedFunction::<
-            TypedFunction::<(i8, String), (String, u8)>,
-            f32,
-        >::get_type_parts()),
-        "function(function((integer),(string)):((string),(integer))):(number)"
+        type_parts_to_str(
+            #[allow(deprecated)]
+            TypedFunction::<TypedFunction::<(i8, String), (String, u8)>, f32>::to_old_type_parts()
+        ),
+        "function(function(integer , string):string , integer):number"
     );
 }
 #[test]
 fn try_to_use() -> mlua::Result<()> {
-    #[derive(Clone, UserData, TypeName)]
+    #[derive(Clone, UserData, ToTypename)]
     struct Test {}
     impl TealData for Test {
         fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
@@ -52,7 +55,7 @@ return test:test_function_as_parameter(add)
 
 #[test]
 fn pass_back() -> mlua::Result<()> {
-    #[derive(Clone, UserData, TypeName)]
+    #[derive(Clone, UserData, ToTypename)]
     struct Test {}
     impl TealData for Test {
         fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {

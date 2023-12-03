@@ -1,9 +1,9 @@
 use tealr::{
     rlu::{rlua::MetaMethod, TealData, TealDataMethods, UserData},
-    TypeName, TypeWalker,
+    ToTypename, TypeWalker,
 };
 
-#[derive(Clone, UserData, TypeName)]
+#[derive(Clone, UserData, ToTypename)]
 struct Example {
     add: i8,
 }

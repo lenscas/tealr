@@ -1,11 +1,11 @@
-use tealr::{compile_inline_teal, create_union_rlua, embed_compiler, TypeName, TypeWalker};
+use tealr::{compile_inline_teal, create_union_rlua, embed_compiler, ToTypename, TypeWalker};
 
 #[test]
 fn test() {
     pieces().unwrap();
 }
 
-#[derive(Clone, tealr::rlu::UserData, TypeName)]
+#[derive(Clone, tealr::rlu::UserData, ToTypename)]
 struct ExampleRlua {}
 
 //now, implement rlu::TealData.

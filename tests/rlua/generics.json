@@ -40,6 +40,12 @@
                 "Symbol": "("
               },
               {
+                "Symbol": "self"
+              },
+              {
+                "Symbol": ":"
+              },
+              {
                 "Type": {
                   "name": "Example",
                   "type_kind": "External",
@@ -47,20 +53,13 @@
                 }
               },
               {
-                "Symbol": ","
+                "Symbol": " , "
               },
               {
-                "Symbol": "function("
+                "Symbol": "function"
               },
               {
-                "Type": {
-                  "name": "X",
-                  "type_kind": "Generic",
-                  "generics": null
-                }
-              },
-              {
-                "Symbol": "):("
+                "Symbol": "("
               },
               {
                 "Type": {
@@ -73,7 +72,7 @@
                 "Symbol": ")"
               },
               {
-                "Symbol": "):("
+                "Symbol": ":"
               },
               {
                 "Type": {
@@ -84,6 +83,61 @@
               },
               {
                 "Symbol": ")"
+              },
+              {
+                "Symbol": ":"
+              },
+              {
+                "Type": {
+                  "name": "X",
+                  "type_kind": "Generic",
+                  "generics": null
+                }
+              }
+            ],
+            "params": [
+              {
+                "param_name": "self",
+                "ty": {
+                  "Single": {
+                    "name": "Example",
+                    "kind": "External"
+                  }
+                }
+              },
+              {
+                "param_name": null,
+                "ty": {
+                  "Function": {
+                    "params": [
+                      {
+                        "param_name": null,
+                        "ty": {
+                          "Single": {
+                            "name": "X",
+                            "kind": "Generic"
+                          }
+                        }
+                      }
+                    ],
+                    "returns": [
+                      {
+                        "Single": {
+                          "name": "X",
+                          "kind": "Generic"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ],
+            "returns": [
+              {
+                "Single": {
+                  "name": "X",
+                  "kind": "Generic"
+                }
               }
             ],
             "is_meta_method": false
@@ -111,6 +165,12 @@
                 "Symbol": "("
               },
               {
+                "Symbol": "self"
+              },
+              {
+                "Symbol": ":"
+              },
+              {
                 "Type": {
                   "name": "Example",
                   "type_kind": "External",
@@ -118,23 +178,7 @@
                 }
               },
               {
-                "Symbol": ","
-              },
-              {
-                "Symbol": "{"
-              },
-              {
-                "Type": {
-                  "name": "X",
-                  "type_kind": "Generic",
-                  "generics": null
-                }
-              },
-              {
-                "Symbol": "}"
-              },
-              {
-                "Symbol": "):("
+                "Symbol": " , "
               },
               {
                 "Symbol": "{"
@@ -151,6 +195,54 @@
               },
               {
                 "Symbol": ")"
+              },
+              {
+                "Symbol": ":"
+              },
+              {
+                "Symbol": "{"
+              },
+              {
+                "Type": {
+                  "name": "X",
+                  "type_kind": "Generic",
+                  "generics": null
+                }
+              },
+              {
+                "Symbol": "}"
+              }
+            ],
+            "params": [
+              {
+                "param_name": "self",
+                "ty": {
+                  "Single": {
+                    "name": "Example",
+                    "kind": "External"
+                  }
+                }
+              },
+              {
+                "param_name": null,
+                "ty": {
+                  "Array": {
+                    "Single": {
+                      "name": "X",
+                      "kind": "Generic"
+                    }
+                  }
+                }
+              }
+            ],
+            "returns": [
+              {
+                "Array": {
+                  "Single": {
+                    "name": "X",
+                    "kind": "Generic"
+                  }
+                }
               }
             ],
             "is_meta_method": false
@@ -178,6 +270,12 @@
                 "Symbol": "("
               },
               {
+                "Symbol": "self"
+              },
+              {
+                "Symbol": ":"
+              },
+              {
                 "Type": {
                   "name": "Example",
                   "type_kind": "External",
@@ -185,7 +283,7 @@
                 }
               },
               {
-                "Symbol": ","
+                "Symbol": " , "
               },
               {
                 "Symbol": "{"
@@ -198,7 +296,7 @@
                 }
               },
               {
-                "Symbol": ":"
+                "Symbol": " : "
               },
               {
                 "Type": {
@@ -211,10 +309,10 @@
                 "Symbol": "}"
               },
               {
-                "Symbol": "):("
+                "Symbol": ")"
               },
               {
-                "Symbol": "("
+                "Symbol": ":"
               },
               {
                 "Symbol": "{"
@@ -227,7 +325,7 @@
                 }
               },
               {
-                "Symbol": ":"
+                "Symbol": " : "
               },
               {
                 "Type": {
@@ -240,7 +338,7 @@
                 "Symbol": "}"
               },
               {
-                "Symbol": "),("
+                "Symbol": " , "
               },
               {
                 "Type": {
@@ -248,12 +346,60 @@
                   "type_kind": "Builtin",
                   "generics": null
                 }
+              }
+            ],
+            "params": [
+              {
+                "param_name": "self",
+                "ty": {
+                  "Single": {
+                    "name": "Example",
+                    "kind": "External"
+                  }
+                }
               },
               {
-                "Symbol": ")"
+                "param_name": null,
+                "ty": {
+                  "Map": {
+                    "key": {
+                      "Single": {
+                        "name": "string",
+                        "kind": "Builtin"
+                      }
+                    },
+                    "value": {
+                      "Single": {
+                        "name": "X",
+                        "kind": "Generic"
+                      }
+                    }
+                  }
+                }
+              }
+            ],
+            "returns": [
+              {
+                "Map": {
+                  "key": {
+                    "Single": {
+                      "name": "string",
+                      "kind": "Builtin"
+                    }
+                  },
+                  "value": {
+                    "Single": {
+                      "name": "X",
+                      "kind": "Generic"
+                    }
+                  }
+                }
               },
               {
-                "Symbol": ")"
+                "Single": {
+                  "name": "integer",
+                  "kind": "Builtin"
+                }
               }
             ],
             "is_meta_method": false
@@ -281,6 +427,12 @@
                 "Symbol": "("
               },
               {
+                "Symbol": "self"
+              },
+              {
+                "Symbol": ":"
+              },
+              {
                 "Type": {
                   "name": "Example",
                   "type_kind": "External",
@@ -288,17 +440,7 @@
                 }
               },
               {
-                "Symbol": ","
-              },
-              {
-                "Type": {
-                  "name": "X",
-                  "type_kind": "Generic",
-                  "generics": null
-                }
-              },
-              {
-                "Symbol": "):("
+                "Symbol": " , "
               },
               {
                 "Type": {
@@ -309,6 +451,44 @@
               },
               {
                 "Symbol": ")"
+              },
+              {
+                "Symbol": ":"
+              },
+              {
+                "Type": {
+                  "name": "X",
+                  "type_kind": "Generic",
+                  "generics": null
+                }
+              }
+            ],
+            "params": [
+              {
+                "param_name": "self",
+                "ty": {
+                  "Single": {
+                    "name": "Example",
+                    "kind": "External"
+                  }
+                }
+              },
+              {
+                "param_name": null,
+                "ty": {
+                  "Single": {
+                    "name": "X",
+                    "kind": "Generic"
+                  }
+                }
+              }
+            ],
+            "returns": [
+              {
+                "Single": {
+                  "name": "X",
+                  "kind": "Generic"
+                }
               }
             ],
             "is_meta_method": false
@@ -323,6 +503,12 @@
                 "Symbol": "("
               },
               {
+                "Symbol": "self"
+              },
+              {
+                "Symbol": ":"
+              },
+              {
                 "Type": {
                   "name": "Example",
                   "type_kind": "External",
@@ -330,23 +516,7 @@
                 }
               },
               {
-                "Symbol": ","
-              },
-              {
-                "Symbol": "{"
-              },
-              {
-                "Type": {
-                  "name": "string",
-                  "type_kind": "Builtin",
-                  "generics": null
-                }
-              },
-              {
-                "Symbol": "}"
-              },
-              {
-                "Symbol": "):("
+                "Symbol": " , "
               },
               {
                 "Symbol": "{"
@@ -363,6 +533,54 @@
               },
               {
                 "Symbol": ")"
+              },
+              {
+                "Symbol": ":"
+              },
+              {
+                "Symbol": "{"
+              },
+              {
+                "Type": {
+                  "name": "string",
+                  "type_kind": "Builtin",
+                  "generics": null
+                }
+              },
+              {
+                "Symbol": "}"
+              }
+            ],
+            "params": [
+              {
+                "param_name": "self",
+                "ty": {
+                  "Single": {
+                    "name": "Example",
+                    "kind": "External"
+                  }
+                }
+              },
+              {
+                "param_name": null,
+                "ty": {
+                  "Array": {
+                    "Single": {
+                      "name": "string",
+                      "kind": "Builtin"
+                    }
+                  }
+                }
+              }
+            ],
+            "returns": [
+              {
+                "Array": {
+                  "Single": {
+                    "name": "string",
+                    "kind": "Builtin"
+                  }
+                }
               }
             ],
             "is_meta_method": false

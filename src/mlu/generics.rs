@@ -124,20 +124,9 @@ macro_rules! create_generic_mlua {
                 }
             }
         }
-        impl<'lua> $crate::TypeName for $type_name<'lua> {
-            fn get_type_parts() -> std::borrow::Cow<'static, [$crate::NamePart]> {
-                let x:&'static [$crate::NamePart] =&[
-                    $crate::NamePart::Type($crate::TealType{
-                        name: ::std::borrow::Cow::Borrowed(stringify!($type_name)),
-                        type_kind: $crate::KindOfType::Generic,
-                        generics: :: std::option::Option::None
-                    })
-                ];
-                ::std::borrow::Cow::Borrowed(x)
-
-            }
-            fn get_type_kind() -> $crate::KindOfType {
-                $crate::KindOfType::Generic
+        impl<'lua> $crate::ToTypename for $type_name<'lua> {
+            fn to_typename() -> $crate::Type {
+                $crate::Type::new_single(stringify!($type_name), $crate::KindOfType::Generic)
             }
         }
     };

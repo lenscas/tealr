@@ -27,6 +27,12 @@
                 "Symbol": "("
               },
               {
+                "Symbol": "self"
+              },
+              {
+                "Symbol": ":"
+              },
+              {
                 "Type": {
                   "name": "Example",
                   "type_kind": "External",
@@ -34,13 +40,13 @@
                 }
               },
               {
-                "Symbol": ","
+                "Symbol": " , "
               },
               {
                 "Symbol": "field_1"
               },
               {
-                "Symbol": " : "
+                "Symbol": ":"
               },
               {
                 "Type": {
@@ -56,7 +62,7 @@
                 "Symbol": "field_2"
               },
               {
-                "Symbol": " : "
+                "Symbol": ":"
               },
               {
                 "Type": {
@@ -66,10 +72,10 @@
                 }
               },
               {
-                "Symbol": "):("
+                "Symbol": ")"
               },
               {
-                "Symbol": "("
+                "Symbol": ":"
               },
               {
                 "Type": {
@@ -79,7 +85,7 @@
                 }
               },
               {
-                "Symbol": "),("
+                "Symbol": " , "
               },
               {
                 "Type": {
@@ -87,12 +93,49 @@
                   "type_kind": "Builtin",
                   "generics": null
                 }
+              }
+            ],
+            "params": [
+              {
+                "param_name": "self",
+                "ty": {
+                  "Single": {
+                    "name": "Example",
+                    "kind": "External"
+                  }
+                }
               },
               {
-                "Symbol": ")"
+                "param_name": "field_1",
+                "ty": {
+                  "Single": {
+                    "name": "string",
+                    "kind": "Builtin"
+                  }
+                }
               },
               {
-                "Symbol": ")"
+                "param_name": "field_2",
+                "ty": {
+                  "Single": {
+                    "name": "integer",
+                    "kind": "Builtin"
+                  }
+                }
+              }
+            ],
+            "returns": [
+              {
+                "Single": {
+                  "name": "string",
+                  "kind": "Builtin"
+                }
+              },
+              {
+                "Single": {
+                  "name": "integer",
+                  "kind": "Builtin"
+                }
               }
             ],
             "is_meta_method": false

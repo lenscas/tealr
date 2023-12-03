@@ -1,16 +1,16 @@
 use std::borrow::Cow;
 
-use crate::{type_representation::KindOfType, NamePart, TypeName};
+use crate::{type_representation::KindOfType, ToTypename, Type};
 
 ///Represents a type
 #[derive(Debug, PartialEq, Eq, Clone, Hash, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
     all(feature = "mlua", feature = "derive", not(feature = "rlua")),
-    derive(crate::mlu::FromToLua, crate::TypeName)
+    derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
     all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::TypeName)
+    derive(crate::rlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
     all(any(feature = "rlua", feature = "mlua"), feature = "derive",not(all(feature = "rlua", feature = "mlua"))),
@@ -35,13 +35,20 @@ pub struct TealType {
 pub trait TealMultiValue {
     ///Gets the types contained in this collection.
     ///Order *IS* important.
-    fn get_types() -> Vec<NamePart>;
+    fn get_types() -> Vec<Type> {
+        Self::get_types_as_params()
+            .into_iter()
+            .map(|v| v.ty)
+            .collect()
+    }
+    ///Gets the type representations as used for function parameters
+    fn get_types_as_params() -> Vec<crate::FunctionParam>;
 }
 
 macro_rules! impl_teal_multi_value {
     () => (
         impl TealMultiValue for () {
-            fn get_types() -> Vec<NamePart> {
+            fn get_types_as_params() -> Vec<crate::FunctionParam> {
                 Vec::new()
             }
         }
@@ -49,44 +56,15 @@ macro_rules! impl_teal_multi_value {
 
     ($($names:ident) +) => (
         impl<$($names,)* > TealMultiValue for ($($names,)*)
-            where $($names: TypeName,)*
+            where $($names: ToTypename,)*
         {
             #[allow(unused_mut)]
             #[allow(non_snake_case)]
-            fn get_types() ->  Vec<NamePart>{
-                let x:Vec<Cow<'static,[$crate::NamePart]>> = vec![
-                    $($names::get_type_parts(),)*
-                ];
-                let x = itertools::Itertools::intersperse(
-                    x.into_iter(),
-                    Cow::Borrowed(
-                        &[
-                            $crate::NamePart::Symbol(
-                                Cow::Borrowed("),(")
-                            )
-                        ]
-                    )
-                ).flat_map(
-                    |v|
-                        v.into_iter()
-                        .map(|v|v.to_owned())
-                        .collect::<Vec<_>>()
-                        .into_iter()
-                );
+            fn get_types_as_params() -> Vec<crate::FunctionParam> {
+                let mut params = Vec::new();
+                $(params.extend($names::to_function_param(),);)*
+                params
 
-                std::iter::once(
-                    $crate::NamePart::Symbol(
-                        Cow::Borrowed("(")
-                    )
-                )
-                .chain(x)
-                .chain(
-                    std::iter::once(
-                        $crate::NamePart::Symbol(
-                            Cow::Borrowed(")")
-                        )
-                    )
-                ).collect()
             }
         }
     );
@@ -94,12 +72,12 @@ macro_rules! impl_teal_multi_value {
 
 impl<A> TealMultiValue for A
 where
-    A: TypeName,
+    A: ToTypename,
 {
     #[allow(unused_mut)]
     #[allow(non_snake_case)]
-    fn get_types() -> Vec<NamePart> {
-        A::get_type_parts().to_vec()
+    fn get_types_as_params() -> Vec<crate::FunctionParam> {
+        A::to_function_param()
     }
 }
 

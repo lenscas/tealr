@@ -3,7 +3,7 @@ use tealr::{
         mlua::{Lua, Result},
         TealData, TealDataMethods, UserData,
     },
-    TypeName, TypeWalker,
+    ToTypename, TypeWalker,
 };
 //this example shows how the new traits allow you to generate the .d.tl file
 //and shows how to use them to share data with lua
@@ -11,11 +11,11 @@ use tealr::{
 //NOTE: All it does it generate the contents of the file. Storing it is left to the user.
 
 //First, create the struct you want to export to lua.
-//instead of both deriving UserData and TypeName you can also
+//instead of both deriving UserData and ToTypename you can also
 //derive TealDerive, which does both. However you will still need to import
-//UserData and TypeName
+//UserData and ToTypename
 //The clone is only needed because one of the example functions has it as a parameter
-#[derive(Clone, UserData, TypeName)]
+#[derive(Clone, UserData, ToTypename)]
 struct Example {}
 
 //now, implement TealData. This tells rlua what methods are available and tealr what the types are

@@ -7,13 +7,12 @@ pub(crate) fn impl_type_representation_derive(ast: &Declaration) -> proc_macro2:
     let name = ast.name();
     let tealr_name = get_tealr_name(ast.attributes());
     let gen = quote! {
-        impl #tealr_name::TypeName for #name {
-            fn get_type_parts() -> ::std::borrow::Cow<'static, [#tealr_name::NamePart]> {
-                ::std::borrow::Cow::Borrowed(&[#tealr_name::NamePart::Type(#tealr_name::TealType{
-                    name: ::std::borrow::Cow::Borrowed(stringify!(#name)),
-                    generics: ::std::option::Option::None,
-                    type_kind: #tealr_name::KindOfType::External
-                })])
+        impl #tealr_name::ToTypename for #name {
+            fn to_typename() -> #tealr_name::Type {
+                #tealr_name::Type::Single(#tealr_name::SingleType{
+                    name: #tealr_name::Name(::std::borrow::Cow::Borrowed(stringify!(#name))),
+                    kind: #tealr_name::KindOfType::External
+                })
             }
         }
     };

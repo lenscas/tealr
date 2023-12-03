@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use mlua::{AnyUserData, Error, Lua, ToLua, UserData};
 
-use crate::{EnumGenerator, RecordGenerator, TypeBody, TypeName};
+use crate::{EnumGenerator, RecordGenerator, ToTypename, Type, TypeBody, TypeName};
 
 /// A userdata which can be used as a static proxy
 pub trait StaticUserdata: UserData + 'static {}
@@ -39,16 +39,17 @@ impl<'lua, T: StaticUserdata> UserDataProxy<'lua, T> {
     }
 }
 
-impl<T: StaticUserdata + TypeName> TypeName for UserDataProxy<'_, T> {
-    fn get_type_parts() -> std::borrow::Cow<'static, [crate::NamePart]> {
-        let mut base = T::get_type_parts().to_vec();
-        let suffix = crate::NamePart::Symbol("Class".into());
-        base.push(suffix);
-        std::borrow::Cow::Owned(base)
+impl<T: StaticUserdata + ToTypename> ToTypename for UserDataProxy<'_, T> {
+    fn to_typename() -> crate::Type {
+        let mut x = T::to_typename();
+        if let Type::Single(x) = &mut x {
+            x.name = format!("Class{}", x.name).into();
+        }
+        x
     }
 }
 
-impl<T: StaticUserdata + TypeBody + TypeName> TypeBody for UserDataProxy<'_, T> {
+impl<T: StaticUserdata + TypeBody + ToTypename> TypeBody for UserDataProxy<'_, T> {
     fn get_type_body() -> crate::TypeGenerator {
         let generator = T::get_type_body();
         // extract only "functions"

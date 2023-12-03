@@ -1,17 +1,12 @@
-use crate::teal_multivalue::TealMultiValue;
-
+use crate::{FunctionParam, MapRepresentation, SingleType, ToTypename, Type};
 macro_rules! impl_type_name_life_time {
     ($teal_type:literal $current_type:ty) => {
-        impl<'lua> TypeName for $current_type {
-            fn get_type_parts() -> Cow<'static, [NamePart]> {
-                Cow::Borrowed(&[NamePart::Type(TealType {
-                    name: Cow::Borrowed($teal_type),
-                    type_kind: KindOfType::Builtin,
-                    generics: None,
-                })])
-            }
-            fn get_type_kind() -> KindOfType {
-                KindOfType::Builtin
+        impl<'lua> ToTypename for $current_type {
+            fn to_typename() -> Type {
+                Type::Single(SingleType {
+                    name: $teal_type.into(),
+                    kind: KindOfType::Builtin,
+                })
             }
         }
     };
@@ -19,17 +14,12 @@ macro_rules! impl_type_name_life_time {
 
 macro_rules! impl_type_name {
     ($teal_type:literal $current_type:ty) => {
-        impl TypeName for $current_type {
-            fn get_type_parts() -> Cow<'static, [NamePart]> {
-                Cow::Borrowed(&[NamePart::Type(TealType {
-                        name: Cow::Borrowed($teal_type),
-                        type_kind: KindOfType::Builtin,
-                        generics: None,
-                    }
-                )])
-            }
-            fn get_type_kind() -> KindOfType {
-                KindOfType::Builtin
+        impl ToTypename for $current_type {
+            fn to_typename() -> Type {
+                Type::Single(SingleType {
+                    name: $teal_type.into(),
+                    kind: KindOfType::Builtin,
+                })
             }
         }
     };
@@ -43,11 +33,11 @@ macro_rules! impl_type_name {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
     all(feature = "mlua", feature = "derive", not(feature = "rlua")),
-    derive(crate::mlu::FromToLua, crate::TypeName)
+    derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
     all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::TypeName)
+    derive(crate::rlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
     all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua")) ),
@@ -96,7 +86,7 @@ impl Default for KindOfType {
     }
 }
 #[macro_export]
-///An easy way to implement [TypeName::get_type_parts](crate::TypeName#tymethod.get_type_parts) if it only needs to return a single type without generics.
+///An easy way to implement [TypeName::get_type_parts](crate::ToTypename#tymethod.get_type_parts) if it only needs to return a single type without generics.
 /// ```rust
 /// # use std::borrow::Cow;
 /// # use tealr::TealType;
@@ -137,11 +127,11 @@ macro_rules! new_type {
 #[derive(Debug, Clone, PartialEq, Hash, Eq, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
     all(feature = "mlua", feature = "derive", not(feature = "rlua")),
-    derive(crate::mlu::FromToLua, crate::TypeName)
+    derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
     all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::TypeName)
+    derive(crate::rlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
     all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
@@ -277,25 +267,15 @@ impl_type_name!("number" f32,f64);
 impl_type_name!("integer" i8,u8,u16,i16,u32,i32,u64,i64,u128,i128,isize,usize);
 
 #[cfg(feature = "rlua")]
-impl<'lua> TypeName for rlua::Thread<'lua> {
-    fn get_type_parts() -> Cow<'static, [NamePart]> {
-        crate::new_type!(thread, BuiltIn)
-    }
-    fn get_type_kind() -> KindOfType {
-        KindOfType::Builtin
-    }
-}
+impl_type_name_life_time!("thread" rlua::Thread<'lua>);
 
 #[cfg(feature = "mlua")]
 impl_type_name_life_time!("thread" mlua::Thread<'lua>);
 
 #[cfg(feature = "mlua_async")]
-impl<'lua, R> TypeName for mlua::AsyncThread<'lua, R> {
-    fn get_type_parts() -> Cow<'static, [NamePart]> {
-        new_type!(thread, BuiltIn)
-    }
-    fn get_type_kind() -> KindOfType {
-        KindOfType::Builtin
+impl<'lua, R> ToTypename for mlua::AsyncThread<'lua, R> {
+    fn to_typename() -> Type {
+        Type::new_single("thread", KindOfType::Builtin)
     }
 }
 
@@ -305,183 +285,77 @@ impl_type_name_life_time!("any" rlua::Value<'lua>);
 #[cfg(feature = "mlua")]
 impl_type_name_life_time!("any" mlua::Value<'lua>);
 
-fn get_type_parts_table() -> Cow<'static, [NamePart]> {
-    Cow::Borrowed(&[
-        NamePart::Symbol(Cow::Borrowed("{")),
-        NamePart::Type(TealType {
-            name: Cow::Borrowed("any"),
-            type_kind: KindOfType::Builtin,
-            generics: None,
-        }),
-        NamePart::Symbol(Cow::Borrowed(" : ")),
-        NamePart::Type(TealType {
-            name: Cow::Borrowed("any"),
-            type_kind: KindOfType::Builtin,
-            generics: None,
-        }),
-        NamePart::Symbol(Cow::Borrowed(" } ")),
-    ])
-}
-
 #[cfg(feature = "rlua")]
-impl<'lua> TypeName for rlua::Table<'lua> {
-    fn get_type_parts() -> Cow<'static, [NamePart]> {
-        get_type_parts_table()
-    }
-    fn get_type_kind() -> KindOfType {
-        KindOfType::Builtin
-    }
-}
+use rlua::{Table, Value};
 
 #[cfg(feature = "mlua")]
-impl<'lua> TypeName for mlua::Table<'lua> {
-    fn get_type_kind() -> KindOfType {
-        KindOfType::Builtin
-    }
+use mlua::{Table, Value};
 
-    fn get_type_parts() -> Cow<'static, [NamePart]> {
-        get_type_parts_table()
+impl<'lua> ToTypename for Table<'lua> {
+    fn to_typename() -> Type {
+        Type::Map(crate::MapRepresentation {
+            key: Value::to_typename().into(),
+            value: Value::to_typename().into(),
+        })
     }
 }
 
 #[cfg(feature = "rlua")]
-impl<'lua> TypeName for rlua::String<'lua> {
-    fn get_type_parts() -> Cow<'static, [NamePart]> {
-        crate::new_type!(string, BuiltIn)
-    }
-    fn get_type_kind() -> KindOfType {
-        KindOfType::Builtin
-    }
-}
-
-fn get_pars_any_func() -> Cow<'static, [NamePart]> {
-    Cow::Borrowed(&[
-        NamePart::Symbol(Cow::Borrowed("function(...:")),
-        NamePart::Type(TealType {
-            name: Cow::Borrowed("any"),
-            type_kind: KindOfType::Builtin,
-            generics: None,
-        }),
-        NamePart::Symbol(Cow::Borrowed("):")),
-        NamePart::Type(TealType {
-            name: Cow::Borrowed("any"),
-            type_kind: KindOfType::Builtin,
-            generics: None,
-        }),
-        NamePart::Symbol(Cow::Borrowed("...")),
-    ])
-}
+impl_type_name_life_time!("string" rlua::String<'lua>);
 
 #[cfg(feature = "mlua")]
 impl_type_name_life_time!("string" mlua::String<'lua>);
 
-#[cfg(feature = "rlua")]
-impl<'lua> TypeName for rlua::Function<'lua> {
-    fn get_type_parts() -> Cow<'static, [NamePart]> {
-        get_pars_any_func()
-    }
-    fn get_type_kind() -> KindOfType {
-        KindOfType::Builtin
-    }
-}
-
 #[cfg(feature = "mlua")]
-impl<'lua> TypeName for mlua::Function<'lua> {
-    fn get_type_kind() -> KindOfType {
-        KindOfType::Builtin
-    }
+use mlua::Function;
+#[cfg(feature = "rlua")]
+use rlua::Function;
 
-    fn get_type_parts() -> Cow<'static, [NamePart]> {
-        get_pars_any_func()
+impl<'lua> ToTypename for Function<'lua> {
+    fn to_typename() -> Type {
+        Type::Function(crate::FunctionRepresentation {
+            params: vec![FunctionParam {
+                param_name: Some("...".into()),
+                ty: Type::new_single("any", KindOfType::Builtin),
+            }],
+            returns: vec![Type::new_single("any...", KindOfType::Builtin)],
+        })
     }
 }
 
-pub(crate) fn type_names_to_teal_types<T>(a: T) -> impl Iterator<Item = TealType>
-where
-    T: IntoIterator<Item = NamePart>,
-{
-    a.into_iter().filter_map(|v| {
-        if let NamePart::Type(x) = v {
-            Some(x)
-        } else {
-            None
-        }
-    })
-}
-
-impl<T: TypeName> TypeName for Vec<T> {
-    fn get_type_kind() -> KindOfType {
-        KindOfType::Builtin
-    }
-    fn collect_children(child: &mut Vec<TealType>) {
-        child.extend(type_names_to_teal_types(T::get_types()));
-        child.extend(type_names_to_teal_types(T::get_types()));
-    }
-    fn get_type_parts() -> Cow<'static, [NamePart]> {
-        let mut v = vec!["{".into()];
-        v.append(&mut T::get_type_parts().to_vec());
-        v.push("}".into());
-        Cow::Owned(v)
+impl<T: ToTypename> ToTypename for Vec<T> {
+    fn to_typename() -> Type {
+        Type::Array(T::to_typename().into())
     }
 }
 
-impl<T: TypeName, const N: usize> TypeName for [T; N] {
-    fn get_type_parts() -> Cow<'static, [NamePart]> {
-        Vec::<T>::get_type_parts()
+impl<T: ToTypename, const N: usize> ToTypename for [T; N] {
+    fn to_typename() -> Type {
+        Vec::<T>::to_typename()
     }
 }
 
-impl<T: TypeName> TypeName for Option<T> {
-    fn get_type_kind() -> KindOfType {
-        KindOfType::Builtin
-    }
-    fn collect_children(child: &mut Vec<TealType>) {
-        child.extend(type_names_to_teal_types(T::get_types()));
-        child.extend(type_names_to_teal_types(T::get_types()));
-    }
-
-    fn get_type_parts() -> Cow<'static, [NamePart]> {
-        T::get_type_parts()
+impl<T: ToTypename> ToTypename for Option<T> {
+    fn to_typename() -> Type {
+        T::to_typename()
     }
 }
 
-impl<K: TypeName, V: TypeName> TypeName for HashMap<K, V> {
-    fn get_type_kind() -> KindOfType {
-        KindOfType::Builtin
-    }
-    fn collect_children(child: &mut Vec<TealType>) {
-        child.extend(type_names_to_teal_types(K::get_types()));
-        child.extend(type_names_to_teal_types(V::get_types()));
-    }
-
-    fn get_type_parts() -> Cow<'static, [NamePart]> {
-        let mut key_parts = K::get_type_parts().to_vec();
-        let mut value_parts = V::get_type_parts().to_vec();
-        let mut type_def = vec!["{".into()];
-        type_def.append(&mut key_parts);
-        type_def.push(":".into());
-        type_def.append(&mut value_parts);
-        type_def.push("}".into());
-        Cow::from(type_def)
+impl<K: ToTypename, V: ToTypename> ToTypename for HashMap<K, V> {
+    fn to_typename() -> Type {
+        Type::Map(crate::MapRepresentation {
+            key: K::to_typename().into(),
+            value: V::to_typename().into(),
+        })
     }
 }
-impl<K: TypeName, V: TypeName> TypeName for BTreeMap<K, V> {
-    fn get_type_kind() -> KindOfType {
-        KindOfType::Builtin
-    }
-    fn collect_children(child: &mut Vec<TealType>) {
-        child.extend(type_names_to_teal_types(K::get_types()));
-        child.extend(type_names_to_teal_types(V::get_types()));
-    }
-    fn get_type_parts() -> Cow<'static, [NamePart]> {
-        let mut key_parts = K::get_type_parts().to_vec();
-        let mut value_parts = V::get_type_parts().to_vec();
-        let mut type_def = vec!["{".into()];
-        type_def.append(&mut key_parts);
-        type_def.push(":".into());
-        type_def.append(&mut value_parts);
-        type_def.push("}".into());
-        Cow::from(type_def)
+
+impl<K: ToTypename, V: ToTypename> ToTypename for BTreeMap<K, V> {
+    fn to_typename() -> Type {
+        Type::Map(MapRepresentation {
+            key: K::to_typename().into(),
+            value: V::to_typename().into(),
+        })
     }
 }
 ///Creates the body of the type, so the functions and fields it exposes.

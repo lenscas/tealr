@@ -1,6 +1,6 @@
 use mlua::{AnyUserData, FromLua, Lua, MetaMethod, ToLua};
 
-use crate::TypeName;
+use crate::ToTypename;
 
 use super::{MaybeSend, TealData};
 
@@ -18,29 +18,29 @@ pub trait TealDataFields<'lua, T: TealData> {
     fn add_field_method_get<S, R, M>(&mut self, name: &S, method: M)
     where
         S: AsRef<[u8]> + ?Sized,
-        R: ToLua<'lua> + TypeName,
+        R: ToLua<'lua> + ToTypename,
         M: 'static + MaybeSend + Fn(&'lua Lua, &T) -> mlua::Result<R>;
     /// the teal version of [UserDataFields](mlua::UserDataFields::add_field_method_set)
     fn add_field_method_set<S, A, M>(&mut self, name: &S, method: M)
     where
         S: AsRef<[u8]> + ?Sized,
-        A: FromLua<'lua> + TypeName,
+        A: FromLua<'lua> + ToTypename,
         M: 'static + MaybeSend + FnMut(&'lua Lua, &mut T, A) -> mlua::Result<()>;
     /// the teal version of [UserDataFields](mlua::UserDataFields::add_field_function_get)
     fn add_field_function_get<S, R, F>(&mut self, name: &S, function: F)
     where
         S: AsRef<[u8]> + ?Sized,
-        R: ToLua<'lua> + TypeName,
+        R: ToLua<'lua> + ToTypename,
         F: 'static + MaybeSend + Fn(&'lua Lua, AnyUserData<'lua>) -> mlua::Result<R>;
     /// the teal version of [UserDataFields](mlua::UserDataFields::add_field_function_set)
     fn add_field_function_set<S, A, F>(&mut self, name: &S, function: F)
     where
         S: AsRef<[u8]> + ?Sized,
-        A: FromLua<'lua> + TypeName,
+        A: FromLua<'lua> + ToTypename,
         F: 'static + MaybeSend + FnMut(&'lua Lua, AnyUserData<'lua>, A) -> mlua::Result<()>;
     /// the teal version of [UserDataFields](mlua::UserDataFields::add_meta_field_with)
     fn add_meta_field_with<R, F>(&mut self, meta: MetaMethod, f: F)
     where
         F: 'static + MaybeSend + Fn(&'lua Lua) -> mlua::Result<R>,
-        R: ToLua<'lua> + TypeName;
+        R: ToLua<'lua> + ToTypename;
 }

@@ -155,7 +155,7 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
                                     .fields
                                     .push(
                                         ::std::convert::From::from((::std::borrow::Cow::Borrowed(stringify!(#key_as_str)).into(),
-                                        <(#type_name) as #type_name_path>::get_type_parts()))
+                                        <(#type_name) as #type_name_path>::to_old_type_parts()))
                                     );
                             },
                         ),
@@ -197,7 +197,7 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
                                     .fields
                                     .push(
                                         ::std::convert::From::from((::std::borrow::Cow::Borrowed(stringify!(#name)).into(),
-                                        <(#type_name) as #type_name_path>::get_type_parts()))
+                                        <(#type_name) as #type_name_path>::to_old_type_parts()))
                                     );
                                 gen.copy_docs(stringify!(#name).as_bytes());
                             },
@@ -457,6 +457,7 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
     let creator_struct_stream = quote! {
         #[derive(#type_name_macro)]
         #attributes
+        ///Automatically generated for exporting to lua
         #visibility struct #creator_struct_name {}
     };
     let parsed = venial::parse_declaration(creator_struct_stream.clone()).unwrap();
@@ -482,6 +483,7 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
     };
     let with_new_method = quote! {
         impl #creator_struct_name {
+            ///creates a new instance of this object
             pub fn new() -> Self {
                 Self{}
             }
@@ -586,7 +588,7 @@ pub(crate) fn mlua_from_to_lua(input: TokenStream) -> TokenStream {
                 message:None
             }
         },
-        type_name_path: quote! {#tealr_name::TypeName},
+        type_name_path: quote! {#tealr_name::ToTypename},
         type_body_loc: quote! {#tealr_name::TypeBody},
         type_generator_loc: quote! {#tealr_name::TypeGenerator},
         record_generator_loc: quote! {#tealr_name::RecordGenerator},
@@ -605,7 +607,7 @@ pub(crate) fn mlua_from_to_lua(input: TokenStream) -> TokenStream {
             message:None
         } },
         is_mlua: true,
-        typename_macro: quote! {#tealr_name::TypeName},
+        typename_macro: quote! {#tealr_name::ToTypename},
     };
 
     match parsed {
@@ -633,7 +635,7 @@ pub(crate) fn rlua_from_to_lua(input: TokenStream) -> TokenStream {
                 message:None
             }
         },
-        type_name_path: quote! {#tealr_name::TypeName},
+        type_name_path: quote! {#tealr_name::ToTypename},
         type_body_loc: quote! {#tealr_name::TypeBody},
         type_generator_loc: quote! {#tealr_name::TypeGenerator},
         record_generator_loc: quote! {#tealr_name::RecordGenerator},
@@ -652,7 +654,7 @@ pub(crate) fn rlua_from_to_lua(input: TokenStream) -> TokenStream {
             message:None
         } },
         is_mlua: false,
-        typename_macro: quote! {#tealr_name::TypeName},
+        typename_macro: quote! {#tealr_name::ToTypename},
     };
 
     debug_macro(match parsed {

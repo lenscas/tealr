@@ -1,6 +1,6 @@
 use std::{borrow::Cow, string::FromUtf8Error};
 
-use crate::{type_parts_to_str, NamePart, TypeBody, TypeGenerator, TypeName};
+use crate::{type_parts_to_str, NamePart, ToTypename, TypeBody, TypeGenerator};
 
 type V = Vec<NamePart>;
 
@@ -8,11 +8,11 @@ type V = Vec<NamePart>;
 ///Used to document what global instances get made by the module
 #[cfg_attr(
     all(feature = "mlua", feature = "derive", not(feature = "rlua")),
-    derive(crate::mlu::FromToLua, crate::TypeName)
+    derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
     all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::TypeName)
+    derive(crate::rlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
     all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
@@ -39,11 +39,11 @@ pub struct GlobalInstance {
 ///Used to document what global instances get made by the module
 #[cfg_attr(
     all(feature = "mlua", feature = "derive", not(feature = "rlua")),
-    derive(crate::mlu::FromToLua, crate::TypeName)
+    derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
     all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::TypeName)
+    derive(crate::rlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
     all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
@@ -60,11 +60,11 @@ pub struct ExtraPage {
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
     all(feature = "mlua", feature = "derive", not(feature = "rlua")),
-    derive(crate::mlu::FromToLua, crate::TypeName)
+    derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
     all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::TypeName)
+    derive(crate::rlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
     all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
@@ -119,7 +119,7 @@ impl TypeWalker {
     ///
     ///When embedding teal/lua there is probably not really a reason to do so.
     ///However, it ***IS*** needed for the struct that gets exposed directly to teal when using mlua to make a lua/teal library.
-    pub fn process_type_inline<A: TypeName + TypeBody>(mut self) -> Self {
+    pub fn process_type_inline<A: ToTypename + TypeBody>(mut self) -> Self {
         let mut x = <A as TypeBody>::get_type_body();
         match &mut x {
             TypeGenerator::Record(x) => {
@@ -131,7 +131,7 @@ impl TypeWalker {
         self
     }
     ///prepares a type to have a `.d.tl` file generated, and adds it to the list of types to generate.
-    pub fn process_type<A: TypeName + TypeBody>(mut self) -> Self {
+    pub fn process_type<A: ToTypename + TypeBody>(mut self) -> Self {
         let x = <A as TypeBody>::get_type_body();
         self.given_types.push(x);
         self
@@ -140,8 +140,8 @@ impl TypeWalker {
     #[cfg_attr(feature = "rlua", doc = " ```")]
     #[cfg_attr(not(feature = "rlua"), doc = " ```ignore")]
     ///# use rlua::{Lua, Result, UserDataMethods};
-    ///# use tealr::{rlu::{TealData,UserData, TealDataMethods,UserDataWrapper}, TypeWalker, TypeName};
-    ///#[derive(UserData,TypeName)]
+    ///# use tealr::{rlu::{TealData,UserData, TealDataMethods,UserDataWrapper}, TypeWalker, ToTypename};
+    ///#[derive(UserData,ToTypename)]
     ///struct Example {}
     ///impl TealData for Example {}
     ///let generated_string = TypeWalker::new().process_type::<Example>().generate("Examples",true);
@@ -218,8 +218,8 @@ impl TypeWalker {
     #[cfg_attr(feature = "rlua", doc = " ```")]
     #[cfg_attr(not(feature = "rlua"), doc = " ```ignore")]
     ///# use rlua::{Lua, Result, UserDataMethods};
-    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper,UserData}, TypeWalker, TypeName};
-    ///#[derive(UserData,TypeName)]
+    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper,UserData}, TypeWalker, ToTypename};
+    ///#[derive(UserData,ToTypename)]
     ///struct Example {}
     ///impl TealData for Example {}
     ///let generated_string = TypeWalker::new().process_type::<Example>().generate_global("Examples");
@@ -245,8 +245,8 @@ impl TypeWalker {
     #[cfg_attr(feature = "rlua", doc = " ```")]
     #[cfg_attr(not(feature = "rlua"), doc = " ```ignore")]
     ///# use rlua::{Lua, Result, UserDataMethods};
-    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper,UserData,}, TypeWalker, TypeName};
-    ///#[derive(UserData,TypeName)]
+    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper,UserData,}, TypeWalker, ToTypename};
+    ///#[derive(UserData,ToTypename)]
     ///struct Example {}
     ///impl TealData for Example {}
     ///let generated_string = TypeWalker::new().process_type::<Example>().generate_local("Examples");

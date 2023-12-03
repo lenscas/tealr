@@ -52,7 +52,7 @@ pub(crate) fn get_meta_name(name: rlua::MetaMethod) -> &'static str {
         MetaMethod::Pairs => "__pairs",
     }
 }
-use crate::TypeName;
+use crate::ToTypename;
 ///Gets the type of a function that is useful for the FromLuaConversion/ToLuaConversion error.
 ///
 ///it should NOT be used to get the real typename.
@@ -61,16 +61,17 @@ use crate::TypeName;
 ///
 ///The plan is to remove it if/when `rlua::Value::type_name` becomes public. Use at your own risk.
 pub fn get_type_name(value: &rlua::Value) -> &'static str {
+    #[allow(deprecated)]
     let x = match value {
         rlua::Value::Nil => return "Nil",
-        rlua::Value::Boolean(_) => bool::get_type_parts(),
+        rlua::Value::Boolean(_) => bool::to_old_type_parts(),
         rlua::Value::LightUserData(_) => return "LightUserData",
-        rlua::Value::Integer(_) => rlua::Integer::get_type_parts(),
-        rlua::Value::Number(_) => rlua::Number::get_type_parts(),
-        rlua::Value::String(_) => String::get_type_parts(),
-        rlua::Value::Table(_) => rlua::Table::get_type_parts(),
-        rlua::Value::Function(_) => rlua::Table::get_type_parts(),
-        rlua::Value::Thread(_) => rlua::Thread::get_type_parts(),
+        rlua::Value::Integer(_) => rlua::Integer::to_old_type_parts(),
+        rlua::Value::Number(_) => rlua::Number::to_old_type_parts(),
+        rlua::Value::String(_) => String::to_old_type_parts(),
+        rlua::Value::Table(_) => rlua::Table::to_old_type_parts(),
+        rlua::Value::Function(_) => rlua::Table::to_old_type_parts(),
+        rlua::Value::Thread(_) => rlua::Thread::to_old_type_parts(),
         rlua::Value::UserData(_) => return "userdata",
         rlua::Value::Error(_) => return "any",
     };
@@ -97,5 +98,5 @@ pub use tealr_derive::RluaUserData as UserData;
 pub use tealr_derive::RluaTealDerive as TealDerive;
 
 #[doc = include_str!("rlu/to_from_macro_doc.md")]
-#[cfg(all(feature = "derive"))]
+#[cfg(feature = "derive")]
 pub use tealr_derive::RluaFromToLua as FromToLua;

@@ -45,7 +45,7 @@ pub fn mlua_user_data_derive(input: TokenStream) -> TokenStream {
 }
 
 #[cfg(feature = "derive")]
-#[proc_macro_derive(TypeName, attributes(tealr))]
+#[proc_macro_derive(ToTypename, attributes(tealr))]
 pub fn type_representation_derive(input: TokenStream) -> TokenStream {
     use user_data::impl_type_representation_derive;
 

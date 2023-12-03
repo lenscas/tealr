@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use mlua::{FromLuaMulti, Lua, MetaMethod, Result, ToLua, ToLuaMulti};
 
-use crate::{TealMultiValue, TypeName};
+use crate::{TealMultiValue, ToTypename};
 
 use super::MaybeSend;
 
@@ -14,7 +14,7 @@ use super::MaybeSend;
 ///The only 2 differences are that [TealDataMethods](crate::mlu::TealDataMethods) has an extra type bound on `A` and `R`.
 ///These are to get the type names when generating the `.d.tl` file.
 
-pub trait TealDataMethods<'lua, T: TypeName> {
+pub trait TealDataMethods<'lua, T: ToTypename> {
     ///Exposes a method to lua
     fn add_method<S, A, R, M>(&mut self, name: &S, method: M)
     where
@@ -105,7 +105,7 @@ pub trait InstanceCollector<'lua> {
     fn add_instance<P, T, F>(&mut self, global_name: P, instance: F) -> Result<&mut Self>
     where
         P: Into<Cow<'static, str>>,
-        T: TypeName + ToLua<'lua>,
+        T: ToTypename + ToLua<'lua>,
         F: FnOnce(&'lua mlua::Lua) -> mlua::Result<T>;
     ///Adds documentation to the next global instance
     fn document_instance(&mut self, doc: &'static str) -> &mut Self;
@@ -122,7 +122,7 @@ impl<'lua> InstanceCollector<'lua> for (mlua::Table<'lua>, &'lua mlua::Lua) {
     fn add_instance<P, T, F>(&mut self, global_name: P, instance: F) -> Result<&mut Self>
     where
         P: Into<Cow<'static, str>>,
-        T: TypeName + ToLua<'lua>,
+        T: ToTypename + ToLua<'lua>,
         F: FnOnce(&'lua mlua::Lua) -> Result<T>,
     {
         let instance = instance(self.1)?;

@@ -3,10 +3,10 @@ use tealr::{
         mlua::{Lua, Result},
         TealData, TealDataMethods, UserData,
     },
-    TypeName, TypeWalker,
+    ToTypename, TypeWalker,
 };
 //this example shows how to use the create_named_parameters! macro to create methods which has names for their parameters in the documentation
-#[derive(Clone, UserData, TypeName)]
+#[derive(Clone, UserData, ToTypename)]
 struct Example {}
 
 impl TealData for Example {
