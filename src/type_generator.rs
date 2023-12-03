@@ -450,7 +450,12 @@ impl RecordGenerator {
         };
         let type_header = type_header
             .lines()
-            .map(|v| format!("\t{}\n", v))
+            .map(|v| {
+                let mut str = "\t".to_string();
+                str.push_str(v);
+                str.push('\n');
+                str
+            })
             .collect::<String>();
         let type_docs = self
             .type_doc
