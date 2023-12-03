@@ -85,7 +85,15 @@ impl ExportedFunction {
     ) -> std::result::Result<String, FromUtf8Error> {
         let documentation = match documentation.get(&self.name) {
             None => "".to_string(),
-            Some(x) => x.lines().map(|v| format!("--{}\n", v)).collect(),
+            Some(x) => x
+                .lines()
+                .map(|v| {
+                    let mut str = "--".to_string();
+                    str.push_str(v);
+                    str.push('\n');
+                    str
+                })
+                .collect(),
         };
         let metamethod = if self.is_meta_method {
             "metamethod "

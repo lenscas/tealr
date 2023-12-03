@@ -339,13 +339,21 @@ impl RecordGenerator {
         let fields: Vec<_> = self
             .fields
             .into_iter()
-            .chain(self.static_fields.into_iter())
+            .chain(self.static_fields)
             .filter(|field| duplicates.insert(field.name.0.clone()))
             .map(|field| {
                 let name = field.name;
                 let lua_type = field.teal_type;
                 let doc = match documentation.get(&name) {
-                    Some(x) => x.lines().map(|v| format!("--{v}\n")).collect::<String>(),
+                    Some(x) => x
+                        .lines()
+                        .map(|v| {
+                            let mut str = "--".to_string();
+                            str.push_str(v);
+                            str.push('\n');
+                            str
+                        })
+                        .collect::<String>(),
                     None => String::from(""),
                 };
                 (name, lua_type, doc)
@@ -429,7 +437,12 @@ impl RecordGenerator {
                     type_name,
                     userdata_string
                         .lines()
-                        .map(|v| format!("\t{}\n", v))
+                        .map(|v| {
+                            let mut str = "\t".to_string();
+                            str.push_str(v);
+                            str.push('\n');
+                            str
+                        })
                         .collect::<String>()
                 ),
                 "\tend",
