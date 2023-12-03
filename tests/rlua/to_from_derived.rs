@@ -1,9 +1,9 @@
 use tealr::{
     rlu::{rlua::Lua, FromToLua},
-    TypeName, TypeWalker,
+    ToTypename, TypeWalker,
 };
 
-#[derive(FromToLua, TypeName, PartialEq, Debug, Clone)]
+#[derive(FromToLua, ToTypename, PartialEq, Debug, Clone)]
 enum ExampleCStyleEnum {
     This,
     Is,
@@ -12,7 +12,7 @@ enum ExampleCStyleEnum {
     Example,
 }
 
-#[derive(FromToLua, Clone, TypeName)]
+#[derive(FromToLua, Clone, ToTypename)]
 struct V(String);
 impl From<String> for V {
     fn from(x: String) -> Self {
@@ -25,7 +25,7 @@ impl From<V> for String {
     }
 }
 
-#[derive(FromToLua, Clone, TypeName, serde::Deserialize)]
+#[derive(FromToLua, Clone, ToTypename, serde::Deserialize)]
 #[tealr(creator_name = TestCreatorOfDOOM)]
 #[serde(deny_unknown_fields)]
 pub(crate) enum Test2 {
@@ -48,7 +48,7 @@ impl From<Test2> for String {
     }
 }
 
-#[derive(Clone, Debug, FromToLua, TypeName, PartialEq)]
+#[derive(Clone, Debug, FromToLua, ToTypename, PartialEq)]
 struct Example {
     #[tealr(remote = Test2)]
     field1: String,

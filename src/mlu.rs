@@ -68,7 +68,7 @@ pub(crate) fn get_meta_name(name: mlua::MetaMethod) -> Cow<'static, str> {
         MetaMethod::Pairs => Cow::Borrowed("__pairs"),
         #[cfg(any(feature = "mlua_lua52", feature = "mlua_luajit52"))]
         MetaMethod::IPairs => Cow::Borrowed("__ipairs"),
-        #[cfg(any(feature = "mlua_lua54"))]
+        #[cfg(feature = "mlua_lua54")]
         MetaMethod::Close => Cow::Borrowed("__close"),
         #[cfg(feature = "mlua_luau")]
         MetaMethod::Iter => Cow::Borrowed("__iter"),
@@ -92,7 +92,7 @@ impl<T> MaybeSend for T {}
 #[cfg(feature = "derive")]
 pub use tealr_derive::MluaFromToLua as FromToLua;
 
-///Implement both [mlua::UserData](mlua::UserData) and [TypeName](crate::TypeName).
+///Implement both [mlua::UserData](mlua::UserData) and [TypeName](crate::ToTypename).
 ///
 ///Look at [tealr_derive::MluaUserData](tealr_derive::MluaUserData) and [tealr_derive::TypeName](tealr_derive::TypeName)
 ///for more information on how the implemented traits will behave.

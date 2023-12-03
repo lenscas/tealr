@@ -2,10 +2,10 @@ use std::collections::HashMap;
 
 use tealr::{
     rlu::{generics::X, rlua::ToLua, TealData, TealDataMethods, TypedFunction, UserData},
-    TypeName, TypeWalker,
+    ToTypename, TypeWalker,
 };
 
-#[derive(Clone, UserData, TypeName)]
+#[derive(Clone, UserData, ToTypename)]
 struct Example {}
 
 //now, implement TealData. This tells mlua what methods are available and tealr what the types are

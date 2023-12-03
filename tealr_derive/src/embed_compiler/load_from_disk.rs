@@ -54,7 +54,7 @@ pub(crate) fn get_local_teal(path: String) -> String {
                 "Could not compile teal:{x}\nRaw error:{}\n{}",
                 v.raw_os_error()
                     .map(|v| format!("Kind:{v}"))
-                    .unwrap_or_else(String::new),
+                    .unwrap_or_default(),
                 v.kind()
             )
         })

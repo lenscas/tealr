@@ -2,12 +2,12 @@ use mlua::ToLua;
 use tealr::{
     create_union_mlua,
     mlu::{mlua::FromLua, TealData, TealDataMethods, TypedFunction, UserData},
-    TypeName, TypeWalker,
+    ToTypename, TypeWalker,
 };
 
 create_union_mlua!(enum X = String | f32 | bool);
 
-#[derive(Clone, UserData, TypeName)]
+#[derive(Clone, UserData, ToTypename)]
 struct Example {}
 
 //now, implement TealData. This tells mlua what methods are available and tealr what the types are
@@ -59,7 +59,7 @@ fn test_limited() {
     assert_eq!(generated, original);
 
     let lua = mlua::Lua::new();
-    tealr::mlu::set_global_env(Export::default(), &lua).unwrap();
+    tealr::mlu::set_global_env(Export {}, &lua).unwrap();
     let code = "
             assert(example_a(2) == 3)
         return test:limited_simple(true)

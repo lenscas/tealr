@@ -1,8 +1,8 @@
-use std::{borrow::Cow, marker::PhantomData};
+use std::marker::PhantomData;
 
 use rlua::{Context, FromLua, FromLuaMulti, Function, ToLua, ToLuaMulti, Value};
 
-use crate::{NamePart, TealMultiValue, TypeName};
+use crate::{TealMultiValue, ToTypename};
 
 ///A typed wrapper around [rlua::Function]
 #[derive(Debug)]
@@ -39,67 +39,16 @@ where
         Ok(Value::Function(self.inner_function))
     }
 }
-impl<'lua, Params, Response> TypeName for TypedFunction<'lua, Params, Response>
+impl<'lua, Params, Response> ToTypename for TypedFunction<'lua, Params, Response>
 where
     Params: TealMultiValue,
     Response: TealMultiValue,
 {
-    fn get_type_parts() -> Cow<'static, [crate::NamePart]> {
-        let params = Params::get_types();
-        let returns = Response::get_types();
-        let mut v = vec!["function(".into()];
-        v.extend(params);
-        v.push("):(".into());
-        v.extend(returns);
-        v.push(")".into());
-        Cow::Owned(v)
-    }
-    fn get_type_parts_as_global() -> Cow<'static, [NamePart]> {
-        let mut generics = Vec::new();
-        let params = Params::get_types();
-        let returns = Response::get_types();
-        params
-            .iter()
-            .chain(returns.iter())
-            .for_each(|param| match param {
-                NamePart::Symbol(_) => (),
-                NamePart::Type(x) => {
-                    if x.type_kind.is_generic() && !generics.contains(x) {
-                        generics.push(x.clone())
-                    }
-                }
-            });
-        if generics.is_empty() {
-            return Self::get_type_parts();
-        }
-        let mut type_name = vec!["function<".into()];
-        let last = generics.len() - 1;
-        for (key, generic) in generics.into_iter().enumerate() {
-            type_name.push(NamePart::Type(generic));
-            if key != last {
-                type_name.push(",".into())
-            }
-        }
-        type_name.push(">(".into());
-        type_name.extend(params);
-        type_name.push("):(".into());
-        type_name.extend(returns);
-        type_name.push(")".into());
-        Cow::Owned(type_name)
-    }
-    fn collect_children(generics: &mut Vec<crate::TealType>) {
-        let params = Params::get_types()
-            .into_iter()
-            .chain(Response::get_types().into_iter())
-            .filter_map(|v| match v {
-                NamePart::Symbol(_) => None,
-                NamePart::Type(x) => Some(x),
-            });
-
-        generics.extend(params);
-    }
-    fn get_type_kind() -> crate::KindOfType {
-        crate::KindOfType::Builtin
+    fn to_typename() -> crate::Type {
+        crate::Type::Function(crate::FunctionRepresentation {
+            params: Params::get_types_as_params(),
+            returns: Response::get_types(),
+        })
     }
 }
 impl<'lua, Params, Response> TypedFunction<'lua, Params, Response>

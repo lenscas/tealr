@@ -3,7 +3,7 @@ use tealr::{
         mlua::{Lua, Result},
         TealData, TealDataMethods, UserData, UserDataProxy,
     },
-    TypeName, TypeWalker,
+    ToTypename, TypeWalker,
 };
 //this example shows how to expose a `proxy` type to enable calling static global functions from anywhere.
 
@@ -12,7 +12,7 @@ use tealr::{
 //derive TealDerive, which does both. However you will still need to import
 //UserData and TypeName
 //The clone is only needed because one of the example functions has it as a parameter
-#[derive(Clone, UserData, TypeName)]
+#[derive(Clone, UserData, ToTypename)]
 struct Example {
     float: f32,
 }
@@ -73,7 +73,7 @@ fn main() -> Result<()> {
 
     //how you pass this type to lua hasn't changed:
     let lua = Lua::new();
-    tealr::mlu::set_global_env(Export::default(), &lua).unwrap();
+    tealr::mlu::set_global_env(Export {}, &lua).unwrap();
     let globals = lua.globals();
     globals.set("test", Example { float: 42.0 })?;
     let code = "

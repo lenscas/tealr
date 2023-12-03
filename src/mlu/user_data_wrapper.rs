@@ -5,7 +5,7 @@ use mlua::{
 use std::{collections::HashMap, marker::PhantomData};
 
 use super::{MaybeSend, TealData, TealDataFields, TealDataMethods};
-use crate::{type_generator::get_method_data, TealMultiValue, TypeName};
+use crate::{type_generator::get_method_data, TealMultiValue, ToTypename, TypeName};
 
 ///Used to turn [UserDataMethods](mlua::UserDataMethods) into [TealDataMethods](crate::mlu::TealDataMethods).
 ///
@@ -32,12 +32,12 @@ where
     ///```
     ///# use std::borrow::Cow;
     ///# use mlua::{Lua, Result, UserData, UserDataMethods};
-    ///# use tealr::{new_type, mlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker,  TypeName,NamePart,TealType, KindOfType};
+    ///# use tealr::{Type, mlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker, ToTypename,NamePart,TealType, KindOfType};
     /// struct Example {}
     /// impl TealData for Example {}
-    /// impl TypeName for Example {
-    ///     fn get_type_parts() -> Cow<'static, [NamePart]> {
-    ///         new_type!(Example)
+    /// impl ToTypename for Example {
+    ///     fn to_typename() -> Type {
+    ///         Type::new_single("Example", tealr::KindOfType::External)
     ///     }
     /// }
     /// impl UserData for Example {
@@ -68,12 +68,12 @@ where
     ///```
     ///# use std::borrow::Cow;
     ///# use mlua::{Lua, Result, UserData, UserDataFields};
-    ///# use tealr::{new_type, mlu::{TealData, TealDataFields,UserDataWrapper}, TypeWalker,  TypeName,NamePart,TealType, KindOfType};
+    ///# use tealr::{Type,new_type, mlu::{TealData, TealDataFields,UserDataWrapper}, TypeWalker, ToTypename,NamePart,TealType, KindOfType};
     /// struct Example {}
     /// impl TealData for Example {}
-    /// impl TypeName for Example {
-    ///     fn get_type_parts() -> Cow<'static, [NamePart]> {
-    ///         new_type!(Example)
+    /// impl ToTypename for Example {
+    ///     fn to_typename() -> Type {
+    ///         Type::new_single("Example", tealr::KindOfType::External)
     ///     }
     /// }
     /// impl UserData for Example {
@@ -95,7 +95,7 @@ where
         }
     }
 }
-impl<'a, 'lua, Container, T: TypeName> UserDataWrapper<'a, 'lua, Container, T>
+impl<'a, 'lua, Container, T: ToTypename> UserDataWrapper<'a, 'lua, Container, T>
 where
     T: UserData,
     //Container: UserDataMethods<'lua, T>,
@@ -105,8 +105,7 @@ where
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
     {
-        let type_def =
-            get_method_data::<A, R, _>(to, false, self_type.then(|| T::get_type_parts()));
+        let type_def = get_method_data::<A, R, _>(to, false, self_type.then(|| T::to_typename()));
         let generated = type_def
             .generate(&Default::default())
             .map(|v| "Signature: ".to_string() + &v)
@@ -115,7 +114,7 @@ where
         let documentation = &mut self.documentation;
         documentation.insert(to.to_owned(), docs);
     }
-    fn copy_field_docs<F: TypeName>(&mut self, name: &[u8]) {
+    fn copy_field_docs<F: ToTypename>(&mut self, name: &[u8]) {
         let name = name.to_vec();
         let documentation = &mut self.documentation;
         let mut current_doc = match documentation.remove(&name) {
@@ -140,7 +139,7 @@ where
     }
 }
 
-impl<'a, 'lua, Container, T: TypeName> TealDataMethods<'lua, T>
+impl<'a, 'lua, Container, T: ToTypename> TealDataMethods<'lua, T>
     for UserDataWrapper<'a, 'lua, Container, T>
 where
     T: UserData,
@@ -303,7 +302,7 @@ where
     }
 }
 
-impl<'a, 'lua, Container, T: TypeName + TealData> TealDataFields<'lua, T>
+impl<'a, 'lua, Container, T: ToTypename + TealData> TealDataFields<'lua, T>
     for UserDataWrapper<'a, 'lua, Container, T>
 where
     T: UserData,
@@ -312,7 +311,7 @@ where
     fn add_field_method_get<S, R, M>(&mut self, name: &S, method: M)
     where
         S: AsRef<[u8]> + ?Sized,
-        R: mlua::ToLua<'lua> + TypeName,
+        R: mlua::ToLua<'lua> + ToTypename,
         M: 'static + MaybeSend + Fn(&'lua Lua, &T) -> mlua::Result<R>,
     {
         self.copy_field_docs::<R>(name.as_ref());
@@ -322,7 +321,7 @@ where
     fn add_field_method_set<S, A, M>(&mut self, name: &S, method: M)
     where
         S: AsRef<[u8]> + ?Sized,
-        A: mlua::FromLua<'lua> + TypeName,
+        A: mlua::FromLua<'lua> + ToTypename,
         M: 'static + MaybeSend + FnMut(&'lua Lua, &mut T, A) -> mlua::Result<()>,
     {
         self.copy_field_docs::<A>(name.as_ref());
@@ -332,7 +331,7 @@ where
     fn add_field_function_get<S, R, F>(&mut self, name: &S, function: F)
     where
         S: AsRef<[u8]> + ?Sized,
-        R: mlua::ToLua<'lua> + TypeName,
+        R: mlua::ToLua<'lua> + ToTypename,
         F: 'static + MaybeSend + Fn(&'lua Lua, mlua::AnyUserData<'lua>) -> mlua::Result<R>,
     {
         self.copy_field_docs::<R>(name.as_ref());
@@ -342,7 +341,7 @@ where
     fn add_field_function_set<S, A, F>(&mut self, name: &S, function: F)
     where
         S: AsRef<[u8]> + ?Sized,
-        A: mlua::FromLua<'lua> + TypeName,
+        A: mlua::FromLua<'lua> + ToTypename,
         F: 'static + MaybeSend + FnMut(&'lua Lua, mlua::AnyUserData<'lua>, A) -> mlua::Result<()>,
     {
         self.copy_field_docs::<A>(name.as_ref());
@@ -352,7 +351,7 @@ where
     fn add_meta_field_with<R, F>(&mut self, meta: MetaMethod, f: F)
     where
         F: 'static + MaybeSend + Fn(&'lua Lua) -> mlua::Result<R>,
-        R: mlua::ToLua<'lua> + TypeName,
+        R: mlua::ToLua<'lua> + ToTypename,
     {
         self.copy_field_docs::<R>(meta.name().as_bytes());
         self.cont.add_meta_field_with(meta, f)

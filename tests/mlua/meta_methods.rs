@@ -1,10 +1,10 @@
 use mlua::MetaMethod;
 use tealr::{
     mlu::{TealData, TealDataMethods, UserData},
-    TypeName, TypeWalker,
+    ToTypename, TypeWalker,
 };
 
-#[derive(Clone, UserData, TypeName)]
+#[derive(Clone, UserData, ToTypename)]
 struct Example {
     add: i8,
 }

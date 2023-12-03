@@ -27,7 +27,9 @@ use mlua::{
     Result as ResultM, ToLua as ToLuaM, ToLuaMulti as ToLuaMultiM, UserData as UserDataM,
 };
 
-use crate::{exported_function::ExportedFunction, type_parts_to_str, NamePart, TypeName};
+use crate::{
+    exported_function::ExportedFunction, type_parts_to_str, NamePart, ToTypename, Type, TypeName,
+};
 
 #[cfg(any(feature = "rlua", feature = "mlua"))]
 use crate::TealMultiValue;
@@ -56,9 +58,9 @@ impl<'lua> crate::rlu::rlua::ToLua<'lua> for NameContainer {
     }
 }
 
-impl TypeName for NameContainer {
-    fn get_type_parts() -> Cow<'static, [NamePart]> {
-        crate::new_type!(string, BuiltIn)
+impl ToTypename for NameContainer {
+    fn to_typename() -> crate::Type {
+        Type::new_single("string", crate::KindOfType::Builtin)
     }
 }
 
@@ -109,7 +111,7 @@ impl From<Cow<'static, str>> for NameContainer {
 pub(crate) fn get_method_data<A: TealMultiValue, R: TealMultiValue, S: ?Sized + AsRef<[u8]>>(
     name: &S,
     is_meta_method: bool,
-    extra_self: Option<Cow<'static, [NamePart]>>,
+    extra_self: Option<Type>,
 ) -> ExportedFunction {
     ExportedFunction::new::<A, R, _>(name, is_meta_method, extra_self)
 }
@@ -117,11 +119,11 @@ pub(crate) fn get_method_data<A: TealMultiValue, R: TealMultiValue, S: ?Sized + 
 #[derive(serde::Serialize, serde::Deserialize, Clone)]
 #[cfg_attr(
     all(feature = "mlua", feature = "derive", not(feature = "rlua")),
-    derive(crate::mlu::FromToLua, crate::TypeName)
+    derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
     all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::TypeName)
+    derive(crate::rlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
     all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "mlua", feature="rlua"))),
@@ -153,11 +155,11 @@ type V = Vec<NamePart>;
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
     all(feature = "mlua", feature = "derive", not(feature = "rlua")),
-    derive(crate::mlu::FromToLua, crate::TypeName)
+    derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
     all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::TypeName)
+    derive(crate::rlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
     all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
@@ -183,7 +185,7 @@ impl From<EnumGenerator> for TypeGenerator {
 }
 impl EnumGenerator {
     ///creates a new EnumGenerator
-    pub fn new<A: TypeName>() -> Self {
+    pub fn new<A: ToTypename>() -> Self {
         Self {
             name: A::get_type_parts(),
             variants: Default::default(),
@@ -214,11 +216,11 @@ impl EnumGenerator {
 #[derive(serde::Serialize, serde::Deserialize, Clone)]
 #[cfg_attr(
     all(feature = "mlua", feature = "derive", not(feature = "rlua")),
-    derive(crate::mlu::FromToLua, crate::TypeName)
+    derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
     all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::TypeName)
+    derive(crate::rlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
     all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
@@ -254,11 +256,11 @@ impl From<Field> for (NameContainer, Cow<'static, [NamePart]>) {
 #[derive(Default, Clone, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
     all(feature = "mlua", feature = "derive", not(feature = "rlua")),
-    derive(crate::mlu::FromToLua, crate::TypeName)
+    derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
     all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::TypeName)
+    derive(crate::rlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
     all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
@@ -319,7 +321,7 @@ impl From<Box<RecordGenerator>> for RecordGenerator {
 
 impl RecordGenerator {
     ///creates a new RecordGenerator
-    pub fn new<A: TypeName>(should_be_inlined: bool) -> Self {
+    pub fn new<A: ToTypename>(should_be_inlined: bool) -> Self {
         Self {
             should_be_inlined,
             is_user_data: false,
@@ -337,13 +339,21 @@ impl RecordGenerator {
         let fields: Vec<_> = self
             .fields
             .into_iter()
-            .chain(self.static_fields.into_iter())
+            .chain(self.static_fields)
             .filter(|field| duplicates.insert(field.name.0.clone()))
             .map(|field| {
                 let name = field.name;
                 let lua_type = field.teal_type;
                 let doc = match documentation.get(&name) {
-                    Some(x) => x.lines().map(|v| format!("--{v}\n")).collect::<String>(),
+                    Some(x) => x
+                        .lines()
+                        .map(|v| {
+                            let mut str = "--".to_string();
+                            str.push_str(v);
+                            str.push('\n');
+                            str
+                        })
+                        .collect::<String>(),
                     None => String::from(""),
                 };
                 (name, lua_type, doc)
@@ -427,7 +437,12 @@ impl RecordGenerator {
                     type_name,
                     userdata_string
                         .lines()
-                        .map(|v| format!("\t{}\n", v))
+                        .map(|v| {
+                            let mut str = "\t".to_string();
+                            str.push_str(v);
+                            str.push('\n');
+                            str
+                        })
                         .collect::<String>()
                 ),
                 "\tend",
@@ -435,7 +450,12 @@ impl RecordGenerator {
         };
         let type_header = type_header
             .lines()
-            .map(|v| format!("\t{}\n", v))
+            .map(|v| {
+                let mut str = "\t".to_string();
+                str.push_str(v);
+                str.push('\n');
+                str
+            })
             .collect::<String>();
         let type_docs = self
             .type_doc
@@ -522,7 +542,7 @@ impl RecordGenerator {
 #[cfg(feature = "rlua")]
 impl<'lua, T> TealDataMethodsR<'lua, T> for RecordGenerator
 where
-    T: 'static + TealDataR + UserDataR + TypeName,
+    T: 'static + TealDataR + UserDataR + ToTypename,
 {
     fn add_method<S, A, R, M>(&mut self, name: &S, _: M)
     where
@@ -535,7 +555,7 @@ where
         self.methods.push(get_method_data::<A, R, _>(
             name,
             false,
-            Some(T::get_type_parts()),
+            Some(T::to_typename()),
         ))
     }
 
@@ -550,7 +570,7 @@ where
         self.mut_methods.push(get_method_data::<A, R, _>(
             name,
             false,
-            Some(T::get_type_parts()),
+            Some(T::to_typename()),
         ))
     }
 
@@ -588,7 +608,7 @@ where
         self.meta_method.push(get_method_data::<A, R, _>(
             get_meta_name_rlua(name),
             false,
-            Some(T::get_type_parts()),
+            Some(T::to_typename()),
         ))
     }
 
@@ -602,7 +622,7 @@ where
         self.meta_method_mut.push(get_method_data::<A, R, _>(
             get_meta_name_rlua(name),
             false,
-            Some(T::get_type_parts()),
+            Some(T::to_typename()),
         ))
     }
 
@@ -652,7 +672,7 @@ where
 #[cfg(feature = "mlua")]
 impl<'lua, T> TealDataMethodsM<'lua, T> for RecordGenerator
 where
-    T: 'static + TealDataM + UserDataM + TypeName,
+    T: 'static + TealDataM + UserDataM + ToTypename,
 {
     fn add_method<S, A, R, M>(&mut self, name: &S, _: M)
     where
@@ -665,7 +685,7 @@ where
         self.methods.push(get_method_data::<A, R, _>(
             name,
             false,
-            Some(T::get_type_parts()),
+            Some(T::to_typename()),
         ))
     }
 
@@ -680,7 +700,7 @@ where
         self.mut_methods.push(get_method_data::<A, R, _>(
             name,
             false,
-            Some(T::get_type_parts()),
+            Some(T::to_typename()),
         ))
     }
 
@@ -718,7 +738,7 @@ where
         self.meta_method.push(get_method_data::<A, R, _>(
             &get_meta_name_mlua(name).as_bytes(),
             true,
-            Some(T::get_type_parts()),
+            Some(T::to_typename()),
         ))
     }
 
@@ -732,7 +752,7 @@ where
         self.meta_method_mut.push(get_method_data::<A, R, _>(
             &get_meta_name_mlua(name).as_bytes(),
             true,
-            Some(T::get_type_parts()),
+            Some(T::to_typename()),
         ))
     }
 
@@ -777,7 +797,7 @@ where
         self.methods.push(get_method_data::<A, R, _>(
             name,
             false,
-            Some(T::get_type_parts()),
+            Some(T::to_typename()),
         ))
     }
 
@@ -812,12 +832,12 @@ where
 #[cfg(feature = "mlua")]
 impl<'lua, T> TealDataFields<'lua, T> for RecordGenerator
 where
-    T: 'static + TealDataM + UserDataM + TypeName,
+    T: 'static + TealDataM + UserDataM + ToTypename,
 {
     fn add_field_method_get<S, R, M>(&mut self, name: &S, _: M)
     where
         S: AsRef<[u8]> + ?Sized,
-        R: mlua::ToLua<'lua> + TypeName,
+        R: mlua::ToLua<'lua> + ToTypename,
         M: 'static + MaybeSend + Fn(&'lua Lua, &T) -> mlua::Result<R>,
     {
         self.copy_docs(name.as_ref());
@@ -828,7 +848,7 @@ where
     fn add_field_method_set<S, A, M>(&mut self, name: &S, _: M)
     where
         S: AsRef<[u8]> + ?Sized,
-        A: mlua::FromLua<'lua> + TypeName,
+        A: mlua::FromLua<'lua> + ToTypename,
         M: 'static + MaybeSend + FnMut(&'lua Lua, &mut T, A) -> mlua::Result<()>,
     {
         self.copy_docs(name.as_ref());
@@ -839,7 +859,7 @@ where
     fn add_field_function_get<S, R, F>(&mut self, name: &S, _: F)
     where
         S: AsRef<[u8]> + ?Sized,
-        R: mlua::ToLua<'lua> + TypeName,
+        R: mlua::ToLua<'lua> + ToTypename,
         F: 'static + MaybeSend + Fn(&'lua Lua, mlua::AnyUserData<'lua>) -> mlua::Result<R>,
     {
         self.copy_docs(name.as_ref());
@@ -850,7 +870,7 @@ where
     fn add_field_function_set<S, A, F>(&mut self, name: &S, _: F)
     where
         S: AsRef<[u8]> + ?Sized,
-        A: mlua::FromLua<'lua> + TypeName,
+        A: mlua::FromLua<'lua> + ToTypename,
         F: 'static + MaybeSend + FnMut(&'lua Lua, mlua::AnyUserData<'lua>, A) -> mlua::Result<()>,
     {
         self.copy_docs(name.as_ref());
@@ -861,7 +881,7 @@ where
     fn add_meta_field_with<R, F>(&mut self, meta: MetaMethodM, _: F)
     where
         F: 'static + MaybeSend + Fn(&'lua Lua) -> mlua::Result<R>,
-        R: mlua::ToLua<'lua> + TypeName,
+        R: mlua::ToLua<'lua> + ToTypename,
     {
         let x = Into::<MetaMethodM>::into(meta);
         let name: Cow<'_, str> = Cow::Owned(x.name().to_string());

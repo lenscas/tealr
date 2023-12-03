@@ -28,17 +28,23 @@ macro_rules! mlua_create_named_parameters {
         pub struct $type_name {
             $(pub $field_name : $field_type_name,)*
         }
-        impl $crate::TypeName for $type_name {
-            fn get_type_parts() -> std::borrow::Cow<'static, [$crate::NamePart]> {
+        impl $crate::ToTypename for $type_name {
+            fn to_typename() -> $crate::Type {
                 let mut x = Vec::new();
                 $(
-                    x.push($crate::NamePart::symbol(stringify!($field_name)));
-                    x.push($crate::NamePart::symbol(" : "));
-                    x.extend(<$field_type_name as $crate::TypeName>::get_type_parts().iter().map(std::borrow::ToOwned::to_owned));
-                    x.push($crate::NamePart::symbol(" , "));
+                    x.push(<$field_type_name as $crate::ToTypename>::to_typename());
                 )*
-                x.remove(x.len() - 1);
-                std::convert::From::from(x)
+                std::convert::From::from($crate::Type::Tuple(x))
+            }
+            fn to_function_param() -> Vec<$crate::FunctionParam> {
+                let mut x = Vec::new();
+                $(
+                    x.push($crate::FunctionParam {
+                        param_name: Some(stringify!($field_name).into()),
+                        ty: <$field_type_name as $crate::ToTypename>::to_typename()
+                    });
+                )*
+                x
             }
         }
         impl<'lua> $crate::mlu::mlua::FromLuaMulti<'lua> for $type_name {

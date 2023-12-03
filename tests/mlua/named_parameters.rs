@@ -3,9 +3,9 @@ use tealr::{
         mlua::{Lua, Result},
         TealData, TealDataMethods, UserData,
     },
-    TypeName, TypeWalker,
+    ToTypename, TypeWalker,
 };
-#[derive(Clone, UserData, TypeName)]
+#[derive(Clone, UserData, ToTypename)]
 struct Example {}
 
 impl TealData for Example {
