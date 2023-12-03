@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use rlua::{Context, FromLuaMulti, MetaMethod, Result, ToLua, ToLuaMulti};
 
-use crate::{TealMultiValue, TypeName};
+use crate::{TealMultiValue, ToTypename, TypeName};
 
 ///The teal version of [UserDataMethods](rlua::UserDataMethods)
 ///
@@ -81,7 +81,7 @@ pub trait InstanceCollector<'lua> {
     fn add_instance<P, T, F>(&mut self, global_name: P, instance: F) -> Result<&mut Self>
     where
         P: Into<Cow<'static, str>>,
-        T: TypeName + ToLua<'lua>,
+        T: ToTypename + ToLua<'lua>,
         F: FnOnce(Context<'lua>) -> rlua::Result<T>;
     ///adds documentation to this instance
     fn document_instance(&mut self, doc: &'static str) -> &mut Self;
