@@ -99,7 +99,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     test.field1 = creator.NewLessSo()
     return test
 ";
-    let res: Example = lua.load(code).set_name("test?")?.eval()?;
+    let res: Example = lua.load(code).set_name("test?").eval()?;
     to_pass.field1 = String::from(Test2::LessSo);
     assert_eq!(res, to_pass);
 

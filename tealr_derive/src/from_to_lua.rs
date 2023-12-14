@@ -37,7 +37,7 @@ fn find_tag_with_value(to_find: &str, tags: &[venial::Attribute]) -> Option<Toke
         .and_then(|v| match &v.value {
             venial::AttributeValue::Empty => None,
             venial::AttributeValue::Group(_, y) => {
-                if y.get(0).map(|v| v.to_string() == to_find).unwrap_or(false) {
+                if y.first().map(|v| v.to_string() == to_find).unwrap_or(false) {
                     y.get(2).map(|v| v.clone().into_token_stream())
                 } else {
                     None
@@ -84,6 +84,7 @@ struct BasicConfig {
     result_location_from: TokenStream,
     lua_type: TokenStream,
     lua_value: TokenStream,
+    to_lua_name: TokenStream,
     error_message: TokenStream,
     type_name_path: TokenStream,
     type_body_loc: TokenStream,
@@ -117,6 +118,7 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
     let type_generator_loc = config.type_generator_loc;
     let record_generator_loc = config.record_generator_loc;
     let name = &structure.name;
+    let to_lua_name = config.to_lua_name;
 
     let (to_add, (to_remove, type_body)): (TokenStream, (TokenStream, TokenStream)) =
         match structure.fields {
@@ -212,7 +214,7 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
         .collect::<TokenStream>();
     quote! {
         impl<'lua> #to_loc for #name {
-            fn to_lua(self, #lua_location) -> #result_location_to {
+            fn #to_lua_name(self, #lua_location) -> #result_location_to {
                 let mut table = #create_table()?;
                 #to_add
                 lua.pack(table)
@@ -326,7 +328,7 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
                                 (
                                     proc_macro2::Ident::new(
                                         &z,
-                                        x.ty.tokens.get(0).map(|v|v.span())
+                                        x.ty.tokens.first().map(|v|v.span())
                                         .unwrap_or_else(Span::call_site)),
                                     x,
                                 )
@@ -495,11 +497,33 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
             }
         }
     };
+
     trait_impls.extend(Some(creator_struct_stream));
     trait_impls.extend(Some(with_userdata));
     trait_impls.extend(Some(with_clone));
     trait_impls.extend(Some(with_teal_data));
     trait_impls.extend(Some(with_new_method));
+    if config.is_mlua {
+        let from_loc = config.from_location;
+        let lua_value = config.lua_value;
+        let lua_location = config.lua_type;
+        let error_message = config.error_message;
+        let result_location_from = config.result_location_from;
+        let with_from_lua = quote! {
+            impl<'lua> #from_loc for #name {
+                fn from_lua(lua_value:#lua_value<'lua>, #lua_location) -> #result_location_from {
+                    match lua_value.as_userdata() {
+                        Some(x) => x.take(),
+                        None => {
+                            let x = lua_value;
+                            Err(#error_message)
+                        }
+                    }
+                }
+            }
+        };
+        trait_impls.extend(with_from_lua);
+    }
     trait_impls
 }
 
@@ -515,7 +539,7 @@ fn implement_for_c_enum(enumeration: venial::Enum, config: BasicConfig) -> Token
     let lua_value = config.lua_value;
     let enum_generator_loc = config.enum_generator_loc;
     let invalid_enum_variant_error = config.invalid_enum_variant_error;
-
+    let to_lua_name = config.to_lua_name;
     let document_type = find_doc_tags(&enumeration.attributes)
         .map(|v| quote! {gen.document_type(#v);})
         .collect::<TokenStream>();
@@ -544,7 +568,7 @@ fn implement_for_c_enum(enumeration: venial::Enum, config: BasicConfig) -> Token
 
     quote! {
         impl<'lua> #to_loc for #name {
-            fn to_lua(self, #lua_location) -> #result_location_to {
+            fn #to_lua_name(self, #lua_location) -> #result_location_to {
                 let res = match self {
                     #to_branches
                 };
@@ -575,7 +599,8 @@ pub(crate) fn mlua_from_to_lua(input: TokenStream) -> TokenStream {
     let parsed = parse_declaration(input).unwrap();
     let tealr_name = get_tealr_name(parsed.attributes());
     let config = BasicConfig {
-        to_location: quote! {#tealr_name::mlu::mlua::ToLua<'lua>},
+        to_location: quote! {#tealr_name::mlu::mlua::IntoLua<'lua>},
+        to_lua_name: quote!(into_lua),
         from_location: quote! {#tealr_name::mlu::mlua::FromLua<'lua>},
         create_table: quote! {lua.create_table},
         result_location_to: quote! {#tealr_name::mlu::mlua::Result<#tealr_name::mlu::mlua::Value<'lua>>},
@@ -623,6 +648,7 @@ pub(crate) fn rlua_from_to_lua(input: TokenStream) -> TokenStream {
     let tealr_name = get_tealr_name(parsed.attributes());
     let config = BasicConfig {
         to_location: quote! {#tealr_name::rlu::rlua::ToLua<'lua>},
+        to_lua_name: quote!(to_lua),
         from_location: quote! {#tealr_name::rlu::rlua::FromLua<'lua>},
         create_table: quote! {lua.create_table},
         result_location_to: quote! {#tealr_name::rlu::rlua::Result<#tealr_name::rlu::rlua::Value<'lua>>},

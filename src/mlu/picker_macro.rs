@@ -42,10 +42,10 @@ macro_rules! create_union_mlua {
         $visibility enum $type_name {
             $($sub_types($sub_types) ,)*
         }
-        impl<'lua> $crate::mlu::mlua::ToLua<'lua> for $type_name {
-            fn to_lua(self, lua: &'lua $crate::mlu::mlua::Lua) -> ::std::result::Result<$crate::mlu::mlua::Value<'lua>, $crate::mlu::mlua::Error> {
+        impl<'lua> $crate::mlu::mlua::IntoLua<'lua> for $type_name {
+            fn into_lua(self, lua: &'lua $crate::mlu::mlua::Lua) -> ::std::result::Result<$crate::mlu::mlua::Value<'lua>, $crate::mlu::mlua::Error> {
                 match self {
-                    $($type_name::$sub_types(x) => x.to_lua(lua),)*
+                    $($type_name::$sub_types(x) => x.into_lua(lua),)*
                 }
             }
         }

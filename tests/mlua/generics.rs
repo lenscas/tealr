@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use mlua::ToLua;
 use tealr::{
     create_generic_mlua,
     mlu::{mlua::FromLua, TealData, TealDataMethods, TypedFunction, UserData},
@@ -18,7 +17,8 @@ impl TealData for Example {
         methods.add_method(
             "generic_function_callback",
             |lua, _, fun: TypedFunction<X, X>| {
-                let param = X::from_lua("nice!".to_lua(lua)?, lua)?;
+                use mlua::IntoLua;
+                let param = X::from_lua("nice!".into_lua(lua)?, lua)?;
                 let res = fun.call(param)?;
                 Ok(res)
             },

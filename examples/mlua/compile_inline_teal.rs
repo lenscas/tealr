@@ -24,7 +24,7 @@ return add(1,2)
 
     let result: String = lua
         .load(code)
-        .set_name("compile inline teal example")?
+        .set_name("compile inline teal example")
         .eval()?;
     println!("output:{}", result);
 

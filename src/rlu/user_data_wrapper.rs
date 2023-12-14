@@ -73,46 +73,47 @@ where
     #[inline(always)]
     fn add_method<S, A, R, M>(&mut self, name: &S, method: M)
     where
-        S: ?Sized + AsRef<[u8]>,
+        S: ?Sized + AsRef<str>,
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         M: 'static + Send + Fn(Context<'lua>, &T, A) -> Result<R>,
     {
-        self.copy_docs(name.as_ref());
-        self.cont.add_method(name, method)
+        self.copy_docs(name.as_ref().as_bytes());
+        self.cont.add_method(name.as_ref().as_bytes(), method)
     }
     #[inline(always)]
     fn add_method_mut<S, A, R, M>(&mut self, name: &S, method: M)
     where
-        S: ?Sized + AsRef<[u8]>,
+        S: ?Sized + AsRef<str>,
         A: FromLuaMulti<'lua>,
         R: ToLuaMulti<'lua>,
         M: 'static + Send + FnMut(Context<'lua>, &mut T, A) -> Result<R>,
     {
-        self.copy_docs(name.as_ref());
-        self.cont.add_method_mut(name, method)
+        self.copy_docs(name.as_ref().as_bytes());
+        self.cont.add_method_mut(name.as_ref().as_bytes(), method)
     }
     #[inline(always)]
     fn add_function<S, A, R, F>(&mut self, name: &S, function: F)
     where
-        S: ?Sized + AsRef<[u8]>,
+        S: ?Sized + AsRef<str>,
         A: FromLuaMulti<'lua>,
         R: ToLuaMulti<'lua>,
         F: 'static + Send + Fn(Context<'lua>, A) -> Result<R>,
     {
-        self.copy_docs(name.as_ref());
-        self.cont.add_function(name, function)
+        self.copy_docs(name.as_ref().as_bytes());
+        self.cont.add_function(name.as_ref().as_bytes(), function)
     }
     #[inline(always)]
     fn add_function_mut<S, A, R, F>(&mut self, name: &S, function: F)
     where
-        S: ?Sized + AsRef<[u8]>,
+        S: ?Sized + AsRef<str>,
         A: FromLuaMulti<'lua>,
         R: ToLuaMulti<'lua>,
         F: 'static + Send + FnMut(Context<'lua>, A) -> Result<R>,
     {
-        self.copy_docs(name.as_ref());
-        self.cont.add_function_mut(name, function)
+        self.copy_docs(name.as_ref().as_bytes());
+        self.cont
+            .add_function_mut(name.as_ref().as_bytes(), function)
     }
     #[inline(always)]
     fn add_meta_method<A, R, M>(&mut self, meta: MetaMethod, method: M)

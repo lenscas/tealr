@@ -70,6 +70,19 @@ Mlua:
 use tealr::ToTypename;
 #[derive(Clone, tealr::mlu::UserData, ToTypename)]
 struct ExampleMlua {}
+impl<'lua> FromLua<'lua> for ExampleMlua {
+    fn from_lua(value: mlua::prelude::LuaValue<'lua>, _: &'lua Lua) -> Result<Self> {
+        value
+            .as_userdata()
+            .map(|x| x.take())
+            .unwrap_or(Err(mlua::Error::FromLuaConversionError {
+                from: value.type_name(),
+                to: "Example",
+                message: None,
+            }))
+    }
+}
+
 impl tealr::mlu::TealData for ExampleMlua {
     //implement your methods/functions
     fn add_methods<'lua, T: tealr::mlu::TealDataMethods<'lua, Self>>(methods: &mut T) {
@@ -136,7 +149,7 @@ To go along with typed functions, tealr also comes with a way to mimic generics.
 In the following example we take a generic function and call it, returning whatever it returned back to lua. Thanks to the use of generics, it i clear that the return type of the method is equal to the return type of the lambda. If `lua::Value` was used instead this was not clear.
 
 ```rust ignore
-use mlua::ToLua;
+use mlua::IntoLua;
 use tealr::{
     create_generic_mlua,
     mlu::{mlua::FromLua, TealData, TealDataMethods, TypedFunction,UserData},
@@ -147,6 +160,7 @@ create_generic_mlua!(X);
 
 #[derive(Clone, UserData, ToTypename)]
 struct Example {}
+
 impl TealData for Example {
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method(
@@ -157,6 +171,21 @@ impl TealData for Example {
         );
     }
 }
+
+impl<'lua> FromLua<'lua> for Example {
+    fn from_lua(value: mlua::prelude::LuaValue<'lua>, _: &'lua Lua) -> Result<Self> {
+        value
+            .as_userdata()
+            .map(|x| x.take())
+            .unwrap_or(Err(mlua::Error::FromLuaConversionError {
+                from: value.type_name(),
+                to: "Example",
+                message: None,
+            }))
+    }
+}
+
+
 ```
 
 For rlua, all you have to do is replace `mlua` for `rlua`
@@ -201,7 +230,7 @@ let compiler = embed_compiler!("v0.13.1");
 {
     let code = compiler("example/basic_teal_file");
     let lua = tealr::mlu::mlua::Lua::new();
-    let res: u8 = lua.load(&code).set_name("embedded_compiler")?.eval()?;
+    let res: u8 = lua.load(&code).set_name("embedded_compiler").eval()?;
 };
 Ok::<(), Box<dyn std::error::Error>>(())
 ```

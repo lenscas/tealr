@@ -5,7 +5,7 @@ The macro will also add documentation to the [TypeBody](crate::TypeBody) impleme
 
 # Structs
 
-Structs implement the [FromLua](mlua::FromLua) and [ToLua](mlua::ToLua) directly.
+Structs implement the [FromLua](mlua::FromLua) and [ToLua](mlua::IntoLua) directly.
 These trait implementations convert the struct directly to and from a table. This table contains every filed INCLUDING private fields.
 
 ## Attributes
@@ -67,7 +67,7 @@ let code = "
     instance.field1.test_field = \"new_value\"
     return instance
 ";
-let res: Example2 = lua.load(code).set_name("MluaToFromLuaStruct").unwrap().eval().unwrap();
+let res: Example2 = lua.load(code).set_name("MluaToFromLuaStruct").eval().unwrap();
 assert_eq!(res.field1,"new_value");
 
 ```
@@ -186,6 +186,6 @@ let code = "
     return ExampleCreator.NewDoubleInnerValueFrom(\"some_new_value\",2)
 
 ";
-let res: Example = lua.load(code).set_name("MluaToFromLuaEnum").unwrap().eval().unwrap();
+let res: Example = lua.load(code).set_name("MluaToFromLuaEnum").eval().unwrap();
 assert!(matches!{Example::DoubleInnerValue("some_new_value".to_string(),5),res});
 ```

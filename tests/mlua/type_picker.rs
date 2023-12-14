@@ -1,4 +1,4 @@
-use mlua::{Lua, ToLua};
+use mlua::{IntoLua, Lua};
 use tealr::{
     create_union_mlua,
     mlu::{mlua::FromLua, TealData, TealDataMethods, TypedFunction, UserData},
@@ -15,7 +15,7 @@ impl TealData for Example {
     //implement your methods/functions
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method("limited_callback", |lua, _, fun: TypedFunction<X, X>| {
-            let param = X::from_lua("nice!".to_lua(lua)?, lua)?;
+            let param = X::from_lua("nice!".into_lua(lua)?, lua)?;
             let res = fun.call(param)?;
             Ok(res)
         });
@@ -49,11 +49,6 @@ fn test_limited() {
     let code = "
     return test:limited_simple(true)
     ";
-    let x: bool = lua
-        .load(code)
-        .set_name("test_limited_lua")
-        .unwrap()
-        .eval()
-        .unwrap();
+    let x: bool = lua.load(code).set_name("test_limited_lua").eval().unwrap();
     assert!(x);
 }

@@ -32,8 +32,8 @@ macro_rules! create_generic_mlua {
                 Ok(value.into())
             }
         }
-        impl<'lua> $crate::mlu::mlua::ToLua<'lua> for $type_name<'lua> {
-            fn to_lua(self, _: &'lua $crate::mlu::mlua::Lua) -> ::std::result::Result<$crate::mlu::mlua::Value<'lua>, $crate::mlu::mlua::Error> {
+        impl<'lua> $crate::mlu::mlua::IntoLua<'lua> for $type_name<'lua> {
+            fn into_lua(self, _: &'lua $crate::mlu::mlua::Lua) -> ::std::result::Result<$crate::mlu::mlua::Value<'lua>, $crate::mlu::mlua::Error> {
                 Ok(self.into())
             }
         }

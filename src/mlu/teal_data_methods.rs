@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use mlua::{FromLuaMulti, Lua, MetaMethod, Result, ToLua, ToLuaMulti};
+use mlua::{FromLuaMulti, IntoLua as ToLua, IntoLuaMulti as ToLuaMulti, Lua, MetaMethod, Result};
 
 use crate::{TealMultiValue, ToTypename};
 
@@ -18,33 +18,33 @@ pub trait TealDataMethods<'lua, T: ToTypename> {
     ///Exposes a method to lua
     fn add_method<S, A, R, M>(&mut self, name: &S, method: M)
     where
-        S: ?Sized + AsRef<[u8]>,
+        S: ?Sized + AsRef<str>,
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         M: 'static + MaybeSend + Fn(&'lua Lua, &T, A) -> Result<R>;
     ///Exposes a method to lua that has a mutable reference to Self
     fn add_method_mut<S, A, R, M>(&mut self, name: &S, method: M)
     where
-        S: ?Sized + AsRef<[u8]>,
+        S: ?Sized + AsRef<str>,
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         M: 'static + MaybeSend + FnMut(&'lua Lua, &mut T, A) -> Result<R>;
 
     #[cfg(feature = "mlua_async")]
     ///exposes an async method to lua
-    fn add_async_method<S: ?Sized, A, R, M, MR>(&mut self, name: &S, method: M)
+    fn add_async_method<'s, S: ?Sized + AsRef<str>, A, R, M, MR>(&mut self, name: &S, method: M)
     where
-        T: Clone,
-        S: AsRef<[u8]>,
+        'lua: 's,
+        T: 'static,
+        M: Fn(&'lua Lua, &'s T, A) -> MR + MaybeSend + 'static,
         A: FromLuaMulti<'lua> + TealMultiValue,
-        R: ToLuaMulti<'lua> + TealMultiValue,
-        M: 'static + MaybeSend + Fn(&'lua Lua, T, A) -> MR,
-        MR: 'lua + std::future::Future<Output = Result<R>>;
+        MR: std::future::Future<Output = Result<R>> + 's,
+        R: ToLuaMulti<'lua> + TealMultiValue;
 
     ///Exposes a function to lua (its a method that does not take Self)
     fn add_function<S, A, R, F>(&mut self, name: &S, function: F)
     where
-        S: ?Sized + AsRef<[u8]>,
+        S: ?Sized + AsRef<str>,
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         F: 'static + MaybeSend + Fn(&'lua Lua, A) -> Result<R>;
@@ -52,7 +52,7 @@ pub trait TealDataMethods<'lua, T: ToTypename> {
     ///Exposes a mutable function to lua
     fn add_function_mut<S, A, R, F>(&mut self, name: &S, function: F)
     where
-        S: ?Sized + AsRef<[u8]>,
+        S: ?Sized + AsRef<str>,
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         F: 'static + MaybeSend + FnMut(&'lua Lua, A) -> Result<R>;
@@ -61,7 +61,7 @@ pub trait TealDataMethods<'lua, T: ToTypename> {
     ///exposes an async function to lua
     fn add_async_function<S: ?Sized, A, R, F, FR>(&mut self, name: &S, function: F)
     where
-        S: AsRef<[u8]>,
+        S: AsRef<str>,
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         F: 'static + MaybeSend + Fn(&'lua Lua, A) -> FR,

@@ -11,9 +11,7 @@ repository = "https://github.com/lenscas/tealr/"
 version = "0.9.0-alpha4"
 
 [workspace]
-members = [
-  "tealr_derive",
-]
+members = ["tealr_derive"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
@@ -48,13 +46,13 @@ rlua_system-lua53 = ["rlua/system-lua53"]
 rlua_system-lua54 = ["rlua/system-lua54"]
 
 [dependencies]
-bstr = {version = "0.2", default_features = false, features = ["std"]}
+bstr = { version = "0.2", default_features = false, features = ["std"] }
 itertools = "0.10.3"
-mlua = {version = "0.8.1", optional = true, default_features = false}
-rlua = {version = "0.19.2", optional = true, default_features = false}
-serde = {version = "1.0.136", features = ["derive"]}
+mlua = { version = "0.9.2", optional = true, default_features = false }
+rlua = { version = "0.19.7", optional = true, default_features = false }
+serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.91"
-tealr_derive = {version = "0.9.0-alpha4", optional = true, path = "./tealr_derive"}
+tealr_derive = { version = "0.9.0-alpha4", optional = true, path = "./tealr_derive" }
 
 # Rlua tests
 [[test]]
@@ -207,5 +205,13 @@ path = "examples/mlua/named_parameters.rs"
 required-features = ["mlua"]
 
 [package.metadata.docs.rs]
-features = ["mlua", "rlua", "rlua_builtin-lua54", "mlua_lua54", "mlua_vendored", "mlua_async", "mlua_serialize"]
+features = [
+  "mlua",
+  "rlua",
+  "rlua_builtin-lua54",
+  "mlua_lua54",
+  "mlua_vendored",
+  "mlua_async",
+  "mlua_serialize",
+]
 rustdoc-args = ["--cfg", "docsrs"]

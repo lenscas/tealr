@@ -43,6 +43,6 @@ fn main() -> Result<()> {
     let globals = lua.globals();
     globals.set("test", Example {})?;
     let code = "test:example_method(\"field_1 is a string\", 3)";
-    lua.load(code).set_name("test?")?.eval()?;
+    lua.load(code).set_name("test?").eval()?;
     Ok(())
 }
