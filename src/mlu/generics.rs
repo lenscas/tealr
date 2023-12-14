@@ -53,7 +53,7 @@ macro_rules! create_generic_mlua {
                     UserData(x) => $type_name::UserData(x),
                     Error(x) => $type_name::Error(x),
                     #[cfg(feature = "mlua_luau")]
-                    Vector(x,y,z) => $type_name::Vector(x,y,z)
+                    Vector(vec) => $type_name::Vector(vec.x(),vec.y(),vec.z())
                 }
             }
         }
@@ -73,7 +73,7 @@ macro_rules! create_generic_mlua {
                     UserData(x) => $crate::mlu::mlua::Value::UserData(x),
                     Error(x) => $crate::mlu::mlua::Value::Error(x),
                     #[cfg(feature = "mlua_luau")]
-                    Vector(x,y,z) => $crate::mlu::mlua::Value::Vector(x,y,z)
+                    Vector(x,y,z) => $crate::mlu::mlua::Value::Vector($crate::mlu::mlua::Vector::new(x,y,z))
                 }
             }
         }
@@ -98,7 +98,7 @@ macro_rules! create_generic_mlua {
                     ($type_name::Thread(a), $crate::mlu::mlua::Value::Thread(b)) => a == b,
                     ($type_name::UserData(a), $crate::mlu::mlua::Value::UserData(b)) => a == b,
                     #[cfg(feature = "mlua_luau")]
-                    ($type_name::Vector(x,y,z), $crate::mlu::mlua::Value::Vector(x2,y2,z2)) => x == x2 && y == y2 && z == z2,
+                    ($type_name::Vector(x,y,z), $crate::mlu::mlua::Value::Vector(vec)) => *x == vec.x() && *y == vec.y() && *z == vec.z(),
                     _ => false,
                 }
             }
