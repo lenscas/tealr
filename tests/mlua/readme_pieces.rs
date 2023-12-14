@@ -1,6 +1,9 @@
 use tealr::{
     compile_inline_teal, create_generic_mlua, create_union_mlua, embed_compiler,
-    mlu::{TealData, TealDataMethods, TypedFunction, UserData},
+    mlu::{
+        mlua::{FromLua, Lua, Result},
+        TealData, TealDataMethods, TypedFunction, UserData,
+    },
     ToTypename, TypeWalker,
 };
 
@@ -10,6 +13,19 @@ fn test() {
 }
 #[derive(Clone, UserData, ToTypename)]
 struct ExampleMlua {}
+impl<'lua> FromLua<'lua> for ExampleMlua {
+    fn from_lua(value: mlua::prelude::LuaValue<'lua>, _: &'lua Lua) -> Result<Self> {
+        value
+            .as_userdata()
+            .map(|x| x.take())
+            .unwrap_or(Err(mlua::Error::FromLuaConversionError {
+                from: value.type_name(),
+                to: "Example",
+                message: None,
+            }))
+    }
+}
+
 impl tealr::mlu::TealData for ExampleMlua {
     //implement your methods/functions
     fn add_methods<'lua, T: tealr::mlu::TealDataMethods<'lua, Self>>(methods: &mut T) {
@@ -36,7 +52,18 @@ create_generic_mlua!(X);
 struct Example {
     example: u32,
 }
-
+impl<'lua> FromLua<'lua> for Example {
+    fn from_lua(value: mlua::prelude::LuaValue<'lua>, _: &'lua Lua) -> Result<Self> {
+        value
+            .as_userdata()
+            .map(|x| x.take())
+            .unwrap_or(Err(mlua::Error::FromLuaConversionError {
+                from: value.type_name(),
+                to: "Example",
+                message: None,
+            }))
+    }
+}
 impl TealData for Example {
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method(
@@ -53,7 +80,7 @@ impl TealData for Example {
     }
 }
 
-fn pieces() -> Result<(), mlua::Error> {
+fn pieces() -> Result<()> {
     //the functionality of these pieces of code are already being tested at other places
     //This is just to make sure the examples in the readme keep working
     if false {
@@ -70,7 +97,7 @@ fn pieces() -> Result<(), mlua::Error> {
 
         let code = compiler("example/basic_teal_file");
         let lua = tealr::mlu::mlua::Lua::new();
-        let _res: u8 = lua.load(&code).set_name("embedded_compiler")?.eval()?;
+        let _res: u8 = lua.load(&code).set_name("embedded_compiler").eval()?;
         let add_1 = TypedFunction::<u8, u8>::from_rust(|_lua, x| Ok(x + 1), &lua)?;
         assert_eq!(add_1.call(2)?, 3);
     }

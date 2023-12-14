@@ -1,4 +1,4 @@
-use mlua::ToLua;
+use mlua::IntoLua;
 use tealr::{
     create_union_mlua,
     mlu::{mlua::FromLua, TealData, TealDataMethods, TypedFunction, UserData},
@@ -15,7 +15,7 @@ impl TealData for Example {
     //implement your methods/functions
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
         methods.add_method("limited_callback", |lua, _, fun: TypedFunction<X, X>| {
-            let param = X::from_lua("nice!".to_lua(lua)?, lua)?;
+            let param = X::from_lua("nice!".into_lua(lua)?, lua)?;
             let res = fun.call(param)?;
             Ok(res)
         });

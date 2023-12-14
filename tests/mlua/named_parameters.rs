@@ -1,12 +1,24 @@
 use tealr::{
     mlu::{
-        mlua::{Lua, Result},
+        mlua::{FromLua, Lua, Result},
         TealData, TealDataMethods, UserData,
     },
     ToTypename, TypeWalker,
 };
 #[derive(Clone, UserData, ToTypename)]
 struct Example {}
+impl<'lua> FromLua<'lua> for Example {
+    fn from_lua(value: mlua::prelude::LuaValue<'lua>, _: &'lua Lua) -> Result<Self> {
+        value
+            .as_userdata()
+            .map(|x| x.take())
+            .unwrap_or(Err(mlua::Error::FromLuaConversionError {
+                from: value.type_name(),
+                to: "Example",
+                message: None,
+            }))
+    }
+}
 
 impl TealData for Example {
     fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
@@ -45,7 +57,7 @@ fn main() -> Result<()> {
     let globals = lua.globals();
     globals.set("test", Example {})?;
     let code = "return test:example_method(\"field_1 is a string\", 3)";
-    let (field1, field2): (String, i64) = lua.load(code).set_name("test?")?.eval()?;
+    let (field1, field2): (String, i64) = lua.load(code).set_name("test?").eval()?;
     assert_eq!(field1, "field_1 is a string");
     assert_eq!(field2, 3);
     Ok(())

@@ -1,3 +1,4 @@
+use mlua::FromLua;
 use tealr::{
     mlu::{
         mlua::{Lua, Result},
@@ -15,6 +16,19 @@ use tealr::{
 #[derive(Clone, UserData, ToTypename)]
 struct Example {
     float: f32,
+}
+
+impl<'lua> FromLua<'lua> for Example {
+    fn from_lua(value: mlua::prelude::LuaValue<'lua>, _: &'lua Lua) -> Result<Self> {
+        value
+            .as_userdata()
+            .map(|x| x.take())
+            .unwrap_or(Err(mlua::Error::FromLuaConversionError {
+                from: value.type_name(),
+                to: "Example",
+                message: None,
+            }))
+    }
 }
 
 //now, implement TealData. This tells rlua what methods are available and tealr what the types are
@@ -88,6 +102,6 @@ print(\" Calling from global `Example` :\")
 print(Example.example_static_field)
 print(Example.example_function({}))
     ";
-    lua.load(code).set_name("test?")?.eval()?;
+    lua.load(code).set_name("test?").eval()?;
     Ok(())
 }

@@ -15,14 +15,14 @@ pub trait TealDataMethods<'lua, T> {
     ///Exposes a method to lua
     fn add_method<S, A, R, M>(&mut self, name: &S, method: M)
     where
-        S: ?Sized + AsRef<[u8]>,
+        S: ?Sized + AsRef<str>,
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         M: 'static + Send + Fn(Context<'lua>, &T, A) -> Result<R>;
     ///Exposes a method to lua that has a mutable reference to Self
     fn add_method_mut<S, A, R, M>(&mut self, name: &S, method: M)
     where
-        S: ?Sized + AsRef<[u8]>,
+        S: ?Sized + AsRef<str>,
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         M: 'static + Send + FnMut(Context<'lua>, &mut T, A) -> Result<R>;
@@ -30,7 +30,7 @@ pub trait TealDataMethods<'lua, T> {
     ///Exposes a function to lua (its a method that does not take Self)
     fn add_function<S, A, R, F>(&mut self, name: &S, function: F)
     where
-        S: ?Sized + AsRef<[u8]>,
+        S: ?Sized + AsRef<str>,
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         F: 'static + Send + Fn(Context<'lua>, A) -> Result<R>;
@@ -38,7 +38,7 @@ pub trait TealDataMethods<'lua, T> {
     ///Exposes a mutable function to lua
     fn add_function_mut<S, A, R, F>(&mut self, name: &S, function: F)
     where
-        S: ?Sized + AsRef<[u8]>,
+        S: ?Sized + AsRef<str>,
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         F: 'static + Send + FnMut(Context<'lua>, A) -> Result<R>;

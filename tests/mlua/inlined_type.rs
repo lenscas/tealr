@@ -1,5 +1,8 @@
 use tealr::{
-    mlu::{TealData, TealDataMethods, UserData},
+    mlu::{
+        mlua::{FromLua, Lua},
+        TealData, TealDataMethods, UserData,
+    },
     ToTypename, TypeWalker,
 };
 //this example shows how the new traits allow you to generate the .d.tl file
@@ -14,6 +17,21 @@ use tealr::{
 //The clone is only needed because one of the example functions has it as a parameter
 #[derive(Clone, UserData, ToTypename)]
 struct Example {}
+impl<'lua> FromLua<'lua> for Example {
+    fn from_lua(
+        value: mlua::prelude::LuaValue<'lua>,
+        _: &'lua Lua,
+    ) -> tealr::mlu::mlua::Result<Self> {
+        value
+            .as_userdata()
+            .map(|x| x.take())
+            .unwrap_or(Err(mlua::Error::FromLuaConversionError {
+                from: value.type_name(),
+                to: "Example",
+                message: None,
+            }))
+    }
+}
 
 //now, implement TealData. This tells rlua what methods are available and tealr what the types are
 impl TealData for Example {

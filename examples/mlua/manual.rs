@@ -1,6 +1,6 @@
 use tealr::{
     mlu::{
-        mlua::{Lua, Result, UserData, UserDataMethods},
+        mlua::{FromLua, Lua, Result, UserData, UserDataMethods},
         TealData, TealDataMethods, UserDataWrapper,
     },
     ToTypename, TypeBody, TypeWalker,
@@ -13,6 +13,18 @@ use tealr::{
 //First, create the struct you want to export to lua.
 #[derive(Clone, Copy)]
 struct Example(u32);
+impl<'lua> FromLua<'lua> for Example {
+    fn from_lua(value: mlua::prelude::LuaValue<'lua>, _: &'lua Lua) -> Result<Self> {
+        value
+            .as_userdata()
+            .map(|x| x.take())
+            .unwrap_or(Err(mlua::Error::FromLuaConversionError {
+                from: value.type_name(),
+                to: "Example",
+                message: None,
+            }))
+    }
+}
 
 //now, implement TealData. This tells rlua what methods are available and tealr what the types are
 impl TealData for Example {
@@ -90,6 +102,6 @@ print(\"Example field\", test.example_field)
 test.example_field = 2
 print(\"After modifying\",test.example_field)
         ";
-    lua.load(code).set_name("test?")?.eval()?;
+    lua.load(code).set_name("test?").eval()?;
     Ok(())
 }

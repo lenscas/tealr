@@ -43,10 +43,10 @@ impl ExportedFunction {
     ///Creates an ExportedFunction with the given name, Parameters and return value
     ///```no_run
     ///# use tealr::ExportedFunction;
-    ///ExportedFunction::new::<(String,String),String,_>(b"concat",false,None);
+    ///ExportedFunction::new::<(String,String),String,_>("concat",false,None);
     ///```
     #[cfg(any(feature = "rlua", feature = "mlua"))]
-    pub fn new<A: crate::TealMultiValue, R: crate::TealMultiValue, S: AsRef<[u8]>>(
+    pub fn new<A: crate::TealMultiValue, R: crate::TealMultiValue, S: AsRef<str>>(
         name: S,
         is_meta_method: bool,
         extra_self: Option<Type>,
@@ -72,7 +72,7 @@ impl ExportedFunction {
         let signature = crate::new_type_to_old(type_to_generate, false);
         #[allow(deprecated)]
         Self {
-            name: name.as_ref().to_vec().into(),
+            name: name.as_ref().as_bytes().to_vec().into(),
             signature,
             is_meta_method,
             params,

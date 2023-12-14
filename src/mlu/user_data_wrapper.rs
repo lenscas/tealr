@@ -1,6 +1,7 @@
 use bstr::ByteVec;
 use mlua::{
-    FromLuaMulti, Lua, MetaMethod, Result, ToLuaMulti, UserData, UserDataFields, UserDataMethods,
+    FromLuaMulti, IntoLuaMulti as ToLuaMulti, Lua, MetaMethod, Result, UserData, UserDataFields,
+    UserDataMethods,
 };
 use std::{collections::HashMap, marker::PhantomData};
 
@@ -100,7 +101,7 @@ where
     T: UserData,
     //Container: UserDataMethods<'lua, T>,
 {
-    fn copy_method_docs<A, R>(&mut self, to: &[u8], self_type: bool)
+    fn copy_method_docs<A, R>(&mut self, to: &str, self_type: bool)
     where
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
@@ -112,10 +113,10 @@ where
             .unwrap_or_default();
         let docs = generated + "\n\ndocs:\n" + &self.next_docs.take().unwrap_or_default();
         let documentation = &mut self.documentation;
-        documentation.insert(to.to_owned(), docs);
+        documentation.insert(to.as_bytes().to_owned(), docs);
     }
-    fn copy_field_docs<F: ToTypename>(&mut self, name: &[u8]) {
-        let name = name.to_vec();
+    fn copy_field_docs<F: ToTypename>(&mut self, name: &str) {
+        let name = name.as_bytes().to_vec();
         let documentation = &mut self.documentation;
         let mut current_doc = match documentation.remove(&name) {
             Some(x) => x,
@@ -148,7 +149,7 @@ where
     #[inline(always)]
     fn add_method<S, A, R, M>(&mut self, name: &S, method: M)
     where
-        S: ?Sized + AsRef<[u8]>,
+        S: ?Sized + AsRef<str>,
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         M: 'static + MaybeSend + Fn(&'lua Lua, &T, A) -> Result<R>,
@@ -159,7 +160,7 @@ where
     #[inline(always)]
     fn add_method_mut<S, A, R, M>(&mut self, name: &S, method: M)
     where
-        S: ?Sized + AsRef<[u8]>,
+        S: ?Sized + AsRef<str>,
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         M: 'static + MaybeSend + FnMut(&'lua Lua, &mut T, A) -> Result<R>,
@@ -170,7 +171,7 @@ where
     #[inline(always)]
     fn add_function<S, A, R, F>(&mut self, name: &S, function: F)
     where
-        S: ?Sized + AsRef<[u8]>,
+        S: ?Sized + AsRef<str>,
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         F: 'static + MaybeSend + Fn(&'lua Lua, A) -> Result<R>,
@@ -181,7 +182,7 @@ where
     #[inline(always)]
     fn add_function_mut<S, A, R, F>(&mut self, name: &S, function: F)
     where
-        S: ?Sized + AsRef<[u8]>,
+        S: ?Sized + AsRef<str>,
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         F: 'static + MaybeSend + FnMut(&'lua Lua, A) -> Result<R>,
@@ -196,7 +197,7 @@ where
         R: ToLuaMulti<'lua> + TealMultiValue,
         M: 'static + MaybeSend + Fn(&'lua Lua, &T, A) -> Result<R>,
     {
-        self.copy_method_docs::<A, R>(meta.name().as_bytes(), true);
+        self.copy_method_docs::<A, R>(meta.name(), true);
         self.cont.add_meta_method(meta, method)
     }
     #[inline(always)]
@@ -206,7 +207,7 @@ where
         R: ToLuaMulti<'lua> + TealMultiValue,
         M: 'static + MaybeSend + FnMut(&'lua Lua, &mut T, A) -> Result<R>,
     {
-        self.copy_method_docs::<A, R>(meta.name().as_bytes(), true);
+        self.copy_method_docs::<A, R>(meta.name(), true);
         self.cont.add_meta_method_mut(meta, method)
     }
     #[inline(always)]
@@ -216,7 +217,7 @@ where
         R: ToLuaMulti<'lua> + TealMultiValue,
         F: 'static + MaybeSend + Fn(&'lua Lua, A) -> Result<R>,
     {
-        self.copy_method_docs::<A, R>(meta.name().as_bytes(), false);
+        self.copy_method_docs::<A, R>(meta.name(), false);
         self.cont.add_meta_function(meta, function)
     }
     #[inline(always)]
@@ -226,20 +227,20 @@ where
         R: ToLuaMulti<'lua> + TealMultiValue,
         F: 'static + MaybeSend + FnMut(&'lua Lua, A) -> Result<R>,
     {
-        self.copy_method_docs::<A, R>(meta.name().as_bytes(), false);
+        self.copy_method_docs::<A, R>(meta.name(), false);
         self.cont.add_meta_function_mut(meta, function)
     }
 
     #[cfg(feature = "mlua_async")]
     #[inline(always)]
-    fn add_async_method<S: ?Sized, A, R, M, MR>(&mut self, name: &S, method: M)
+    fn add_async_method<'s, S: ?Sized + AsRef<str>, A, R, M, MR>(&mut self, name: &S, method: M)
     where
-        T: Clone,
-        S: AsRef<[u8]>,
+        'lua: 's,
+        T: 'static,
+        M: Fn(&'lua Lua, &'s T, A) -> MR + MaybeSend + 'static,
         A: FromLuaMulti<'lua> + TealMultiValue,
+        MR: std::future::Future<Output = Result<R>> + 's,
         R: ToLuaMulti<'lua> + TealMultiValue,
-        M: 'static + MaybeSend + Fn(&'lua Lua, T, A) -> MR,
-        MR: 'lua + std::future::Future<Output = Result<R>>,
     {
         self.copy_method_docs::<A, R>(name.as_ref(), true);
         self.cont.add_async_method(name, method)
@@ -249,7 +250,7 @@ where
     #[inline(always)]
     fn add_async_function<S: ?Sized, A, R, F, FR>(&mut self, name: &S, function: F)
     where
-        S: AsRef<[u8]>,
+        S: AsRef<str>,
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         F: 'static + MaybeSend + Fn(&'lua Lua, A) -> FR,
@@ -291,7 +292,7 @@ where
                 }
             };
 
-            lua.create_string(&doc)
+            lua.create_string(doc)
         })
     }
 
@@ -310,8 +311,8 @@ where
 {
     fn add_field_method_get<S, R, M>(&mut self, name: &S, method: M)
     where
-        S: AsRef<[u8]> + ?Sized,
-        R: mlua::ToLua<'lua> + ToTypename,
+        S: AsRef<str> + ?Sized,
+        R: mlua::IntoLua<'lua> + ToTypename,
         M: 'static + MaybeSend + Fn(&'lua Lua, &T) -> mlua::Result<R>,
     {
         self.copy_field_docs::<R>(name.as_ref());
@@ -320,7 +321,7 @@ where
 
     fn add_field_method_set<S, A, M>(&mut self, name: &S, method: M)
     where
-        S: AsRef<[u8]> + ?Sized,
+        S: AsRef<str> + ?Sized,
         A: mlua::FromLua<'lua> + ToTypename,
         M: 'static + MaybeSend + FnMut(&'lua Lua, &mut T, A) -> mlua::Result<()>,
     {
@@ -330,8 +331,8 @@ where
 
     fn add_field_function_get<S, R, F>(&mut self, name: &S, function: F)
     where
-        S: AsRef<[u8]> + ?Sized,
-        R: mlua::ToLua<'lua> + ToTypename,
+        S: AsRef<str> + ?Sized,
+        R: mlua::IntoLua<'lua> + ToTypename,
         F: 'static + MaybeSend + Fn(&'lua Lua, mlua::AnyUserData<'lua>) -> mlua::Result<R>,
     {
         self.copy_field_docs::<R>(name.as_ref());
@@ -340,7 +341,7 @@ where
 
     fn add_field_function_set<S, A, F>(&mut self, name: &S, function: F)
     where
-        S: AsRef<[u8]> + ?Sized,
+        S: AsRef<str> + ?Sized,
         A: mlua::FromLua<'lua> + ToTypename,
         F: 'static + MaybeSend + FnMut(&'lua Lua, mlua::AnyUserData<'lua>, A) -> mlua::Result<()>,
     {
@@ -351,9 +352,9 @@ where
     fn add_meta_field_with<R, F>(&mut self, meta: MetaMethod, f: F)
     where
         F: 'static + MaybeSend + Fn(&'lua Lua) -> mlua::Result<R>,
-        R: mlua::ToLua<'lua> + ToTypename,
+        R: mlua::IntoLua<'lua> + ToTypename,
     {
-        self.copy_field_docs::<R>(meta.name().as_bytes());
+        self.copy_field_docs::<R>(meta.name());
         self.cont.add_meta_field_with(meta, f)
     }
 

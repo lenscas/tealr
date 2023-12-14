@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use mlua::{FromLua, FromLuaMulti, Function, Lua, ToLua, ToLuaMulti, Value};
+use mlua::{FromLua, FromLuaMulti, Function, IntoLua, IntoLuaMulti, Lua, Value};
 
 use crate::{TealMultiValue, ToTypename};
 
@@ -30,13 +30,13 @@ where
     }
 }
 
-impl<'lua, Params, Response> ToLua<'lua> for TypedFunction<'lua, Params, Response>
+impl<'lua, Params, Response> IntoLua<'lua> for TypedFunction<'lua, Params, Response>
 where
     Params: TealMultiValue,
     Response: TealMultiValue,
 {
     #[allow(clippy::wrong_self_convention)]
-    fn to_lua(self, _: &'lua Lua) -> mlua::Result<Value<'lua>> {
+    fn into_lua(self, _: &'lua Lua) -> mlua::Result<Value<'lua>> {
         Ok(Value::Function(self.inner_function))
     }
 }
@@ -54,7 +54,7 @@ where
 }
 impl<'lua, Params, Response> TypedFunction<'lua, Params, Response>
 where
-    Params: ToLuaMulti<'lua> + TealMultiValue,
+    Params: IntoLuaMulti<'lua> + TealMultiValue,
     Response: FromLuaMulti<'lua> + TealMultiValue,
 {
     ///Same as [mlua::Function::call](mlua::Function#method.call). Calls the function with the given parameters.
@@ -91,7 +91,7 @@ where
 impl<'lua, Params, Response> TypedFunction<'lua, Params, Response>
 where
     Params: FromLuaMulti<'lua> + TealMultiValue,
-    Response: ToLuaMulti<'lua> + TealMultiValue,
+    Response: IntoLuaMulti<'lua> + TealMultiValue,
 {
     ///make a typed function directly from a Rust one.
     pub fn from_rust<
@@ -122,7 +122,7 @@ where
 }
 impl<'lua, Params, Response> TypedFunction<'lua, Params, Response>
 where
-    Params: ToLuaMulti<'lua> + TealMultiValue,
+    Params: IntoLuaMulti<'lua> + TealMultiValue,
     Response: TealMultiValue,
 {
     ///call a function without trying to convert it to a rust type.

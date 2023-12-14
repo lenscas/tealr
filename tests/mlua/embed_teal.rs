@@ -6,7 +6,7 @@ fn legacy_syntax() -> mlua::Result<()> {
     let code = compiler("tests/mlua/test_embedded_compiler");
     let res: u8 = mlua::Lua::new()
         .load(&code)
-        .set_name("embedded_compiler_legacy")?
+        .set_name("embedded_compiler_legacy")
         .eval()?;
     assert_eq!(res, 5);
     Ok(())
@@ -17,7 +17,7 @@ fn new_syntax_github() -> mlua::Result<()> {
     let code = compiler("tests/mlua/test_embedded_compiler");
     let res: u8 = mlua::Lua::new()
         .load(&code)
-        .set_name("embedded_compiler_legacy")?
+        .set_name("embedded_compiler_legacy")
         .eval()?;
     assert_eq!(res, 5);
     Ok(())
@@ -29,7 +29,7 @@ fn new_version_luarocks() -> mlua::Result<()> {
     let code = compiler("tests/mlua/test_embedded_compiler");
     let res: u8 = mlua::Lua::new()
         .load(&code)
-        .set_name("embedded_compiler_legacy")?
+        .set_name("embedded_compiler_legacy")
         .eval()?;
     assert_eq!(res, 5);
     Ok(())
@@ -41,7 +41,7 @@ fn new_syntax_from_local_discover() -> mlua::Result<()> {
     let code = compiler("tests/mlua/test_embedded_compiler");
     let res: u8 = mlua::Lua::new()
         .load(&code)
-        .set_name("embedded_compiler_legacy")?
+        .set_name("embedded_compiler_legacy")
         .eval()?;
     assert_eq!(res, 5);
     Ok(())

@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use mlua::{AnyUserData, Error, Lua, ToLua, UserData};
+use mlua::{AnyUserData, Error, IntoLua, Lua, UserData};
 
 use crate::{EnumGenerator, RecordGenerator, ToTypename, Type, TypeBody, TypeName};
 
@@ -83,8 +83,8 @@ impl<T: StaticUserdata + TypeBody + ToTypename> TypeBody for UserDataProxy<'_, T
     }
 }
 
-impl<'lua, T: StaticUserdata> ToLua<'lua> for UserDataProxy<'lua, T> {
-    fn to_lua(self, lua: &'lua Lua) -> mlua::Result<mlua::Value<'lua>> {
-        self.user_data.to_lua(lua)
+impl<'lua, T: StaticUserdata> IntoLua<'lua> for UserDataProxy<'lua, T> {
+    fn into_lua(self, lua: &'lua Lua) -> mlua::Result<mlua::Value<'lua>> {
+        self.user_data.into_lua(lua)
     }
 }

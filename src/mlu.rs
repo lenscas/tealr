@@ -72,7 +72,7 @@ pub(crate) fn get_meta_name(name: mlua::MetaMethod) -> Cow<'static, str> {
         MetaMethod::Close => Cow::Borrowed("__close"),
         #[cfg(feature = "mlua_luau")]
         MetaMethod::Iter => Cow::Borrowed("__iter"),
-        MetaMethod::Custom(x) => Cow::Owned(x),
+        _ => Cow::Borrowed("unknown"),
     }
 }
 

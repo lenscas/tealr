@@ -1,4 +1,4 @@
-use mlua::{AnyUserData, FromLua, Lua, MetaMethod, ToLua};
+use mlua::{AnyUserData, FromLua, IntoLua, Lua, MetaMethod};
 
 use crate::ToTypename;
 
@@ -17,30 +17,30 @@ pub trait TealDataFields<'lua, T: TealData> {
     /// the teal version of [UserDataFields](mlua::UserDataFields::add_field_method_get)
     fn add_field_method_get<S, R, M>(&mut self, name: &S, method: M)
     where
-        S: AsRef<[u8]> + ?Sized,
-        R: ToLua<'lua> + ToTypename,
+        S: AsRef<str> + ?Sized,
+        R: IntoLua<'lua> + ToTypename,
         M: 'static + MaybeSend + Fn(&'lua Lua, &T) -> mlua::Result<R>;
     /// the teal version of [UserDataFields](mlua::UserDataFields::add_field_method_set)
     fn add_field_method_set<S, A, M>(&mut self, name: &S, method: M)
     where
-        S: AsRef<[u8]> + ?Sized,
+        S: AsRef<str> + ?Sized,
         A: FromLua<'lua> + ToTypename,
         M: 'static + MaybeSend + FnMut(&'lua Lua, &mut T, A) -> mlua::Result<()>;
     /// the teal version of [UserDataFields](mlua::UserDataFields::add_field_function_get)
     fn add_field_function_get<S, R, F>(&mut self, name: &S, function: F)
     where
-        S: AsRef<[u8]> + ?Sized,
-        R: ToLua<'lua> + ToTypename,
+        S: AsRef<str> + ?Sized,
+        R: IntoLua<'lua> + ToTypename,
         F: 'static + MaybeSend + Fn(&'lua Lua, AnyUserData<'lua>) -> mlua::Result<R>;
     /// the teal version of [UserDataFields](mlua::UserDataFields::add_field_function_set)
     fn add_field_function_set<S, A, F>(&mut self, name: &S, function: F)
     where
-        S: AsRef<[u8]> + ?Sized,
+        S: AsRef<str> + ?Sized,
         A: FromLua<'lua> + ToTypename,
         F: 'static + MaybeSend + FnMut(&'lua Lua, AnyUserData<'lua>, A) -> mlua::Result<()>;
     /// the teal version of [UserDataFields](mlua::UserDataFields::add_meta_field_with)
     fn add_meta_field_with<R, F>(&mut self, meta: MetaMethod, f: F)
     where
         F: 'static + MaybeSend + Fn(&'lua Lua) -> mlua::Result<R>,
-        R: ToLua<'lua> + ToTypename;
+        R: IntoLua<'lua> + ToTypename;
 }
