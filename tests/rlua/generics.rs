@@ -33,9 +33,14 @@ fn make_generic() {
         .process_type::<Example>()
         .to_json_pretty()
         .unwrap();
-
     let new_value: serde_json::Value = serde_json::from_str(&file_contents).unwrap();
-    let old_value: serde_json::Value =
+    let mut old_value: serde_json::Value =
         serde_json::from_str(include_str!("./generics.json")).unwrap();
+    let mut x = old_value
+        .get_mut("tealr_version_used")
+        .expect("missing tealr_version_used in original");
+    if let serde_json::Value::String(x) = &mut x {
+        *x = tealr::get_tealr_version().to_string();
+    }
     assert_eq!(new_value, old_value);
 }

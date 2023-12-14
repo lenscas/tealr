@@ -72,7 +72,7 @@
                 "Symbol": ")"
               },
               {
-                "Symbol": ":"
+                "Symbol": ":("
               },
               {
                 "Type": {
@@ -85,7 +85,10 @@
                 "Symbol": ")"
               },
               {
-                "Symbol": ":"
+                "Symbol": ")"
+              },
+              {
+                "Symbol": ":("
               },
               {
                 "Type": {
@@ -93,6 +96,9 @@
                   "type_kind": "Generic",
                   "generics": null
                 }
+              },
+              {
+                "Symbol": ")"
               }
             ],
             "params": [
@@ -197,7 +203,7 @@
                 "Symbol": ")"
               },
               {
-                "Symbol": ":"
+                "Symbol": ":("
               },
               {
                 "Symbol": "{"
@@ -211,6 +217,9 @@
               },
               {
                 "Symbol": "}"
+              },
+              {
+                "Symbol": ")"
               }
             ],
             "params": [
@@ -312,7 +321,7 @@
                 "Symbol": ")"
               },
               {
-                "Symbol": ":"
+                "Symbol": ":("
               },
               {
                 "Symbol": "{"
@@ -346,6 +355,9 @@
                   "type_kind": "Builtin",
                   "generics": null
                 }
+              },
+              {
+                "Symbol": ")"
               }
             ],
             "params": [
@@ -453,7 +465,7 @@
                 "Symbol": ")"
               },
               {
-                "Symbol": ":"
+                "Symbol": ":("
               },
               {
                 "Type": {
@@ -461,6 +473,9 @@
                   "type_kind": "Generic",
                   "generics": null
                 }
+              },
+              {
+                "Symbol": ")"
               }
             ],
             "params": [
@@ -535,7 +550,7 @@
                 "Symbol": ")"
               },
               {
-                "Symbol": ":"
+                "Symbol": ":("
               },
               {
                 "Symbol": "{"
@@ -549,6 +564,9 @@
               },
               {
                 "Symbol": "}"
+              },
+              {
+                "Symbol": ")"
               }
             ],
             "params": [

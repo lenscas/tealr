@@ -85,7 +85,7 @@
                 "Symbol": ")"
               },
               {
-                "Symbol": ":"
+                "Symbol": ":("
               },
               {
                 "Symbol": "("
@@ -124,7 +124,10 @@
                 "Symbol": ")"
               },
               {
-                "Symbol": ":"
+                "Symbol": ")"
+              },
+              {
+                "Symbol": ":("
               },
               {
                 "Symbol": "("
@@ -155,6 +158,9 @@
                   "type_kind": "Builtin",
                   "generics": null
                 }
+              },
+              {
+                "Symbol": ")"
               },
               {
                 "Symbol": ")"
@@ -323,7 +329,7 @@
                 "Symbol": ")"
               },
               {
-                "Symbol": ":"
+                "Symbol": ":("
               },
               {
                 "Symbol": "{"
@@ -363,6 +369,9 @@
               },
               {
                 "Symbol": "}"
+              },
+              {
+                "Symbol": ")"
               }
             ],
             "params": [
@@ -493,7 +502,7 @@
                 "Symbol": ")"
               },
               {
-                "Symbol": ":"
+                "Symbol": ":("
               },
               {
                 "Symbol": "("
@@ -524,6 +533,9 @@
                   "type_kind": "Builtin",
                   "generics": null
                 }
+              },
+              {
+                "Symbol": ")"
               },
               {
                 "Symbol": ")"

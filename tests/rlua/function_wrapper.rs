@@ -9,14 +9,14 @@ fn generate_correct_type() {
             #[allow(deprecated)]
             TypedFunction::<String, String>::to_old_type_parts()
         ),
-        "function(string):string"
+        "function(string):(string)"
     );
     assert_eq!(
         type_parts_to_str(
             #[allow(deprecated)]
             TypedFunction::<TypedFunction::<(i8, String), (String, u8)>, f32>::to_old_type_parts()
         ),
-        "function(function(integer , string):string , integer):number"
+        "function(function(integer , string):(string , integer)):(number)"
     );
 }
 #[test]

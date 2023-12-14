@@ -50,7 +50,7 @@ impl InstanceWalker {
             instances: Default::default(),
         }
     }
-    fn add_instance<T: TypeName>(&mut self, name: Cow<'static, str>) {
+    fn add_instance<T: ToTypename>(&mut self, name: Cow<'static, str>) {
         let teal_type = T::get_type_parts_as_global();
         let z = T::get_type_kind();
         let is_external = matches!(z, KindOfType::External);
@@ -60,6 +60,7 @@ impl InstanceWalker {
             teal_type,
             is_external,
             doc,
+            ty: T::to_typename(),
         });
     }
     fn document_instance(&mut self, doc: &'static str) {

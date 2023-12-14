@@ -39,16 +39,21 @@ fn async_fn() -> Result<()> {
         //add more calls to process_type to generate more types in the same file
         .process_type::<Example>()
         //generate the file
-        .generate_global("test")
-        //the name parameter for TealDataMethods::{add_method,add_method_mut,add_function,add_function_mut}
-        //takes anything that can be used as a &[u8]
-        //this is to match the types from UserDataMethods
-        //however, as we turn it back into a string it is technically possible to get an error
-        //in this case, as &str's where used it can't happen though, so the .expect is fine
+        .to_json()
         .expect("oh no :(");
-    assert_eq!(file_contents, "global record test\n\trecord Example\n\t\tuserdata\n\n\t\t-- Pure methods\n\t\texample_method: function(self:Example , integer):integer\n\n\t\t-- Pure functions\n\t\texample_method_mut: function(integer , string):string\n\n\t\texample_function: function({string}):{string} , integer\n\n\t\t-- Mutating functions\n\t\texample_function_mut: function(boolean , Example):boolean , Example\n\n\n\tend\nend\nreturn test");
-    //normally you would now save the file somewhere.
-    println!("{}\n ", file_contents);
+
+    let generated: serde_json::Value = serde_json::from_str(&file_contents).unwrap();
+
+    let mut original: serde_json::Value =
+        serde_json::from_str(include_str!("./async.json")).unwrap();
+    let x = original
+        .get_mut("tealr_version_used")
+        .expect("missing tealr_version_used in original");
+    if let serde_json::Value::String(x) = x {
+        *x = tealr::get_tealr_version().to_string();
+    }
+
+    assert_eq!(generated, original);
 
     //how you pass this type to lua hasn't changed:
     let lua = Lua::new();

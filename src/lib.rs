@@ -351,12 +351,13 @@ pub fn new_type_to_old(a: Type, is_callback: bool) -> Cow<'static, [NamePart]> {
             }
             parts.push(NamePart::symbol(")"));
             if !returns.is_empty() {
-                parts.push(NamePart::symbol(":"));
+                parts.push(NamePart::symbol(":("));
                 for ret in returns {
                     parts.extend(new_type_to_old(ret, true).iter().cloned());
                     parts.push(NamePart::symbol(" , "))
                 }
                 parts.pop();
+                parts.push(NamePart::symbol(")"));
             }
 
             Cow::Owned(parts)

@@ -75,7 +75,7 @@
                 "Symbol": ")"
               },
               {
-                "Symbol": ":"
+                "Symbol": ":("
               },
               {
                 "Type": {
@@ -93,6 +93,9 @@
                   "type_kind": "Builtin",
                   "generics": null
                 }
+              },
+              {
+                "Symbol": ")"
               }
             ],
             "params": [
