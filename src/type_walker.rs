@@ -1,6 +1,6 @@
 use std::{borrow::Cow, string::FromUtf8Error};
 
-use crate::{type_parts_to_str, NamePart, ToTypename, TypeBody, TypeGenerator};
+use crate::{type_parts_to_str, NamePart, ToTypename, Type, TypeBody, TypeGenerator};
 
 type V = Vec<NamePart>;
 
@@ -24,11 +24,13 @@ pub struct GlobalInstance {
         all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
         tealr(remote =  String))]
     pub name: Cow<'static, str>,
-    ///the type
+    ///the type according to the old format
     #[cfg_attr(
         all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
         tealr(remote =  V))]
     pub teal_type: Cow<'static, [NamePart]>,
+    ///the type
+    pub ty: Type,
     ///if the type is external
     pub is_external: bool,
     ///documentation for this global
@@ -180,6 +182,7 @@ impl TypeWalker {
                     teal_type,
                     is_external,
                     doc,
+                    ty: _,
                 } = global;
                 let doc = doc
                     .lines()

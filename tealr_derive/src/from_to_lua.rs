@@ -129,6 +129,7 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
                 .enumerate()
                 .map(|(key, x)| {
                     let ty = &x.0.ty;
+                    let name = format!("param{key}");
                     let key_as_str = Literal::usize_unsuffixed(key);
                     let (set_value, get_value, type_name) =
                         find_tag_with_value("remote", &x.0.attributes)
@@ -154,8 +155,8 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
                                 gen
                                     .fields
                                     .push(
-                                        ::std::convert::From::from((::std::borrow::Cow::Borrowed(stringify!(#key_as_str)).into(),
-                                        <(#type_name) as #type_name_path>::to_old_type_parts()))
+                                        ::std::convert::From::from((::std::borrow::Cow::Borrowed(#name).into(),
+                                        <(#type_name) as #type_name_path>::to_typename()))
                                     );
                             },
                         ),
@@ -197,7 +198,7 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
                                     .fields
                                     .push(
                                         ::std::convert::From::from((::std::borrow::Cow::Borrowed(stringify!(#name)).into(),
-                                        <(#type_name) as #type_name_path>::to_old_type_parts()))
+                                        <(#type_name) as #type_name_path>::to_typename()))
                                     );
                                 gen.copy_docs(stringify!(#name).as_bytes());
                             },

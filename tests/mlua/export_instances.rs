@@ -53,9 +53,17 @@ fn test_limited() {
         .unwrap()
         .to_json()
         .expect("oh no :(");
+
     let generated: serde_json::Value = serde_json::from_str(&file_contents).unwrap();
-    let original: serde_json::Value =
+    let mut original: serde_json::Value =
         serde_json::from_str(include_str!("./export_instances.json")).unwrap();
+
+    let mut x = original
+        .get_mut("tealr_version_used")
+        .expect("missing tealr_version_used in original");
+    if let serde_json::Value::String(x) = &mut x {
+        *x = tealr::get_tealr_version().to_string();
+    }
     assert_eq!(generated, original);
 
     let lua = mlua::Lua::new();

@@ -232,17 +232,31 @@ pub struct Field {
     ///the name of the field
     pub name: NameContainer,
 
-    ///the type of the field
+    ///the type of the field, according to the old format
     #[cfg_attr(
     all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
     tealr(remote = V)
 )]
     pub teal_type: Cow<'static, [NamePart]>,
+    /// the type of the field
+    pub ty: Type,
 }
 
-impl From<(NameContainer, Cow<'static, [NamePart]>)> for Field {
-    fn from((name, teal_type): (NameContainer, Cow<'static, [NamePart]>)) -> Self {
-        Self { name, teal_type }
+impl From<(NameContainer, Type)> for Field {
+    fn from((name, ty): (NameContainer, Type)) -> Self {
+        #[allow(deprecated)]
+        let teal_type = crate::new_type_to_old(ty.clone(), false);
+        Self {
+            name,
+            teal_type,
+            ty,
+        }
+    }
+}
+impl Field {
+    ///creates a new field
+    pub fn new<A: ToTypename>(name: impl Into<Cow<'static, str>>) -> Self {
+        (NameContainer::from(name.into()), A::to_typename()).into()
     }
 }
 
@@ -842,7 +856,7 @@ where
     {
         self.copy_docs(name.as_ref());
         self.fields
-            .push((name.as_ref().to_vec().into(), R::get_type_parts()).into());
+            .push((name.as_ref().to_vec().into(), R::to_typename()).into());
     }
 
     fn add_field_method_set<S, A, M>(&mut self, name: &S, _: M)
@@ -853,7 +867,7 @@ where
     {
         self.copy_docs(name.as_ref());
         self.fields
-            .push((name.as_ref().to_vec().into(), A::get_type_parts()).into());
+            .push((name.as_ref().to_vec().into(), A::to_typename()).into());
     }
 
     fn add_field_function_get<S, R, F>(&mut self, name: &S, _: F)
@@ -864,7 +878,7 @@ where
     {
         self.copy_docs(name.as_ref());
         self.static_fields
-            .push((name.as_ref().to_vec().into(), R::get_type_parts()).into());
+            .push((name.as_ref().to_vec().into(), R::to_typename()).into());
     }
 
     fn add_field_function_set<S, A, F>(&mut self, name: &S, _: F)
@@ -875,7 +889,7 @@ where
     {
         self.copy_docs(name.as_ref());
         self.static_fields
-            .push((name.as_ref().to_vec().into(), A::get_type_parts()).into());
+            .push((name.as_ref().to_vec().into(), A::to_typename()).into());
     }
 
     fn add_meta_field_with<R, F>(&mut self, meta: MetaMethodM, _: F)
@@ -887,7 +901,7 @@ where
         let name: Cow<'_, str> = Cow::Owned(x.name().to_string());
         self.copy_docs(name.as_bytes());
         self.static_fields
-            .push((NameContainer::from(name), R::get_type_parts()).into());
+            .push((NameContainer::from(name), R::to_typename()).into());
     }
 
     fn document(&mut self, documentation: &str) {

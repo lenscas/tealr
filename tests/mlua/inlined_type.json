@@ -53,7 +53,7 @@
                 "Symbol": ")"
               },
               {
-                "Symbol": ":"
+                "Symbol": ":("
               },
               {
                 "Type": {
@@ -61,6 +61,9 @@
                   "type_kind": "Builtin",
                   "generics": null
                 }
+              },
+              {
+                "Symbol": ")"
               }
             ],
             "params": [
@@ -141,7 +144,7 @@
                 "Symbol": ")"
               },
               {
-                "Symbol": ":"
+                "Symbol": ":("
               },
               {
                 "Type": {
@@ -149,6 +152,9 @@
                   "type_kind": "Builtin",
                   "generics": null
                 }
+              },
+              {
+                "Symbol": ")"
               }
             ],
             "params": [
@@ -218,7 +224,7 @@
                 "Symbol": ")"
               },
               {
-                "Symbol": ":"
+                "Symbol": ":("
               },
               {
                 "Symbol": "{"
@@ -242,6 +248,9 @@
                   "type_kind": "Builtin",
                   "generics": null
                 }
+              },
+              {
+                "Symbol": ")"
               }
             ],
             "params": [
@@ -307,7 +316,7 @@
                 "Symbol": ")"
               },
               {
-                "Symbol": ":"
+                "Symbol": ":("
               },
               {
                 "Type": {
@@ -325,6 +334,9 @@
                   "type_kind": "External",
                   "generics": null
                 }
+              },
+              {
+                "Symbol": ")"
               }
             ],
             "params": [
@@ -426,7 +438,7 @@
                 "Symbol": ")"
               },
               {
-                "Symbol": ":"
+                "Symbol": ":("
               },
               {
                 "Type": {
@@ -434,6 +446,9 @@
                   "type_kind": "Builtin",
                   "generics": null
                 }
+              },
+              {
+                "Symbol": ")"
               }
             ],
             "params": [
@@ -514,7 +529,7 @@
                 "Symbol": ")"
               },
               {
-                "Symbol": ":"
+                "Symbol": ":("
               },
               {
                 "Type": {
@@ -522,6 +537,9 @@
                   "type_kind": "Builtin",
                   "generics": null
                 }
+              },
+              {
+                "Symbol": ")"
               }
             ],
             "params": [
@@ -591,7 +609,7 @@
                 "Symbol": ")"
               },
               {
-                "Symbol": ":"
+                "Symbol": ":("
               },
               {
                 "Symbol": "{"
@@ -615,6 +633,9 @@
                   "type_kind": "Builtin",
                   "generics": null
                 }
+              },
+              {
+                "Symbol": ")"
               }
             ],
             "params": [
@@ -680,7 +701,7 @@
                 "Symbol": ")"
               },
               {
-                "Symbol": ":"
+                "Symbol": ":("
               },
               {
                 "Type": {
@@ -698,6 +719,9 @@
                   "type_kind": "External",
                   "generics": null
                 }
+              },
+              {
+                "Symbol": ")"
               }
             ],
             "params": [
