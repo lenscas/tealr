@@ -291,6 +291,7 @@ use rlua::{Table, Value};
 #[cfg(feature = "mlua")]
 use mlua::{Table, Value};
 
+#[cfg(any(feature = "mlua", feature = "rlua"))]
 impl<'lua> ToTypename for Table<'lua> {
     fn to_typename() -> Type {
         Type::Map(crate::MapRepresentation {
@@ -311,6 +312,7 @@ use mlua::Function;
 #[cfg(feature = "rlua")]
 use rlua::Function;
 
+#[cfg(any(feature = "mlua", feature = "rlua"))]
 impl<'lua> ToTypename for Function<'lua> {
     fn to_typename() -> Type {
         Type::Function(crate::FunctionRepresentation {
