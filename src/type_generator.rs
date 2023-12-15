@@ -49,7 +49,9 @@ impl Deref for NameContainer {
 #[cfg(feature = "rlua")]
 impl<'lua> FromLuaR<'lua> for NameContainer {
     fn from_lua(lua_value: rlua::Value<'lua>, lua: Context<'lua>) -> ResultR<Self> {
-        Ok(String::from_lua(lua_value, lua)?.into_bytes().into())
+        Ok(<String as FromLuaR>::from_lua(lua_value, lua)?
+            .into_bytes()
+            .into())
     }
 }
 #[cfg(feature = "rlua")]
@@ -68,7 +70,9 @@ impl ToTypename for NameContainer {
 #[cfg(feature = "mlua")]
 impl<'lua> FromLuaM<'lua> for NameContainer {
     fn from_lua(lua_value: mlua::Value<'lua>, lua: &'lua Lua) -> ResultM<Self> {
-        Ok(String::from_lua(lua_value, lua)?.into_bytes().into())
+        Ok(<String as FromLuaM>::from_lua(lua_value, lua)?
+            .into_bytes()
+            .into())
     }
 }
 #[cfg(feature = "mlua")]

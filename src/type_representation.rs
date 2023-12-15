@@ -286,17 +286,26 @@ impl_type_name_life_time!("any" rlua::Value<'lua>);
 impl_type_name_life_time!("any" mlua::Value<'lua>);
 
 #[cfg(feature = "rlua")]
-use rlua::{Table, Value};
+use rlua::{Table as TableR, Value as ValueR};
 
 #[cfg(feature = "mlua")]
-use mlua::{Table, Value};
+use mlua::{Table as TableM, Value as ValueM};
 
-#[cfg(any(feature = "mlua", feature = "rlua"))]
-impl<'lua> ToTypename for Table<'lua> {
+#[cfg(feature = "rlua")]
+impl<'lua> ToTypename for TableR<'lua> {
     fn to_typename() -> Type {
         Type::Map(crate::MapRepresentation {
-            key: Value::to_typename().into(),
-            value: Value::to_typename().into(),
+            key: ValueR::to_typename().into(),
+            value: ValueR::to_typename().into(),
+        })
+    }
+}
+#[cfg(feature = "mlua")]
+impl<'lua> ToTypename for TableM<'lua> {
+    fn to_typename() -> Type {
+        Type::Map(crate::MapRepresentation {
+            key: ValueM::to_typename().into(),
+            value: ValueM::to_typename().into(),
         })
     }
 }
@@ -308,12 +317,24 @@ impl_type_name_life_time!("string" rlua::String<'lua>);
 impl_type_name_life_time!("string" mlua::String<'lua>);
 
 #[cfg(feature = "mlua")]
-use mlua::Function;
+use mlua::Function as FunctionM;
 #[cfg(feature = "rlua")]
-use rlua::Function;
+use rlua::Function as FunctionR;
 
-#[cfg(any(feature = "mlua", feature = "rlua"))]
-impl<'lua> ToTypename for Function<'lua> {
+#[cfg(feature = "rlua")]
+impl<'lua> ToTypename for FunctionR<'lua> {
+    fn to_typename() -> Type {
+        Type::Function(crate::FunctionRepresentation {
+            params: vec![FunctionParam {
+                param_name: Some("...".into()),
+                ty: Type::new_single("any", KindOfType::Builtin),
+            }],
+            returns: vec![Type::new_single("any...", KindOfType::Builtin)],
+        })
+    }
+}
+#[cfg(feature = "mlua")]
+impl<'lua> ToTypename for FunctionM<'lua> {
     fn to_typename() -> Type {
         Type::Function(crate::FunctionRepresentation {
             params: vec![FunctionParam {

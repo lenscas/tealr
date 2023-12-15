@@ -294,7 +294,7 @@ impl TypeWalker {
     }
 }
 
-#[cfg(feature = "rlua")]
+#[cfg(all(feature = "rlua", not(feature = "mlua")))]
 impl TypeWalker {
     ///collect every instance that is getting shared with lua
     pub fn document_global_instance<T: crate::rlu::ExportInstances>(
