@@ -276,20 +276,72 @@ impl_from_exact_non_failing!(Table<'lua>, rlua::Value::Table(x), x);
 
 impl_from_exact_non_failing!(rlua::String<'lua>, rlua::Value::String(x), x);
 
+#[cfg(all(
+    not(feature = "rlua_builtin-lua51"),
+    not(feature = "rlua_system-lua51")
+))]
 impl_from_exact!(i8, rlua::Value::Integer(x), x, TryFromIntError);
+#[cfg(all(
+    not(feature = "rlua_builtin-lua51"),
+    not(feature = "rlua_system-lua51")
+))]
 impl_from_exact!(u8, rlua::Value::Integer(x), x, TryFromIntError);
+#[cfg(all(
+    not(feature = "rlua_builtin-lua51"),
+    not(feature = "rlua_system-lua51")
+))]
 impl_from_exact!(i16, rlua::Value::Integer(x), x, TryFromIntError);
+#[cfg(all(
+    not(feature = "rlua_builtin-lua51"),
+    not(feature = "rlua_system-lua51")
+))]
 impl_from_exact!(u16, rlua::Value::Integer(x), x, TryFromIntError);
-#[cfg(target_pointer_width = "32")]
+#[cfg(all(
+    target_pointer_width = "32",
+    not(feature = "rlua_builtin-lua51"),
+    not(feature = "rlua_system-lua51")
+))]
 impl_from_exact_non_failing!(i32, rlua::Value::Integer(x), x);
-#[cfg(target_pointer_width = "64")]
+#[cfg(all(
+    target_pointer_width = "64",
+    not(feature = "rlua_builtin-lua51"),
+    not(feature = "rlua_system-lua51")
+))]
 impl_from_exact!(i32, rlua::Value::Integer(x), x, TryFromIntError);
+#[cfg(all(
+    not(feature = "rlua_builtin-lua51"),
+    not(feature = "rlua_system-lua51")
+))]
 impl_from_exact!(u32, rlua::Value::Integer(x), x, TryFromIntError);
+#[cfg(all(
+    not(feature = "rlua_builtin-lua51"),
+    not(feature = "rlua_system-lua51")
+))]
 impl_from_exact_non_failing!(i64, rlua::Value::Integer(x), x);
+#[cfg(all(
+    not(feature = "rlua_builtin-lua51"),
+    not(feature = "rlua_system-lua51")
+))]
 impl_from_exact!(u64, rlua::Value::Integer(x), x, TryFromIntError);
+#[cfg(all(
+    not(feature = "rlua_builtin-lua51"),
+    not(feature = "rlua_system-lua51")
+))]
 impl_from_exact_non_failing!(i128, rlua::Value::Integer(x), x);
+#[cfg(all(
+    not(feature = "rlua_builtin-lua51"),
+    not(feature = "rlua_system-lua51")
+))]
 impl_from_exact!(u128, rlua::Value::Integer(x), x, TryFromIntError);
+#[cfg(all(
+    not(feature = "rlua_builtin-lua51"),
+    not(feature = "rlua_system-lua51")
+))]
 impl_from_exact!(isize, rlua::Value::Integer(x), x, TryFromIntError);
+#[cfg(all(
+    not(feature = "rlua_builtin-lua51"),
+    not(feature = "rlua_system-lua51")
+))]
 impl_from_exact!(usize, rlua::Value::Integer(x), x, TryFromIntError);
 
 impl_from_exact_non_failing!(f64, rlua::Value::Number(x), x);
