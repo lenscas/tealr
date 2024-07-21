@@ -16,6 +16,10 @@ macro_rules! create_generic_rlua {
             Nil,
             Boolean(bool),
             LightUserData($crate::rlu::rlua::LightUserData),
+            #[cfg(all(
+                not(feature = "rlua_builtin-lua51"),
+                not(feature = "rlua_system-lua51")
+            ))]
             Integer($crate::rlu::rlua::Integer),
             Number($crate::rlu::rlua::Number),
             String($crate::rlu::rlua::String<'lua>),
@@ -42,6 +46,10 @@ macro_rules! create_generic_rlua {
                     Nil => $type_name::Nil,
                     Boolean(x) => $type_name::Boolean(x),
                     LightUserData(x) => $type_name::LightUserData(x),
+                    #[cfg(all(
+                        not(feature = "rlua_builtin-lua51"),
+                        not(feature = "rlua_system-lua51")
+                    ))]
                     Integer(x) => $type_name::Integer(x),
                     Number(x) => $type_name::Number(x),
                     String(x) => $type_name::String(x),
@@ -60,6 +68,10 @@ macro_rules! create_generic_rlua {
                     Nil => $crate::rlu::rlua::Value::Nil,
                     Boolean(x) => $crate::rlu::rlua::Value::Boolean(x),
                     LightUserData(x) => $crate::rlu::rlua::Value::LightUserData(x),
+                    #[cfg(all(
+                        not(feature = "rlua_builtin-lua51"),
+                        not(feature = "rlua_system-lua51")
+                    ))]
                     Integer(x) => $crate::rlu::rlua::Value::Integer(x),
                     Number(x) => $crate::rlu::rlua::Value::Number(x),
                     String(x) => $crate::rlu::rlua::Value::String(x),

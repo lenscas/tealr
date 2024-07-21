@@ -66,6 +66,10 @@ pub fn get_type_name(value: &rlua::Value) -> &'static str {
         rlua::Value::Nil => return "Nil",
         rlua::Value::Boolean(_) => bool::to_old_type_parts(),
         rlua::Value::LightUserData(_) => return "LightUserData",
+        #[cfg(all(
+            not(feature = "rlua_builtin-lua51"),
+            not(feature = "rlua_system-lua51")
+        ))]
         rlua::Value::Integer(_) => rlua::Integer::to_old_type_parts(),
         rlua::Value::Number(_) => rlua::Number::to_old_type_parts(),
         rlua::Value::String(_) => String::to_old_type_parts(),
