@@ -821,9 +821,9 @@ where
     }
 
     #[cfg(feature = "mlua_async")]
-    fn add_async_function<S: ?Sized, A, R, F, FR>(&mut self, name: &S, _: F)
+    fn add_async_function<S, A, R, F, FR>(&mut self, name: &S, _: F)
     where
-        S: AsRef<str>,
+        S: AsRef<str> + ?Sized,
         A: FromLuaMultiM<'lua> + TealMultiValue,
         R: ToLuaMultiM<'lua> + TealMultiValue,
         F: 'static + MaybeSend + Fn(&'lua Lua, A) -> FR,
