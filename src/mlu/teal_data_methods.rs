@@ -59,9 +59,9 @@ pub trait TealDataMethods<'lua, T: ToTypename> {
 
     #[cfg(feature = "mlua_async")]
     ///exposes an async function to lua
-    fn add_async_function<S: ?Sized, A, R, F, FR>(&mut self, name: &S, function: F)
+    fn add_async_function<S, A, R, F, FR>(&mut self, name: &S, function: F)
     where
-        S: AsRef<str>,
+        S: AsRef<str> + ?Sized,
         A: FromLuaMulti<'lua> + TealMultiValue,
         R: ToLuaMulti<'lua> + TealMultiValue,
         F: 'static + MaybeSend + Fn(&'lua Lua, A) -> FR,
