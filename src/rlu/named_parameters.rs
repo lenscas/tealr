@@ -68,9 +68,3 @@ macro_rules! rlua_create_named_parameters {
         }
     };
 }
-
-rlua_create_named_parameters!(
-    TestStruct with
-    field_1 : String,
-    field_2 : i64,
-);
