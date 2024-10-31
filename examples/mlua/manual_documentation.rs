@@ -89,7 +89,7 @@ impl TypeBody for Example {
         gen.into()
     }
 }
-fn main() -> Result<()> {
+fn main() {
     let file_contents = TypeWalker::new()
         //tells it that you want to include the Example type
         //chain extra calls to include more types
@@ -105,7 +105,7 @@ fn main() -> Result<()> {
     let lua = Lua::new();
 
     let globals = lua.globals();
-    globals.set("test", Example(1))?;
+    globals.set("test", Example(1)).unwrap();
     let code = "
 print(test.help())
 print(\"----\")
@@ -116,6 +116,5 @@ print(test.example_function({}))
 print(test.example_function_mut(true))
         ";
 
-    lua.load(code).set_name("test?").eval()?;
-    Ok(())
+    lua.load(code).set_name("test?").eval::<()>().unwrap();
 }

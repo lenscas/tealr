@@ -1,6 +1,6 @@
 use tealr::{
     mlu::{
-        mlua::{Lua, Result},
+        mlua::Lua,
         TealData, TealDataMethods, UserData,
     },
     ToTypename, TypeWalker,
@@ -26,7 +26,7 @@ impl TealData for Example {
     }
 }
 
-fn main() -> Result<()> {
+fn main() {
     let file_contents = TypeWalker::new()
         //tells it that you want to include the Example type
         //chain extra calls to include more types
@@ -41,8 +41,7 @@ fn main() -> Result<()> {
     //lua is still using position parameters as normal.
     let lua = Lua::new();
     let globals = lua.globals();
-    globals.set("test", Example {})?;
+    globals.set("test", Example {}).unwrap();
     let code = "test:example_method(\"field_1 is a string\", 3)";
-    lua.load(code).set_name("test?").eval()?;
-    Ok(())
+    lua.load(code).set_name("test?").eval::<()>().unwrap();
 }

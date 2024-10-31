@@ -43,7 +43,7 @@ impl TealData for Example {
     }
 }
 
-fn main() -> Result<()> {
+fn main() {
     //we collect the documentation of our API in a json file so `tealr_doc_gen` can generate
     //the online documentation
     let file_contents = TypeWalker::new()
@@ -60,13 +60,12 @@ fn main() -> Result<()> {
     //how you pass this type to lua hasn't changed:
     let lua = Lua::new();
     let globals = lua.globals();
-    globals.set("test", Example {})?;
+    globals.set("test", Example {}).unwrap();
     let code = "
 print(test:example_method(1))
 print(test:example_method_mut(2,\"test\"))
 print(test.example_function({}))
 print(test.example_function_mut(true))
     ";
-    lua.load(code).set_name("test?").eval()?;
-    Ok(())
+    lua.load(code).set_name("test?").eval::<()>().unwrap();
 }

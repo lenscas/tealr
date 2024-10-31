@@ -24,49 +24,59 @@ fn run_find_command(is_local: bool) -> String {
         }
     }
     stdout
-        .split(|v| v == '\n')
+        .lines()
         .next()
         .expect("Did not get the expected output from luarocks")
         .to_string()
 }
 
 use std::{fs::read_to_string, process::Command};
+
 pub(crate) fn discover_tl_tl() -> String {
     run_find_command(true)
 }
 pub(crate) fn get_local_teal(path: String) -> String {
     let build_dir = tempfile::tempdir().expect("Could not get a temporary directory to build teal");
-
-    let mut compiler = Command::new("tl")
+    let compiler = Command::new("tl")
         .current_dir(build_dir.path())
         .args(["gen", "-o", "output.lua", "--skip-compat53"])
         .arg(path)
         .spawn()
-        .map_err(|v| {
-            let x = match v.kind() {
+        .map_err(|e| {
+            (match e.kind() {
                 std::io::ErrorKind::NotFound => "Could not compile teal. Command `tl` not found.",
                 std::io::ErrorKind::PermissionDenied => {
                     "Permission denied when running the teal compiler."
                 }
                 _ => "Error while running teal. Is it available as `tl` in the path?",
-            };
+            }, e)
+        });
+
+
+    let mut compiler = match compiler {
+        Ok(v) => v,
+        Err((msg, e)) => {
+            if let Err(error) = build_dir.close() {
+                eprint!("Could not close temporary directory : {}", error);
+            }
             panic!(
-                "Could not compile teal:{x}\nRaw error:{}\n{}",
-                v.raw_os_error()
-                    .map(|v| format!("Kind:{v}"))
+                "Could not compile teal:{msg}\nRaw error:{}\n{}",
+                e.raw_os_error()
+                    .map(|e| format!("Kind:{e}"))
                     .unwrap_or_default(),
-                v.kind()
+                e.kind()
             )
-        })
-        .expect(
-            "Failed running the teal compiler. Is `tl` installed and accessible through the path?",
-        );
+        },
+    };
 
     if !compiler
         .wait()
         .expect("Could not wait for compiler")
         .success()
     {
+        if let Err(e) = build_dir.close() {
+            eprint!("Could not close temporary directory : {}", e);
+        }
         panic!(
             "Could not compile teal without compatibility library. Is `tl` available in the path?"
         )

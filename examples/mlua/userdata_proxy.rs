@@ -70,14 +70,15 @@ impl tealr::mlu::ExportInstances for Export {
     }
 }
 
-fn main() -> Result<()> {
+fn main() {
     let file_contents = TypeWalker::new()
         //tells it that we want to generate Example
         .process_type::<Example>()
         //generate the documentation for our proxy, allowing us to
         .process_type::<UserDataProxy<Example>>()
         // enable documenting the globals
-        .document_global_instance::<Export>()?
+        .document_global_instance::<Export>()
+        .unwrap()
         //generate the file
         .to_json()
         .expect("serde_json failed to serialize our data");
@@ -89,7 +90,7 @@ fn main() -> Result<()> {
     let lua = Lua::new();
     tealr::mlu::set_global_env(Export {}, &lua).unwrap();
     let globals = lua.globals();
-    globals.set("test", Example { float: 42.0 })?;
+    globals.set("test", Example { float: 42.0 }).unwrap();
     let code = "
 print(\" Calling from `test` :\")
 print(test:example_method(1))
@@ -102,6 +103,5 @@ print(\" Calling from global `Example` :\")
 print(Example.example_static_field)
 print(Example.example_function({}))
     ";
-    lua.load(code).set_name("test?").eval()?;
-    Ok(())
+    lua.load(code).set_name("test?").eval::<()>().unwrap();
 }
