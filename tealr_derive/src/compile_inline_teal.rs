@@ -68,7 +68,7 @@ pub(crate) fn compile_inline_teal(input: TokenStream) -> TokenStream {
         .write_all(code.as_bytes())
         .expect("Could not write teal source file");
 
-    let mut command = Command::new("tl")
+    let output = Command::new("tl")
         .args([
             OsStr::new("check"),
             OsStr::new("-I"),
@@ -76,14 +76,11 @@ pub(crate) fn compile_inline_teal(input: TokenStream) -> TokenStream {
             OsStr::new("input.tl"),
         ])
         .current_dir(temp_path)
-        .spawn()
+        .output()
         .expect("Could not run `tl check`. Make sure it is available in the path");
 
-    if !command
-        .wait()
-        .expect("Something has gone wrong while running `tl check`")
-        .success()
-    {
+    if !output.status.success() {
+        eprintln!("{}", String::from_utf8_lossy(&output.stderr).trim());
         panic!("There was an error while typechecking your teal code.")
     }
 

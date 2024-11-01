@@ -1,12 +1,8 @@
 #![warn(missing_docs)]
 #![doc = include_str!("../README.md")]
-//mod expanded;
-///traits and types specific to rlua
-#[cfg(feature = "rlua")]
-pub mod rlu;
+
 
 ///traits and types specific to mlua
-#[cfg(feature = "mlua")]
 pub mod mlu;
 
 mod export_instance;
@@ -50,21 +46,17 @@ pub fn get_tealr_version() -> &'static str {
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug, Serialize, Deserialize)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive", not(feature = "rlua")),
+    feature = "derive",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::ToTypename)
-)]
-#[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
+    feature = "derive",
     tealr(tealr_name = crate)
 )]
 ///The name of a type
 pub struct Name(
     #[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive",not(all(feature = "rlua", feature = "mlua"))),
+    feature = "derive",
     tealr(remote =  String))]
     pub Cow<'static, str>,
 );
@@ -81,15 +73,11 @@ impl<T: AsRef<str>> From<T> for Name {
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive", not(feature = "rlua")),
+    feature = "derive",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::ToTypename)
-)]
-#[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
+    feature = "derive",
     tealr(tealr_name = crate)
 )]
 ///A singular type
@@ -101,15 +89,11 @@ pub struct SingleType {
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive", not(feature = "rlua")),
+    feature = "derive",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::ToTypename)
-)]
-#[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
+    feature = "derive",
     tealr(tealr_name = crate)
 )]
 ///A parameter for a function
@@ -121,15 +105,11 @@ pub struct FunctionParam {
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive", not(feature = "rlua")),
+    feature = "derive",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::ToTypename)
-)]
-#[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
+    feature = "derive",
     tealr(tealr_name = crate)
 )]
 ///The representation of a function type
@@ -141,26 +121,22 @@ pub struct FunctionRepresentation {
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive", not(feature = "rlua")),
+    feature = "derive",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::ToTypename)
-)]
-#[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
+    feature = "derive",
     tealr(tealr_name = crate)
 )]
 ///The representation of a Map<K,T> type
 pub struct MapRepresentation {
     #[cfg_attr(
-        all(any(feature = "rlua", feature = "mlua"), feature = "derive",not(all(feature = "rlua", feature = "mlua"))),
+        feature = "derive",
         tealr(remote =  Type))]
     ///The type of the key
     pub key: Box<Type>,
     #[cfg_attr(
-        all(any(feature = "rlua", feature = "mlua"), feature = "derive",not(all(feature = "rlua", feature = "mlua"))),
+        feature = "derive",
         tealr(remote =  Type))]
     ///The type of the value
     pub value: Box<Type>,
@@ -170,15 +146,11 @@ type NewTypeArray = Vec<Type>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive", not(feature = "rlua")),
+    feature = "derive",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::ToTypename)
-)]
-#[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
+    feature = "derive",
     tealr(tealr_name = crate)
 )]
 ///A type
@@ -192,14 +164,14 @@ pub enum Type {
     ///The type is a union (A | B)
     Or(
         #[cfg_attr(
-            all(any(feature = "rlua", feature = "mlua"), feature = "derive",not(all(feature = "rlua", feature = "mlua"))),
+            feature = "derive",
             tealr(remote =  NewTypeArray))]
         Vec<Type>,
     ),
     ///The type is an array
     Array(
         #[cfg_attr(
-            all(any(feature = "rlua", feature = "mlua"), feature = "derive",not(all(feature = "rlua", feature = "mlua"))),
+            feature = "derive",
             tealr(remote =  Type))]
         Box<Type>,
     ),
@@ -208,7 +180,7 @@ pub enum Type {
     ///As it can _easily_ break things
     Tuple(
         #[cfg_attr(
-            all(any(feature = "rlua", feature = "mlua"), feature = "derive",not(all(feature = "rlua", feature = "mlua"))),
+            feature = "derive",
             tealr(remote =  NewTypeArray))]
         Vec<Type>,
     ),

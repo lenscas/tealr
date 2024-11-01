@@ -1,6 +1,6 @@
 use proc_macro2::{Literal, Span, TokenStream};
 use quote::ToTokens;
-use venial::{parse_declaration, Struct};
+use venial::{parse_item, Struct};
 
 pub(crate) fn get_tealr_name(attributes: &[venial::Attribute]) -> TokenStream {
     find_tag_with_value("tealr_name", attributes)
@@ -12,21 +12,22 @@ pub(crate) fn get_tealr_name(attributes: &[venial::Attribute]) -> TokenStream {
 fn debug_macro(ts: TokenStream) -> TokenStream {
     let hopefully_unique = {
         use ::std::hash::*;
-        let ref mut hasher = ::std::collections::hash_map::RandomState::new().build_hasher();
+        let hasher = &mut RandomState::new().build_hasher();
         hasher.finish()
     };
 
     //FEEL FREE TO TWEAK THIS DEFAULT PATH (e.g., your target dir)
     let mut debug_macros_dir = ::std::path::PathBuf::from("/tmp");
-    ::std::fs::create_dir_all(&debug_macros_dir).unwrap();
-    let ref file_name = {
+    std::fs::create_dir_all(&debug_macros_dir).unwrap();
+    let file_name = &{
         debug_macros_dir.push(format!("{:016x}.rs", hopefully_unique));
         debug_macros_dir.into_os_string().into_string().unwrap()
     };
-    ::std::fs::write(file_name, ts.to_string()).unwrap();
+    std::fs::write(file_name, ts.to_string()).unwrap();
     quote!(::core::include! { #file_name })
 }
 #[cfg(not(feature = "debug_macros"))]
+#[warn(unused_imports)]
 fn debug_macro(ts: TokenStream) -> TokenStream {
     ts
 }
@@ -47,7 +48,7 @@ fn find_tag_with_value(to_find: &str, tags: &[venial::Attribute]) -> Option<Toke
         })
 }
 
-fn find_doc_tags(tags: &[venial::Attribute]) -> impl Iterator<Item = String> + '_ {
+fn find_doc_tags(tags: &[venial::Attribute]) -> impl Iterator<Item=String> + '_ {
     tags.iter()
         .filter(|v| {
             let name = v.path.iter().cloned().collect::<TokenStream>().to_string();
@@ -101,7 +102,6 @@ struct BasicConfig {
     teal_data_methods_location: TokenStream,
     invalid_enum_variant_error: TokenStream,
     typename_macro: TokenStream,
-    is_mlua: bool,
 }
 
 fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
@@ -122,10 +122,10 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
 
     let (to_add, (to_remove, type_body)): (TokenStream, (TokenStream, TokenStream)) =
         match structure.fields {
-            venial::StructFields::Unit => {
+            venial::Fields::Unit => {
                 return venial::Error::new("Unit structs are not supported.").to_compile_error()
             }
-            venial::StructFields::Tuple(x) => x
+            venial::Fields::Tuple(x) => x
                 .fields
                 .iter()
                 .enumerate()
@@ -138,14 +138,14 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
                             .map(|v| {
                                 (
                                     quote! {<#v as ::std::convert::From<#ty>>::from(self.#key_as_str)},
-                                    quote! {get::<_,#v>(#key)?.into()},
+                                    quote! {get::<#v>(#key)?.into()},
                                     v.to_token_stream(),
                                 )
                             })
                             .unwrap_or_else(|| {
                                 (quote! {self.#key_as_str}, quote! {get(#key)?}, quote! {#ty})
                             });
-                    let docs = find_doc_tags(&x.0.attributes).map(|v|quote!{
+                    let docs = find_doc_tags(&x.0.attributes).map(|v| quote! {
                         gen.document(#v);
                     }).collect::<TokenStream>();
                     (
@@ -165,7 +165,7 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
                     )
                 })
                 .unzip(),
-            venial::StructFields::Named(x) => x
+            venial::Fields::Named(x) => x
                 .fields
                 .iter()
                 .map(|(field, _)| {
@@ -176,7 +176,7 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
                             .map(|v| {
                                 (
                                     quote! {<#v as ::std::convert::From<#ty>>::from(self.#name)},
-                                    quote! {get::<_,#v>(stringify!(#name))?.into()},
+                                    quote! {get::<#v>(stringify!(#name))?.into()},
                                     v.to_token_stream(),
                                 )
                             })
@@ -187,7 +187,7 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
                                     quote! {#ty},
                                 )
                             });
-                    let docs = find_doc_tags(&field.attributes).map(|v|quote!{
+                    let docs = find_doc_tags(&field.attributes).map(|v| quote! {
                         gen.document(#v);
                     }).collect::<TokenStream>();
                     (
@@ -213,15 +213,15 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
         .map(|v| quote! {gen.document_type(#v);})
         .collect::<TokenStream>();
     quote! {
-        impl<'lua> #to_loc for #name {
+        impl #to_loc for #name {
             fn #to_lua_name(self, #lua_location) -> #result_location_to {
                 let mut table = #create_table()?;
                 #to_add
                 lua.pack(table)
             }
         }
-        impl<'lua> #from_loc for #name {
-            fn from_lua(lua_value:#lua_value<'lua>, #lua_location) -> #result_location_from {
+        impl #from_loc for #name {
+            fn from_lua(lua_value:#lua_value, #lua_location) -> #result_location_from {
                 let as_table = match lua_value {
                     #lua_value::Table(x) => x,
                     x => Err(#error_message)?
@@ -269,13 +269,13 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
         .then(|| {
             (
                 quote! {
-                    fn add_fields<'lua, F: #user_data_fields_location<'lua, Self>>(fields: &mut F) {
+                    fn add_fields<F: #user_data_fields_location<Self>>(fields: &mut F) {
                         let mut wrapper = #user_data_wrapper_location::from_user_data_fields(fields);
                         <Self as #teal_data_location>::add_fields(&mut wrapper)
                     }
                 },
                 quote! {
-                    fn add_fields<'lua, F: #teal_data_fields_location<'lua, Self>>(fields: &mut F) {
+                    fn add_fields<F: #teal_data_fields_location<Self>>(fields: &mut F) {
                         #call_fields
                     }
                 },
@@ -285,15 +285,15 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
             )
         })
         .unwrap_or_else(|| (quote! {}, quote! {}, quote! {}));
-    let (variant_functions,(creator_functions,is_of_branches)): (Vec<_>,(Vec<_>,TokenStream)) = enumeration
+    let (variant_functions, (creator_functions, is_of_branches)): (Vec<_>, (Vec<_>, TokenStream)) = enumeration
         .variants
         .iter()
         .map(|(variant, _)| {
             let variant_name = variant.name.clone();
             let variant_as_text = variant_name.to_string();
             let is_method_name = format!("Is{}", variant_name);
-            let new_variant = format!("New{}",variant_name);
-            if variant.is_empty_variant() || matches!(variant.contents, venial::StructFields::Unit)
+            let new_variant = format!("New{}", variant_name);
+            if variant.is_empty_variant() || matches!(variant.fields, venial::Fields::Unit)
             {
                 (vec![quote! {
                     methods.add_method(
@@ -303,21 +303,21 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
                             _ => Ok(false)
                         }
                     );
-                }],(
-                    vec![quote! {
+                }], (
+                     vec![quote! {
                         methods.add_function(
                             #new_variant,
                             |_,()| Ok(#name::#variant_name)
                         );
                     }],
-                    quote!{
+                     quote! {
                         #name::#variant_name => #variant_as_text,
                     }
-                ))
+                 ))
             } else {
-                match &variant.contents {
-                    venial::StructFields::Unit => unreachable!(),
-                    venial::StructFields::Tuple(x) => {
+                match &variant.fields {
+                    venial::Fields::Unit => unreachable!(),
+                    venial::Fields::Tuple(x) => {
                         let field_names = x
                             .fields
                             .iter()
@@ -328,39 +328,39 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
                                 (
                                     proc_macro2::Ident::new(
                                         &z,
-                                        x.ty.tokens.first().map(|v|v.span())
-                                        .unwrap_or_else(Span::call_site)),
+                                        x.ty.tokens.first().map(|v| v.span())
+                                            .unwrap_or_else(Span::call_site)),
                                     x,
                                 )
                             })
                             .map(|(v, field)| (quote! {#v}, field))
                             .map(|(v, field)| {
-                                let (to_with_from_conversion,to_as_type) = find_tag_with_value("remote", &field.attributes)
+                                let (to_with_from_conversion, to_as_type) = find_tag_with_value("remote", &field.attributes)
                                     .or_else(|| {
                                         let name = field.ty;
                                         Some(quote! {#name})
                                     })
                                     .map(|to|
-                                        (quote! {<(#to) as From<_>>::from(<_ as ::std::borrow::ToOwned>::to_owned(#v))},to)
+                                        (quote! {<(#to) as From<_>>::from(<_ as ::std::borrow::ToOwned>::to_owned(#v))}, to)
                                     )
                                     .unwrap();
-                                (v, to_with_from_conversion,to_as_type)
+                                (v, to_with_from_conversion, to_as_type)
                             })
                             .collect::<Vec<_>>();
                         let (combined_with, combined_none): (Vec<TokenStream>, Vec<TokenStream>) =
                             field_names
                                 .iter()
-                                .map(|(_, to,_)| (quote!(Some(#to)), quote!(None)))
+                                .map(|(_, to, _)| (quote!(Some(#to)), quote!(None)))
                                 .unzip();
-                        let to_as_types =add_commas(field_names.iter().map(|(_,_,t)|t.to_owned()).collect::<Vec<_>>());
+                        let to_as_types = add_commas(field_names.iter().map(|(_, _, t)| t.to_owned()).collect::<Vec<_>>());
                         let combined_none = add_commas(combined_none);
                         let combined_with = add_commas(combined_with);
-                        let fields = add_commas(field_names.iter().map(|v|v.0.clone()).collect());
+                        let fields = add_commas(field_names.iter().map(|v| v.0.clone()).collect());
                         let is_method_name = format!("Is{variant_name}");
                         let get_method_name = format!("Get{variant_name}");
                         let get_or_nill_method_name = format!("Get{variant_name}OrNil");
                         let new_variant_from = format!("New{variant_name}From");
-                        let convert_back = add_commas(field_names.into_iter().map(|(name,_,_)|quote!{<_ as ::std::convert::From<_>>::from(#name)}).collect::<Vec<TokenStream>>());
+                        let convert_back = add_commas(field_names.into_iter().map(|(name, _, _)| quote! {<_ as ::std::convert::From<_>>::from(#name)}).collect::<Vec<TokenStream>>());
 
                         (vec![quote! {
                             methods.add_method(
@@ -384,18 +384,18 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
                                     _ => Ok((#combined_none))
                                 }
                             );
-                        }],(
-                            vec![quote!{
+                        }], (
+                             vec![quote! {
                                 methods.add_function(
                                     #new_variant_from,
                                     |_, (#fields):(#to_as_types)|
                                         Ok(#name::#variant_name(#convert_back))
                                 );
-                        }],quote!{
+                        }], quote! {
                             #name::#variant_name(..) => #variant_as_text,
                         }))
                     }
-                    venial::StructFields::Named(_) => todo!(),
+                    venial::Fields::Named(_) => todo!(),
                 }
             }
         })
@@ -408,14 +408,14 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
     let mut trait_impls = quote! {
         impl #user_data_location for #name {
             #add_fields_user_data
-            fn add_methods<'lua, M: #user_data_methods_location<'lua, Self>>(methods: &mut M) {
+            fn add_methods<M: #user_data_methods_location<Self>>(methods: &mut M) {
                 let mut wrapper = #user_data_wrapper_location::from_user_data_methods(methods);
                 <Self as #teal_data_location>::add_methods(&mut wrapper)
             }
         }
         impl #teal_data_location for #name {
             #add_fields_teal_data
-            fn add_methods<'lua, T: #teal_data_methods_location<'lua, Self>>(methods: &mut T) {
+            fn add_methods<T: #teal_data_methods_location<Self>>(methods: &mut T) {
                 #variant_functions
                 #call_methods
                 methods.add_method("GetTypeName",|_,this,()|{
@@ -463,12 +463,8 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
         ///Automatically generated for exporting to lua
         #visibility struct #creator_struct_name {}
     };
-    let parsed = venial::parse_declaration(creator_struct_stream.clone()).unwrap();
-    let with_userdata = if config.is_mlua {
-        crate::user_data::impl_mlua_user_data_derive(&parsed)
-    } else {
-        crate::user_data::impl_rlua_user_data_derive(&parsed)
-    };
+    let parsed = parse_item(creator_struct_stream.clone()).unwrap();
+    let with_userdata = crate::user_data::impl_mlua_user_data_derive(&parsed);
     //let with_type_name = crate::user_data::impl_type_representation_derive(&parsed);
     let with_clone = quote! {
         impl ::std::clone::Clone for #creator_struct_name {
@@ -479,7 +475,7 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
     };
     let with_teal_data = quote! {
         impl #teal_data_location for #creator_struct_name {
-            fn add_methods<'lua, T: #teal_data_methods_location<'lua, Self>>(methods: &mut T) {
+            fn add_methods<T: #teal_data_methods_location<Self>>(methods: &mut T) {
                 #creator_functions
             }
         }
@@ -503,15 +499,14 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
     trait_impls.extend(Some(with_clone));
     trait_impls.extend(Some(with_teal_data));
     trait_impls.extend(Some(with_new_method));
-    if config.is_mlua {
-        let from_loc = config.from_location;
-        let lua_value = config.lua_value;
-        let lua_location = config.lua_type;
-        let error_message = config.error_message;
-        let result_location_from = config.result_location_from;
-        let with_from_lua = quote! {
-            impl<'lua> #from_loc for #name {
-                fn from_lua(lua_value:#lua_value<'lua>, #lua_location) -> #result_location_from {
+    let from_loc = config.from_location;
+    let lua_value = config.lua_value;
+    let lua_location = config.lua_type;
+    let error_message = config.error_message;
+    let result_location_from = config.result_location_from;
+    let with_from_lua = quote! {
+            impl #from_loc for #name {
+                fn from_lua(lua_value:#lua_value, #lua_location) -> #result_location_from {
                     match lua_value.as_userdata() {
                         Some(x) => x.take(),
                         None => {
@@ -522,8 +517,7 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
                 }
             }
         };
-        trait_impls.extend(with_from_lua);
-    }
+    trait_impls.extend(with_from_lua);
     trait_impls
 }
 
@@ -567,7 +561,7 @@ fn implement_for_c_enum(enumeration: venial::Enum, config: BasicConfig) -> Token
             .unzip();
 
     quote! {
-        impl<'lua> #to_loc for #name {
+        impl #to_loc for #name {
             fn #to_lua_name(self, #lua_location) -> #result_location_to {
                 let res = match self {
                     #to_branches
@@ -575,8 +569,8 @@ fn implement_for_c_enum(enumeration: venial::Enum, config: BasicConfig) -> Token
                 lua.pack(res.to_string())
             }
         }
-        impl<'lua> #from_loc for #name {
-            fn from_lua(lua_value:#lua_value<'lua>, #lua_location) -> #result_location_from {
+        impl #from_loc for #name {
+            fn from_lua(lua_value:#lua_value, #lua_location) -> #result_location_from {
                 let x = <std::string::String as #from_loc>::from_lua(lua_value,lua)?;
                 Ok(match x.as_str() {
                     #from_branches
@@ -596,21 +590,21 @@ fn implement_for_c_enum(enumeration: venial::Enum, config: BasicConfig) -> Token
 }
 
 pub(crate) fn mlua_from_to_lua(input: TokenStream) -> TokenStream {
-    let parsed = parse_declaration(input).unwrap();
+    let parsed = parse_item(input).unwrap();
     let tealr_name = get_tealr_name(parsed.attributes());
     let config = BasicConfig {
-        to_location: quote! {#tealr_name::mlu::mlua::IntoLua<'lua>},
+        to_location: quote! {#tealr_name::mlu::mlua::IntoLua},
         to_lua_name: quote!(into_lua),
-        from_location: quote! {#tealr_name::mlu::mlua::FromLua<'lua>},
+        from_location: quote! {#tealr_name::mlu::mlua::FromLua},
         create_table: quote! {lua.create_table},
-        result_location_to: quote! {#tealr_name::mlu::mlua::Result<#tealr_name::mlu::mlua::Value<'lua>>},
+        result_location_to: quote! {#tealr_name::mlu::mlua::Result<#tealr_name::mlu::mlua::Value>},
         result_location_from: quote! {#tealr_name::mlu::mlua::Result<Self>},
-        lua_type: quote! {lua: &'lua #tealr_name::mlu::mlua::Lua},
+        lua_type: quote! {lua: &#tealr_name::mlu::mlua::Lua},
         lua_value: quote! {#tealr_name::mlu::mlua::Value},
         error_message: quote! {
             #tealr_name::mlu::mlua::Error::FromLuaConversionError{
                 from: x.type_name(),
-                to: "unknown",
+                to: "unknown".to_string(),
                 message:None
             }
         },
@@ -629,64 +623,15 @@ pub(crate) fn mlua_from_to_lua(input: TokenStream) -> TokenStream {
         teal_data_methods_location: quote! {#tealr_name::mlu::TealDataMethods},
         invalid_enum_variant_error: quote! {#tealr_name::mlu::mlua::Error::FromLuaConversionError {
             from: "String",
-            to:"unknown",
+            to:"unknown".to_string(),
             message:None
         } },
-        is_mlua: true,
         typename_macro: quote! {#tealr_name::ToTypename},
     };
 
     match parsed {
-        venial::Declaration::Struct(x) => implement_for_struct(x, config),
-        venial::Declaration::Enum(x) => implement_for_enum(x, config),
+        venial::Item::Struct(x) => implement_for_struct(x, config),
+        venial::Item::Enum(x) => implement_for_enum(x, config),
         _ => venial::Error::new("Only structs and enums are supported").to_compile_error(),
     }
-}
-
-pub(crate) fn rlua_from_to_lua(input: TokenStream) -> TokenStream {
-    let parsed = parse_declaration(input).unwrap();
-    let tealr_name = get_tealr_name(parsed.attributes());
-    let config = BasicConfig {
-        to_location: quote! {#tealr_name::rlu::rlua::ToLua<'lua>},
-        to_lua_name: quote!(to_lua),
-        from_location: quote! {#tealr_name::rlu::rlua::FromLua<'lua>},
-        create_table: quote! {lua.create_table},
-        result_location_to: quote! {#tealr_name::rlu::rlua::Result<#tealr_name::rlu::rlua::Value<'lua>>},
-        result_location_from: quote! {#tealr_name::rlu::rlua::Result<Self>},
-        lua_type: quote! {lua: #tealr_name::rlu::rlua::Context<'lua>},
-        lua_value: quote! {#tealr_name::rlu::rlua::Value},
-        error_message: quote! {
-            #tealr_name::rlu::rlua::Error::FromLuaConversionError{
-                from: x. type_name(),
-                to: "unknown",
-                message:None
-            }
-        },
-        type_name_path: quote! {#tealr_name::ToTypename},
-        type_body_loc: quote! {#tealr_name::TypeBody},
-        type_generator_loc: quote! {#tealr_name::TypeGenerator},
-        record_generator_loc: quote! {#tealr_name::RecordGenerator},
-        enum_generator_loc: quote! {#tealr_name::EnumGenerator},
-        user_data_location: quote! {#tealr_name::rlu::rlua::UserData},
-        teal_data_location: quote! {#tealr_name::rlu::TealData},
-        has_userdata_fields: false,
-        user_data_fields_location: quote! {},
-        teal_data_fields_location: quote! {#tealr_name::rlu::TealDataFields},
-        user_data_wrapper_location: quote! {#tealr_name::rlu::UserDataWrapper},
-        user_data_methods_location: quote! {#tealr_name::rlu::rlua::UserDataMethods},
-        teal_data_methods_location: quote! {#tealr_name::rlu::TealDataMethods},
-        invalid_enum_variant_error: quote! {#tealr_name::rlu::rlua::Error::FromLuaConversionError {
-            from: "String",
-            to:"unknown",
-            message:None
-        } },
-        is_mlua: false,
-        typename_macro: quote! {#tealr_name::ToTypename},
-    };
-
-    debug_macro(match parsed {
-        venial::Declaration::Struct(x) => implement_for_struct(x, config),
-        venial::Declaration::Enum(x) => implement_for_enum(x, config),
-        _ => venial::Error::new("Only structs and enums are supported").to_compile_error(),
-    })
 }

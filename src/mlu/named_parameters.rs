@@ -47,10 +47,10 @@ macro_rules! mlua_create_named_parameters {
                 x
             }
         }
-        impl<'lua> $crate::mlu::mlua::FromLuaMulti<'lua> for $type_name {
+        impl $crate::mlu::mlua::FromLuaMulti for $type_name {
             fn from_lua_multi(
-                mut values: $crate::mlu::mlua::MultiValue<'lua>,
-                lua: &'lua $crate::mlu::mlua::Lua,
+                mut values: $crate::mlu::mlua::MultiValue,
+                lua: &$crate::mlu::mlua::Lua,
             ) -> $crate::mlu::mlua::Result<Self> {
                 Ok(Self {
                     $($field_name: <_ as $crate::mlu::mlua::FromLua>::from_lua(

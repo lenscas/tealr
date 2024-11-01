@@ -29,8 +29,6 @@ jobs:
           - "cargo test --features mlua,mlua_vendored,mlua_lua54,mlua_async,mlua_send"
           - "cargo test --features mlua,mlua_vendored,mlua_lua53,mlua_async --no-run"
           - "cargo test --features mlua,mlua_vendored,mlua_lua54,mlua_async --no-run"
-          - "cargo test --features rlua,rlua_builtin-lua54"
-          - "cargo test --features rlua,rlua_builtin-lua53"
     steps:
     - uses: actions/checkout@master
     - uses: hecrj/setup-rust-action@v1.3.4 
@@ -52,8 +50,6 @@ jobs:
           - "cargo clippy --features mlua,mlua_vendored,mlua_lua54,mlua_async,mlua_send -- -D warnings"
           - "cargo clippy --features mlua,mlua_vendored,mlua_lua53,mlua_async,mlua_send -- -D warnings"
           - "cargo clippy --features mlua,mlua_vendored,mlua_luau,mlua_async,mlua_send -- -D warnings"
-          - "cargo clippy --features rlua,rlua_builtin-lua54 -- -D warnings"
-          - "cargo clippy --features rlua,rlua_builtin-lua53 -- -D warnings"
     steps:
     - uses: hecrj/setup-rust-action@v1.3.4 
       with:

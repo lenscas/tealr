@@ -1,6 +1,6 @@
 # tealr
 
-A crate to enhance the APIs provided by the [rlua](https://crates.io/crates/rlua) and [mlua](https://crates.io/crates/mlua) crates
+A crate to enhance the APIs provided by the [mlua](https://crates.io/crates/mlua) crates
 
 It aims to do this by improving the following:
 
@@ -9,7 +9,7 @@ It aims to do this by improving the following:
 - To go along with the documentation, `tealr` also allow you to be more precise in the types your api works with. Think generic methods and typed lambdas. No more `Lua::Value`
 - Add macros to make it easier to work with teal, a statically typed dialect of lua.
 
-It does this by adding new traits and replacing/extending the existing ones from [rlua](https://crates.io/crates/rlua) and [mlua](https://crates.io/crates/mlua). As a result, the api that tealr exposes is as similar as the api from those 2 crates as possible.
+It does this by adding new traits and replacing/extending the existing ones from [mlua](https://crates.io/crates/mlua). As a result, the api that tealr exposes is as similar as the api from those 2 crates as possible.
 
 It also contains some macro's to easily generate new types to better express the API type wise.
 
@@ -23,55 +23,19 @@ The library shown is <https://github.com/lenscas/tealsql>
 
 Rendered html is also available at <https://lenscas.github.io/tealsql/>
 
-## Note:
-
-Both `rlua` and `mlua` are behind the feature flags `rlua` and `mlua`.
-
-Tealr reexports these crates and allows you to set flags through it (the forwarded flags are the same with either the prefix `rlua_` or `mlua_`. For example if you want to enable `mlua/async` then you need to enable `tealr/mlua_async`).
-
-Please, do not set feature flags directly in mlua/rlua and instead set them through tealr. The API of these crates can change depending on what feature flags are set and tealr needs to be made aware of those changes.
-
 ## Expose a value to lua/teal
 
-Exposing types to lua as userdata is almost the same using tealr as it is using rlua and mlua
+Exposing types to lua as userdata is almost the same using tealr as it is using mlua
 
-#### Rlua:
 
-```rust ignore
-use tealr::ToTypename;
-#[derive(Clone, tealr::rlu::UserData, ToTypename)]
-struct ExampleRlua {}
-
-//now, implement rlu::TealData.
-//This tells rlua what methods are available and tealr what the types are
-impl tealr::rlu::TealData for ExampleRlua {
-    //implement your methods/functions
-    fn add_methods<'lua, T: tealr::rlu::TealDataMethods<'lua, Self>>(methods: &mut T) {
-        methods.document_type("This is documentation added to the type itself.");
-
-        methods.document("This documentation gets added to the exposed function bellow.");
-        methods.add_method("example_method", |_, _, x: i8| Ok(x));
-        methods.add_method_mut("example_method_mut", |_, _, x: (i8, String)| Ok(x.1));
-        methods.add_function("example_function", |_, x: Vec<String>| Ok((x, 8)));
-        methods.document("***You*** can also embed markdown to the documentation, which gets picked up by [tealr_doc_gen](https://github.com/lenscas/type_generator)`");
-        methods.document("It is also possible to use this function multiple times. These are added as paragraphs.");
-        methods.add_function_mut("example_function_mut", |_, x: (bool, Option<ExampleRlua>)| {
-            Ok(x)
-        });
-        ///This creates the instance.help() function, which returns the documentation as a string.
-        methods.generate_help();
-    }
-}
-```
-
-Mlua:
+#### Mlua:
 
 ```rust ignore
 use tealr::ToTypename;
 #[derive(Clone, tealr::mlu::UserData, ToTypename)]
 struct ExampleMlua {}
-impl<'lua> FromLua<'lua> for ExampleMlua {
-    fn from_lua(value: mlua::prelude::LuaValue<'lua>, _: &'lua Lua) -> Result<Self> {
+impl FromLua for ExampleMlua {
+    fn from_lua(value: mlua::prelude::LuaValue, _: &Lua) -> Result<Self> {
         value
             .as_userdata()
             .map(|x| x.take())
@@ -85,7 +49,7 @@ impl<'lua> FromLua<'lua> for ExampleMlua {
 
 impl tealr::mlu::TealData for ExampleMlua {
     //implement your methods/functions
-    fn add_methods<'lua, T: tealr::mlu::TealDataMethods<'lua, Self>>(methods: &mut T) {
+    fn add_methods<T: tealr::mlu::TealDataMethods<Self>>(methods: &mut T) {
         methods.document_type("This is documentation added to the type itself.");
         methods.document("This documentation gets added to the exposed function bellow.");
         methods.add_method("example_method", |_, _, x: i8| Ok(x));
@@ -104,7 +68,7 @@ impl tealr::mlu::TealData for ExampleMlua {
 
 ## Replacing lua::Value with better type information
 
-Though it is perfectly possible to use the `lua::Value` from `rlua` and `mlua` they aren't the most descriptive type wise. Using them will hurt your documentation as a result.
+Though it is perfectly possible to use the `lua::Value` from `mlua` it isn't the most descriptive type wise. Using it will hurt your documentation as a result.
 
 To help avoid `lua::Value` tealr comes with new types and macros that help you define your API better type wise.
 
@@ -125,7 +89,7 @@ create_union_mlua!(enum YourTypeName = i32 | String);
 
 ### Typed functions:
 
-Though the normal function type from both mlua and rlua is perfectly useable it doesn't contain contain any type information. To help add more type information to your api tealr comes with its own version of this function type that contains type information.
+Though the normal function type from mlua is perfectly useable it doesn't contain contain any type information. To help add more type information to your api tealr comes with its own version of this function type that contains type information.
 
 ```rust ignore
 use tealr::{
@@ -162,7 +126,7 @@ create_generic_mlua!(X);
 struct Example {}
 
 impl TealData for Example {
-    fn add_methods<'lua, T: TealDataMethods<'lua, Self>>(methods: &mut T) {
+    fn add_methods<T: TealDataMethods<Self>>(methods: &mut T) {
         methods.add_method(
             "generic_function_callback",
             |lua, _, fun: TypedFunction<String, X>| {
@@ -172,8 +136,8 @@ impl TealData for Example {
     }
 }
 
-impl<'lua> FromLua<'lua> for Example {
-    fn from_lua(value: mlua::prelude::LuaValue<'lua>, _: &'lua Lua) -> Result<Self> {
+impl FromLua for Example {
+    fn from_lua(value: mlua::prelude::LuaValue, _: &Lua) -> Result<Self> {
         value
             .as_userdata()
             .map(|x| x.take())
@@ -188,8 +152,6 @@ impl<'lua> FromLua<'lua> for Example {
 
 ```
 
-For rlua, all you have to do is replace `mlua` for `rlua`
-
 ## Teal integration
 
 The [teal](https://github.com/teal-language/tl) language is basically just a statically typed variant of lua and can even be made to run in the lua vm without compiling to lua first.
@@ -198,9 +160,9 @@ As a result of this and `tealr`'s focus on enabling a richer typed api causes th
 
 ### Compile inline teal code into lua
 
-Both rlua and mlua allow you to run lua code embedded in your application.
+Mlua allow you to run lua code embedded in your application.
 
-Similarly, tealr allows you to compile embedded teal code to lua while compiling your application. This can then be executed by rlua and mlua.
+Similarly, tealr allows you to compile embedded teal code to lua while compiling your application. This can then be executed by mlua.
 
 This means that you can make use of teal's static type system even for small scripts inside your rust codebase.
 
@@ -218,15 +180,7 @@ Tealr makes doing this from withing rust a bit easier, by exposing a macro that 
 ```rust no_run
 use tealr::embed_compiler;
 let compiler = embed_compiler!("v0.13.1");
-#[cfg(feature = "rlua")]
-{
-    let res : u8 = tealr::rlu::rlua::Lua::new().context(|ctx| {
-        let code = compiler("example/basic_teal_file");
-        ctx.load(&code).set_name("embedded_compiler")?.eval()
-    })?;
-};
 
-#[cfg(feature = "mlua")]
 {
     let code = compiler("example/basic_teal_file");
     let lua = tealr::mlu::mlua::Lua::new();
