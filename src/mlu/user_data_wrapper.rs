@@ -1,5 +1,8 @@
 use bstr::{ByteSlice, ByteVec};
-use mlua::{FromLuaMulti, IntoLuaMulti as ToLuaMulti, Lua, MetaMethod, Result, UserData, UserDataFields, UserDataMethods, UserDataRef};
+use mlua::{
+    FromLuaMulti, IntoLuaMulti as ToLuaMulti, Lua, MetaMethod, Result, UserData, UserDataFields,
+    UserDataMethods, UserDataRef,
+};
 use std::{collections::HashMap, marker::PhantomData};
 
 use super::{MaybeSend, TealData, TealDataFields, TealDataMethods};
@@ -131,8 +134,7 @@ where
     }
 }
 
-impl<Container, T: ToTypename> TealDataMethods<T>
-    for UserDataWrapper<'_, Container, T>
+impl<Container, T: ToTypename> TealDataMethods<T> for UserDataWrapper<'_, Container, T>
 where
     T: UserData,
     Container: UserDataMethods<T>,
@@ -293,8 +295,7 @@ where
     }
 }
 
-impl<Container, T: ToTypename + TealData> TealDataFields<T>
-    for UserDataWrapper<'_, Container, T>
+impl<Container, T: ToTypename + TealData> TealDataFields<T> for UserDataWrapper<'_, Container, T>
 where
     T: UserData,
     Container: UserDataFields<T>,

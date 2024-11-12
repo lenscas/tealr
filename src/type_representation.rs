@@ -31,10 +31,7 @@ macro_rules! impl_type_name {
 
 ///Keeps track of any special treatment a type needs to get
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(
-    feature = "derive",
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
     feature = "derive",
     tealr(tealr_name = crate)
@@ -121,10 +118,7 @@ macro_rules! new_type {
     };
 }
 #[derive(Debug, Clone, PartialEq, Hash, Eq, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(
-    feature = "derive",
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
     feature = "derive",
     tealr(tealr_name = crate)

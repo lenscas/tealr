@@ -11,7 +11,11 @@ use crate::mlu::{
     get_meta_name as get_meta_name_mlua, MaybeSend, TealData as TealDataM, TealDataFields,
     TealDataMethods as TealDataMethodsM,
 };
-use mlua::{FromLua as FromLuaM, FromLuaMulti as FromLuaMultiM, IntoLua as ToLuaM, IntoLuaMulti as ToLuaMultiM, Lua, MetaMethod as MetaMethodM, Result as ResultM, UserData as UserDataM, UserDataRef};
+use mlua::{
+    FromLua as FromLuaM, FromLuaMulti as FromLuaMultiM, IntoLua as ToLuaM,
+    IntoLuaMulti as ToLuaMultiM, Lua, MetaMethod as MetaMethodM, Result as ResultM,
+    UserData as UserDataM, UserDataRef,
+};
 
 use crate::{
     exported_function::ExportedFunction, type_parts_to_str, NamePart, ToTypename, Type, TypeName,
@@ -90,10 +94,7 @@ pub(crate) fn get_method_data<A: TealMultiValue, R: TealMultiValue, S: ToString 
 }
 ///Container of all the information needed to create the `.d.tl` file for your type.
 #[derive(serde::Serialize, serde::Deserialize, Clone)]
-#[cfg_attr(
-    feature = "derive",
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
     feature = "derive",
     tealr(tealr_name = crate)
@@ -122,10 +123,7 @@ impl TypeGenerator {
 type V = Vec<NamePart>;
 ///contains all the information needed to create a teal enum.
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(
-    feature = "derive",
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
     feature = "derive",
     tealr(tealr_name = crate)
@@ -179,10 +177,7 @@ impl EnumGenerator {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone)]
-#[cfg_attr(
-    feature = "derive",
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
     feature = "derive",
     tealr(tealr_name = crate)
@@ -229,10 +224,7 @@ impl From<Field> for (NameContainer, Cow<'static, [NamePart]>) {
 
 ///contains all the information needed to create a record
 #[derive(Default, Clone, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(
-    feature = "derive",
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
     feature = "derive",
     tealr(tealr_name = crate)
@@ -509,7 +501,6 @@ impl RecordGenerator {
         self
     }
 }
-
 
 impl<T> TealDataMethodsM<T> for RecordGenerator
 where

@@ -23,7 +23,6 @@ impl crate::mlu::InstanceCollector for InstanceWalker {
     }
 }
 
-
 impl InstanceWalker {
     pub(crate) fn new() -> Self {
         Self {

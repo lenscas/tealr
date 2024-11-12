@@ -43,15 +43,19 @@ pub(crate) fn get_local_teal(path: String) -> String {
         .arg(path)
         .spawn()
         .map_err(|e| {
-            (match e.kind() {
-                std::io::ErrorKind::NotFound => "Could not compile teal. Command `tl` not found.",
-                std::io::ErrorKind::PermissionDenied => {
-                    "Permission denied when running the teal compiler."
-                }
-                _ => "Error while running teal. Is it available as `tl` in the path?",
-            }, e)
+            (
+                match e.kind() {
+                    std::io::ErrorKind::NotFound => {
+                        "Could not compile teal. Command `tl` not found."
+                    }
+                    std::io::ErrorKind::PermissionDenied => {
+                        "Permission denied when running the teal compiler."
+                    }
+                    _ => "Error while running teal. Is it available as `tl` in the path?",
+                },
+                e,
+            )
         });
-
 
     let mut compiler = match compiler {
         Ok(v) => v,
@@ -66,7 +70,7 @@ pub(crate) fn get_local_teal(path: String) -> String {
                     .unwrap_or_default(),
                 e.kind()
             )
-        },
+        }
     };
 
     if !compiler

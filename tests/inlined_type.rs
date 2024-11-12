@@ -18,10 +18,7 @@ use tealr::{
 #[derive(Clone, UserData, ToTypename)]
 struct Example {}
 impl FromLua for Example {
-    fn from_lua(
-        value: mlua::prelude::LuaValue,
-        _: &Lua,
-    ) -> tealr::mlu::mlua::Result<Self> {
+    fn from_lua(value: mlua::prelude::LuaValue, _: &Lua) -> tealr::mlu::mlua::Result<Self> {
         value
             .as_userdata()
             .map(|x| x.take())

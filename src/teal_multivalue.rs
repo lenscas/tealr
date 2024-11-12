@@ -4,10 +4,7 @@ use crate::{type_representation::KindOfType, ToTypename, Type};
 
 ///Represents a type
 #[derive(Debug, PartialEq, Eq, Clone, Hash, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(
-    feature = "derive",
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
     all(feature = "derive"),
     tealr(tealr_name = crate)

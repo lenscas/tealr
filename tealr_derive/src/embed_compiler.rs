@@ -77,7 +77,7 @@ fn get_version(version: String) -> String {
                 true
             } else {
                 false
-            }
+            };
         }
         match last {
             Checker::V => {

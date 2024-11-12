@@ -10,10 +10,7 @@ type X = Vec<NamePart>;
 
 ///Contains the data needed to write down the type of a function
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(
-    feature = "derive",
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
     feature = "derive",
     tealr(tealr_name = crate)

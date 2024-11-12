@@ -6,10 +6,7 @@ type V = Vec<NamePart>;
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 ///Used to document what global instances get made by the module
-#[cfg_attr(
-    feature = "derive",
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
     feature = "derive",
     tealr(tealr_name = crate)
@@ -35,10 +32,7 @@ pub struct GlobalInstance {
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 ///Used to document what global instances get made by the module
-#[cfg_attr(
-    feature = "derive",
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
     feature = "derive",
     tealr(tealr_name = crate)
@@ -52,10 +46,7 @@ pub struct ExtraPage {
 
 ///This generates the .d.tl files
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(
-    feature = "derive",
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
     feature = "derive",
     tealr(tealr_name = crate)

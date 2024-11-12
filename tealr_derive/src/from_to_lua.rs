@@ -48,7 +48,7 @@ fn find_tag_with_value(to_find: &str, tags: &[venial::Attribute]) -> Option<Toke
         })
 }
 
-fn find_doc_tags(tags: &[venial::Attribute]) -> impl Iterator<Item=String> + '_ {
+fn find_doc_tags(tags: &[venial::Attribute]) -> impl Iterator<Item = String> + '_ {
     tags.iter()
         .filter(|v| {
             let name = v.path.iter().cloned().collect::<TokenStream>().to_string();
@@ -505,18 +505,18 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
     let error_message = config.error_message;
     let result_location_from = config.result_location_from;
     let with_from_lua = quote! {
-            impl #from_loc for #name {
-                fn from_lua(lua_value:#lua_value, #lua_location) -> #result_location_from {
-                    match lua_value.as_userdata() {
-                        Some(x) => x.take(),
-                        None => {
-                            let x = lua_value;
-                            Err(#error_message)
-                        }
+        impl #from_loc for #name {
+            fn from_lua(lua_value:#lua_value, #lua_location) -> #result_location_from {
+                match lua_value.as_userdata() {
+                    Some(x) => x.take(),
+                    None => {
+                        let x = lua_value;
+                        Err(#error_message)
                     }
                 }
             }
-        };
+        }
+    };
     trait_impls.extend(with_from_lua);
     trait_impls
 }

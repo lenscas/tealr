@@ -1,8 +1,5 @@
 use tealr::{
-    mlu::{
-        mlua::Lua,
-        TealData, TealDataMethods, UserData,
-    },
+    mlu::{mlua::Lua, TealData, TealDataMethods, UserData},
     ToTypename, TypeWalker,
 };
 //this example shows how to use the create_named_parameters! macro to create methods which has names for their parameters in the documentation

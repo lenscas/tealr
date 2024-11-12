@@ -59,8 +59,7 @@ fn async_fn() -> Result<()> {
 
     let generated: serde_json::Value = serde_json::from_str(&file_contents).unwrap();
 
-    let mut original: serde_json::Value =
-        serde_json::from_str(include_str!("async.json")).unwrap();
+    let mut original: serde_json::Value = serde_json::from_str(include_str!("async.json")).unwrap();
     let x = original
         .get_mut("tealr_version_used")
         .expect("missing tealr_version_used in original");

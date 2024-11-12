@@ -1,7 +1,6 @@
 #![warn(missing_docs)]
 #![doc = include_str!("../README.md")]
 
-
 ///traits and types specific to mlua
 pub mod mlu;
 
@@ -45,10 +44,7 @@ pub fn get_tealr_version() -> &'static str {
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug, Serialize, Deserialize)]
-#[cfg_attr(
-    feature = "derive",
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
     feature = "derive",
     tealr(tealr_name = crate)
@@ -72,10 +68,7 @@ impl<T: AsRef<str>> From<T> for Name {
     }
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
-#[cfg_attr(
-    feature = "derive",
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
     feature = "derive",
     tealr(tealr_name = crate)
@@ -88,10 +81,7 @@ pub struct SingleType {
     pub kind: KindOfType,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
-#[cfg_attr(
-    feature = "derive",
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
     feature = "derive",
     tealr(tealr_name = crate)
@@ -104,10 +94,7 @@ pub struct FunctionParam {
     pub ty: Type,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(
-    feature = "derive",
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
     feature = "derive",
     tealr(tealr_name = crate)
@@ -120,10 +107,7 @@ pub struct FunctionRepresentation {
     pub returns: Vec<Type>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(
-    feature = "derive",
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
     feature = "derive",
     tealr(tealr_name = crate)
@@ -145,10 +129,7 @@ pub struct MapRepresentation {
 type NewTypeArray = Vec<Type>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(
-    feature = "derive",
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
     feature = "derive",
     tealr(tealr_name = crate)

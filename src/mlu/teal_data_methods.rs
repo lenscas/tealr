@@ -1,6 +1,9 @@
 use std::borrow::Cow;
 
-use mlua::{FromLuaMulti, IntoLua as ToLua, IntoLuaMulti as ToLuaMulti, Lua, MetaMethod, Result, UserDataRef};
+use mlua::{
+    FromLuaMulti, IntoLua as ToLua, IntoLuaMulti as ToLuaMulti, Lua, MetaMethod, Result,
+    UserDataRef,
+};
 
 use crate::{TealMultiValue, ToTypename};
 
@@ -136,8 +139,5 @@ impl InstanceCollector for (mlua::Table, &Lua) {
 ///implement this to easily document what global instances are exposed to lua
 pub trait ExportInstances: Default {
     ///adds the instances
-    fn add_instances<T: InstanceCollector>(
-        self,
-        instance_collector: &mut T,
-    ) -> Result<()>;
+    fn add_instances<T: InstanceCollector>(self, instance_collector: &mut T) -> Result<()>;
 }

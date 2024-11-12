@@ -1,5 +1,5 @@
 use proc_macro2::{Ident, TokenStream};
-use venial::{Item, Error};
+use venial::{Error, Item};
 
 use crate::from_to_lua::get_tealr_name;
 

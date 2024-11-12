@@ -2,10 +2,7 @@
 //This is useful if you want to write a bit of teal/lua code directly in your application that gets passed to mlua.
 //NOTE: At this point it requires you to have teal installed and accessible as `tl` at compile time.
 
-use tealr::{
-    compile_inline_teal,
-    mlu::mlua::Lua,
-};
+use tealr::{compile_inline_teal, mlu::mlua::Lua};
 
 //This example using `compile_inline_teal` which takes in some teal code and compiles it.
 fn main() {
@@ -25,6 +22,7 @@ return add(1,2)
     let result: String = lua
         .load(code)
         .set_name("compile inline teal example")
-        .eval().unwrap();
+        .eval()
+        .unwrap();
     println!("output:{}", result);
 }
