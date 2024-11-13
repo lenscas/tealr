@@ -14,7 +14,7 @@ use crate::mlu::{
 use mlua::{
     FromLua as FromLuaM, FromLuaMulti as FromLuaMultiM, IntoLua as ToLuaM,
     IntoLuaMulti as ToLuaMultiM, Lua, MetaMethod as MetaMethodM, Result as ResultM,
-    UserData as UserDataM, UserDataRef,
+    UserData as UserDataM,
 };
 
 use crate::{
@@ -51,7 +51,7 @@ impl FromLuaM for NameContainer {
 
 impl ToLuaM for NameContainer {
     fn into_lua(self, lua: &Lua) -> ResultM<mlua::Value> {
-        lua.create_string(&self.0).and_then(|x| x.into_lua(lua))
+        lua.create_string(self.0).and_then(|x| x.into_lua(lua))
     }
 }
 

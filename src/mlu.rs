@@ -23,7 +23,9 @@ pub use crate::{
     create_generic_mlua as create_generic, create_union_mlua as create_union,
     mlua_create_named_parameters as create_named_parameters,
 };
+use crate::{ToTypename, Type};
 pub use mlua;
+use mlua::{UserDataRef, UserDataRefMut};
 pub use teal_data_fields::TealDataFields;
 
 pub(crate) fn get_meta_name(name: mlua::MetaMethod) -> Cow<'static, str> {
@@ -107,3 +109,29 @@ pub use tealr_derive::MluaTealDerive as TealDerive;
 ///Type body is implemented in a similar way, where it uses the [TealData](crate::mlu::TealData) implementation to get the types
 #[cfg(feature = "derive")]
 pub use tealr_derive::MluaUserData as UserData;
+
+impl<T: ToTypename> ToTypename for UserDataRef<T> {
+    fn to_typename() -> Type {
+        T::to_typename()
+    }
+    fn to_function_param() -> Vec<crate::FunctionParam> {
+        T::to_function_param()
+    }
+    fn to_old_type_parts() -> Cow<'static, [crate::NamePart]> {
+        #[allow(deprecated)]
+        T::to_old_type_parts()
+    }
+}
+
+impl<T: ToTypename> ToTypename for UserDataRefMut<T> {
+    fn to_typename() -> Type {
+        T::to_typename()
+    }
+    fn to_function_param() -> Vec<crate::FunctionParam> {
+        T::to_function_param()
+    }
+    fn to_old_type_parts() -> Cow<'static, [crate::NamePart]> {
+        #[allow(deprecated)]
+        T::to_old_type_parts()
+    }
+}

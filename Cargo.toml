@@ -36,6 +36,9 @@ mlua_module = ["mlua/module"]
 mlua_send = ["mlua/send"]
 mlua_serialize = ["mlua/serialize"]
 mlua_vendored = ["mlua/vendored"]
+mlua_error-send = ["mlua/error-send"]
+mlua_userdata-wrappers = ["mlua/userdata-wrappers"]
+mlua_anyhow = ["mlua/anyhow"]
 
 [dependencies]
 bstr = { version = "1.10.0", default-features = false, features = ["std"] }
@@ -130,10 +133,5 @@ path = "examples/named_parameters.rs"
 required-features = ["mlua"]
 
 [package.metadata.docs.rs]
-features = [
-  "mlua_lua54",
-  "mlua_vendored",
-  "mlua_async",
-  "mlua_serialize",
-]
+features = ["mlua_lua54", "mlua_vendored", "mlua_async", "mlua_serialize"]
 rustdoc-args = ["--cfg", "docsrs"]

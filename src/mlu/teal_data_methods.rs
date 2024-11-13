@@ -1,9 +1,6 @@
 use std::borrow::Cow;
 
-use mlua::{
-    FromLuaMulti, IntoLua as ToLua, IntoLuaMulti as ToLuaMulti, Lua, MetaMethod, Result,
-    UserDataRef,
-};
+use mlua::{FromLuaMulti, IntoLua as ToLua, IntoLuaMulti as ToLuaMulti, Lua, MetaMethod, Result};
 
 use crate::{TealMultiValue, ToTypename};
 
