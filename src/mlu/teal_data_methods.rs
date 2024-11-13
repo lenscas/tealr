@@ -35,7 +35,7 @@ pub trait TealDataMethods<T: ToTypename> {
     fn add_async_method<S: ToString + AsRef<str>, A, R, M, MR>(&mut self, name: S, method: M)
     where
         T: 'static,
-        M: Fn(Lua, UserDataRef<T>, A) -> MR + MaybeSend + 'static,
+        M: Fn(Lua, mlua::UserDataRef<T>, A) -> MR + MaybeSend + 'static,
         A: FromLuaMulti + TealMultiValue,
         MR: std::future::Future<Output = Result<R>> + mlua::MaybeSend + 'static,
         R: ToLuaMulti + TealMultiValue;

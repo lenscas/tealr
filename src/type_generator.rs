@@ -540,7 +540,7 @@ where
     fn add_async_method<S: ToString + AsRef<str>, A, R, M, MR>(&mut self, name: S, _: M)
     where
         T: 'static,
-        M: Fn(Lua, UserDataRef<T>, A) -> MR + MaybeSend + 'static,
+        M: Fn(Lua, mlua::UserDataRef<T>, A) -> MR + MaybeSend + 'static,
         A: FromLuaMultiM + TealMultiValue,
         MR: std::future::Future<Output = ResultM<R>> + MaybeSend + 'static,
         R: ToLuaMultiM + TealMultiValue,
