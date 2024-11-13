@@ -167,10 +167,10 @@ enum Example {
     ),
     DoubleInnerValue(String,u8)
 }
-fn field_extension<'lua,B:ToTypename + TealData,A: tealr::mlu::TealDataFields<'lua,B>>(fields: &mut A) {
+fn field_extension<B:ToTypename + TealData,A: tealr::mlu::TealDataFields<B>>(fields: &mut A) {
     //set fields as usual
 }
-fn method_extension<'lua,B:ToTypename,A: tealr::mlu::TealDataMethods<'lua,B>>(fields: &mut A) {
+fn method_extension<B:ToTypename,A: tealr::mlu::TealDataMethods<B>>(fields: &mut A) {
     //set methods as usual
 }
 let instance = Example::SingularInnerValue("SomeValue".into());

@@ -6,27 +6,20 @@ type V = Vec<NamePart>;
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 ///Used to document what global instances get made by the module
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive", not(feature = "rlua")),
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
-#[cfg_attr(
-    all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::ToTypename)
-)]
-#[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
+    feature = "derive",
     tealr(tealr_name = crate)
 )]
 pub struct GlobalInstance {
     ///name of the global
     #[cfg_attr(
-        all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
+        feature = "derive",
         tealr(remote =  String))]
     pub name: Cow<'static, str>,
     ///the type according to the old format
     #[cfg_attr(
-        all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
+        feature = "derive",
         tealr(remote =  V))]
     pub teal_type: Cow<'static, [NamePart]>,
     ///the type
@@ -39,16 +32,9 @@ pub struct GlobalInstance {
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 ///Used to document what global instances get made by the module
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive", not(feature = "rlua")),
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
-#[cfg_attr(
-    all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::ToTypename)
-)]
-#[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
+    feature = "derive",
     tealr(tealr_name = crate)
 )]
 pub struct ExtraPage {
@@ -60,16 +46,9 @@ pub struct ExtraPage {
 
 ///This generates the .d.tl files
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive", not(feature = "rlua")),
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
-#[cfg_attr(
-    all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::ToTypename)
-)]
-#[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
+    feature = "derive",
     tealr(tealr_name = crate)
 )]
 pub struct TypeWalker {
@@ -139,24 +118,6 @@ impl TypeWalker {
         self
     }
     ///generates the `.d.tl` file. It outputs the string, its up to you to store it.
-    #[cfg_attr(feature = "rlua", doc = " ```")]
-    #[cfg_attr(not(feature = "rlua"), doc = " ```ignore")]
-    ///# use rlua::{Lua, Result, UserDataMethods};
-    ///# use tealr::{rlu::{TealData,UserData, TealDataMethods,UserDataWrapper}, TypeWalker, ToTypename};
-    ///#[derive(UserData,ToTypename)]
-    ///struct Example {}
-    ///impl TealData for Example {}
-    ///let generated_string = TypeWalker::new().process_type::<Example>().generate("Examples",true);
-    ///assert_eq!(generated_string,Ok(String::from("global record Examples
-    ///\trecord Example
-    ///\t\tuserdata
-    ///
-    ///
-    ///\tend
-    ///end
-    ///return Examples"
-    ///)));
-    ///```
     #[deprecated(
         since = "0.9.0",
         note = "Generation of .d.tl files has been moved to tealr_doc_gen. Use TypeWaller::to_json() instead to get json parsable by tealr_doc_gen."
@@ -218,24 +179,6 @@ impl TypeWalker {
         ))
     }
     ///Same as calling [Typewalker::generate(outer_name,true)](crate::TypeWalker::generate).
-    #[cfg_attr(feature = "rlua", doc = " ```")]
-    #[cfg_attr(not(feature = "rlua"), doc = " ```ignore")]
-    ///# use rlua::{Lua, Result, UserDataMethods};
-    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper,UserData}, TypeWalker, ToTypename};
-    ///#[derive(UserData,ToTypename)]
-    ///struct Example {}
-    ///impl TealData for Example {}
-    ///let generated_string = TypeWalker::new().process_type::<Example>().generate_global("Examples");
-    ///assert_eq!(generated_string,Ok(String::from("global record Examples
-    ///\trecord Example
-    ///\t\tuserdata
-    ///
-    ///
-    ///\tend
-    ///end
-    ///return Examples"
-    ///)));
-    ///```
     #[deprecated(
         since = "0.9.0",
         note = "Generation of .d.tl files has been moved to tealr_doc_gen. Use TypeWaller::to_json() instead to get json parsable by tealr_doc_gen."
@@ -245,24 +188,6 @@ impl TypeWalker {
         self.generate(outer_name, true)
     }
     ///Same as calling [Typewalker::generate(outer_name,false)](crate::TypeWalker::generate).
-    #[cfg_attr(feature = "rlua", doc = " ```")]
-    #[cfg_attr(not(feature = "rlua"), doc = " ```ignore")]
-    ///# use rlua::{Lua, Result, UserDataMethods};
-    ///# use tealr::{rlu::{TealData, TealDataMethods,UserDataWrapper,UserData,}, TypeWalker, ToTypename};
-    ///#[derive(UserData,ToTypename)]
-    ///struct Example {}
-    ///impl TealData for Example {}
-    ///let generated_string = TypeWalker::new().process_type::<Example>().generate_local("Examples");
-    ///assert_eq!(generated_string,Ok(String::from("local record Examples
-    ///\trecord Example
-    ///\t\tuserdata
-    ///
-    ///
-    ///\tend
-    ///end
-    ///return Examples"
-    ///)));
-    ///```
     #[deprecated(
         since = "0.9.0",
         note = "Generation of .d.tl files has been moved to tealr_doc_gen. Use TypeWaller::to_json() instead to get json parsable by tealr_doc_gen."
@@ -294,20 +219,6 @@ impl TypeWalker {
     }
 }
 
-#[cfg(all(feature = "rlua", not(feature = "mlua")))]
-impl TypeWalker {
-    ///collect every instance that is getting shared with lua
-    pub fn document_global_instance<T: crate::rlu::ExportInstances>(
-        mut self,
-    ) -> rlua::Result<Self> {
-        let mut collector = crate::export_instance::InstanceWalker::new();
-        T::default().add_instances(&mut collector)?;
-        self.global_instances_off.append(&mut collector.instances);
-        Ok(self)
-    }
-}
-
-#[cfg(feature = "mlua")]
 impl TypeWalker {
     ///collect every instance that is getting shared with lua
     pub fn document_global_instance<T: crate::mlu::ExportInstances>(

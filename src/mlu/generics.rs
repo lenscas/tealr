@@ -12,33 +12,33 @@ macro_rules! create_generic_mlua {
     ($visibility:vis $type_name:ident) => {
         #[derive(Clone,Debug)]
         #[allow(missing_docs)]
-        $visibility enum $type_name<'lua> {
+        $visibility enum $type_name {
             Nil,
             Boolean(bool),
             LightUserData($crate::mlu::mlua::LightUserData),
             Integer($crate::mlu::mlua::Integer),
             Number($crate::mlu::mlua::Number),
-            String($crate::mlu::mlua::String<'lua>),
-            Table($crate::mlu::mlua::Table<'lua>),
-            Function($crate::mlu::mlua::Function<'lua>),
-            Thread($crate::mlu::mlua::Thread<'lua>),
-            UserData($crate::mlu::mlua::AnyUserData<'lua>),
-            Error($crate::mlu::mlua::Error),
+            String($crate::mlu::mlua::String),
+            Table($crate::mlu::mlua::Table),
+            Function($crate::mlu::mlua::Function),
+            Thread($crate::mlu::mlua::Thread),
+            UserData($crate::mlu::mlua::AnyUserData),
+            Error(Box<$crate::mlu::mlua::Error>),
             #[cfg(feature = "mlua_luau")]
             Vector(f32,f32,f32)
         }
-        impl<'lua> $crate::mlu::mlua::FromLua<'lua> for $type_name<'lua> {
-            fn from_lua(value: $crate::mlu::mlua::Value<'lua>, _: &'lua $crate::mlu::mlua::Lua) -> ::std::result::Result<Self, $crate::mlu::mlua::Error> {
+        impl $crate::mlu::mlua::FromLua for $type_name {
+            fn from_lua(value: $crate::mlu::mlua::Value, _: &$crate::mlu::mlua::Lua) -> ::std::result::Result<Self, $crate::mlu::mlua::Error> {
                 Ok(value.into())
             }
         }
-        impl<'lua> $crate::mlu::mlua::IntoLua<'lua> for $type_name<'lua> {
-            fn into_lua(self, _: &'lua $crate::mlu::mlua::Lua) -> ::std::result::Result<$crate::mlu::mlua::Value<'lua>, $crate::mlu::mlua::Error> {
+        impl $crate::mlu::mlua::IntoLua for $type_name {
+            fn into_lua(self, _: &$crate::mlu::mlua::Lua) -> ::std::result::Result<$crate::mlu::mlua::Value, $crate::mlu::mlua::Error> {
                 Ok(self.into())
             }
         }
-        impl<'lua> From<$crate::mlu::mlua::Value<'lua>> for $type_name<'lua> {
-            fn from(value:$crate::mlu::mlua::Value<'lua>) -> $type_name {
+        impl From<$crate::mlu::mlua::Value> for $type_name {
+            fn from(value:$crate::mlu::mlua::Value) -> $type_name {
                 use $crate::mlu::mlua::Value::*;
                 match value {
                     Nil => $type_name::Nil,
@@ -53,12 +53,13 @@ macro_rules! create_generic_mlua {
                     UserData(x) => $type_name::UserData(x),
                     Error(x) => $type_name::Error(x),
                     #[cfg(feature = "mlua_luau")]
-                    Vector(vec) => $type_name::Vector(vec.x(),vec.y(),vec.z())
+                    Vector(vec) => $type_name::Vector(vec.x(),vec.y(),vec.z()),
+                    _ => unimplemented!("Unsupported variant"),
                 }
             }
         }
-        impl<'lua> From<$type_name<'lua>> for $crate::mlu::mlua::Value<'lua> {
-            fn from(value:$type_name<'lua>) -> $crate::mlu::mlua::Value<'lua> {
+        impl From<$type_name> for $crate::mlu::mlua::Value {
+            fn from(value:$type_name) -> $crate::mlu::mlua::Value {
                 use $type_name::*;
                 match value {
                     Nil => $crate::mlu::mlua::Value::Nil,
@@ -77,13 +78,13 @@ macro_rules! create_generic_mlua {
                 }
             }
         }
-        impl<'lua> ::std::iter::FromIterator<$type_name<'lua>> for $crate::mlu::mlua::MultiValue<'lua> {
-            fn from_iter<__MacroIterGeneric: IntoIterator<Item = $type_name<'lua>>>(iter: __MacroIterGeneric) -> Self {
+        impl ::std::iter::FromIterator<$type_name> for $crate::mlu::mlua::MultiValue {
+            fn from_iter<__MacroIterGeneric: IntoIterator<Item = $type_name>>(iter: __MacroIterGeneric) -> Self {
                 iter.into_iter().map($crate::mlu::mlua::Value::from).collect()
             }
         }
-        impl<'lua> ::core::cmp::PartialEq<$crate::mlu::mlua::Value<'lua>> for $type_name<'lua> {
-            fn eq(&self, other: &$crate::mlu::mlua::Value<'lua>) -> bool {
+        impl ::core::cmp::PartialEq<$crate::mlu::mlua::Value> for $type_name {
+            fn eq(&self, other: &$crate::mlu::mlua::Value) -> bool {
                 match (self, other) {
                     ($type_name::Nil, $crate::mlu::mlua::Value::Nil) => true,
                     ($type_name::Boolean(a), $crate::mlu::mlua::Value::Boolean(b)) => a == b,
@@ -103,7 +104,7 @@ macro_rules! create_generic_mlua {
                 }
             }
         }
-        impl<'lua> ::core::cmp::PartialEq for $type_name<'lua> {
+        impl ::core::cmp::PartialEq for $type_name {
             fn eq(&self, other: &Self) -> bool {
                 match (self, other) {
                     ($type_name::Nil, $type_name::Nil) => true,
@@ -124,7 +125,7 @@ macro_rules! create_generic_mlua {
                 }
             }
         }
-        impl<'lua> $crate::ToTypename for $type_name<'lua> {
+        impl $crate::ToTypename for $type_name {
             fn to_typename() -> $crate::Type {
                 $crate::Type::new_single(stringify!($type_name), $crate::KindOfType::Generic)
             }

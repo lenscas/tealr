@@ -10,16 +10,9 @@ type X = Vec<NamePart>;
 
 ///Contains the data needed to write down the type of a function
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive", not(feature = "rlua")),
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
-#[cfg_attr(
-    all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::ToTypename)
-)]
-#[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive",not(all(feature = "rlua", feature = "mlua"))),
+    feature = "derive",
     tealr(tealr_name = crate)
 )]
 pub struct ExportedFunction {
@@ -28,7 +21,7 @@ pub struct ExportedFunction {
     ///The full layout of the function based on teal's syntax
     #[deprecated]
     #[cfg_attr(
-        all(any(feature = "rlua", feature = "mlua"), feature = "derive",not(all(feature = "rlua", feature = "mlua"))),
+        feature = "derive",
         tealr(remote = X)
     )]
     pub signature: Cow<'static, [crate::NamePart]>,
@@ -45,7 +38,6 @@ impl ExportedFunction {
     ///# use tealr::ExportedFunction;
     ///ExportedFunction::new::<(String,String),String,_>("concat",false,None);
     ///```
-    #[cfg(any(feature = "rlua", feature = "mlua"))]
     pub fn new<A: crate::TealMultiValue, R: crate::TealMultiValue, S: AsRef<str>>(
         name: S,
         is_meta_method: bool,

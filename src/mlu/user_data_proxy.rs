@@ -24,14 +24,14 @@ impl<T: UserData + 'static> StaticUserdata for T {}
 /// - `TealDataFields::add_meta_field_with`
 ///
 /// The type documentation is overriden as well.
-pub struct UserDataProxy<'lua, T: StaticUserdata> {
-    user_data: AnyUserData<'lua>,
+pub struct UserDataProxy<T: StaticUserdata> {
+    user_data: AnyUserData,
     ph_: PhantomData<T>,
 }
 
-impl<'lua, T: StaticUserdata> UserDataProxy<'lua, T> {
+impl<T: StaticUserdata> UserDataProxy<T> {
     /// Creates a new UserDataProxy
-    pub fn new(lua: &'lua Lua) -> Result<Self, Error> {
+    pub fn new(lua: &Lua) -> Result<Self, Error> {
         Ok(Self {
             user_data: lua.create_proxy::<T>()?,
             ph_: Default::default(),
@@ -39,7 +39,7 @@ impl<'lua, T: StaticUserdata> UserDataProxy<'lua, T> {
     }
 }
 
-impl<T: StaticUserdata + ToTypename> ToTypename for UserDataProxy<'_, T> {
+impl<T: StaticUserdata + ToTypename> ToTypename for UserDataProxy<T> {
     fn to_typename() -> crate::Type {
         let mut x = T::to_typename();
         if let Type::Single(x) = &mut x {
@@ -49,7 +49,7 @@ impl<T: StaticUserdata + ToTypename> ToTypename for UserDataProxy<'_, T> {
     }
 }
 
-impl<T: StaticUserdata + TypeBody + ToTypename> TypeBody for UserDataProxy<'_, T> {
+impl<T: StaticUserdata + TypeBody + ToTypename> TypeBody for UserDataProxy<T> {
     fn get_type_body() -> crate::TypeGenerator {
         let generator = T::get_type_body();
         // extract only "functions"
@@ -83,8 +83,8 @@ impl<T: StaticUserdata + TypeBody + ToTypename> TypeBody for UserDataProxy<'_, T
     }
 }
 
-impl<'lua, T: StaticUserdata> IntoLua<'lua> for UserDataProxy<'lua, T> {
-    fn into_lua(self, lua: &'lua Lua) -> mlua::Result<mlua::Value<'lua>> {
+impl<T: StaticUserdata> IntoLua for UserDataProxy<T> {
+    fn into_lua(self, lua: &Lua) -> mlua::Result<mlua::Value> {
         self.user_data.into_lua(lua)
     }
 }

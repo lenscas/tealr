@@ -72,12 +72,12 @@ fn get_version(version: String) -> String {
     let mut last = Checker::Start;
     let is_valid_version = version.char_indices().all(|(loc, chara)| {
         if loc == 0 {
-            if chara == 'v' {
+            return if chara == 'v' {
                 last = Checker::V;
-                return true;
+                true
             } else {
-                return false;
-            }
+                false
+            };
         }
         match last {
             Checker::V => {

@@ -1,7 +1,7 @@
 [package]
 authors = ["Lenscas <lenscas@gmail.com>"]
 categories = ["development-tools::ffi"]
-description = "A crate to enhance the APIs provided by the rlua and mlua crates"
+description = "A crate to enhance the APIs provided by the mlua crates"
 edition = "2021"
 keywords = ["teal", "lua", "type", "generation", "type-generation"]
 license = "MIT OR Apache-2.0"
@@ -36,182 +36,102 @@ mlua_module = ["mlua/module"]
 mlua_send = ["mlua/send"]
 mlua_serialize = ["mlua/serialize"]
 mlua_vendored = ["mlua/vendored"]
-
-#rlua specific features
-rlua_builtin-lua51 = ["rlua/builtin-lua51"]
-rlua_builtin-lua53 = ["rlua/builtin-lua53"]
-rlua_builtin-lua54 = ["rlua/builtin-lua54"]
-rlua_system-lua51 = ["rlua/system-lua51"]
-rlua_system-lua53 = ["rlua/system-lua53"]
-rlua_system-lua54 = ["rlua/system-lua54"]
+mlua_error-send = ["mlua/error-send"]
+mlua_userdata-wrappers = ["mlua/userdata-wrappers"]
+mlua_anyhow = ["mlua/anyhow"]
 
 [dependencies]
-bstr = { version = "0.2", default_features = false, features = ["std"] }
-itertools = "0.10.3"
-mlua = { version = "0.9.2", optional = true, default_features = false }
-rlua = { version = "0.19.7", optional = true, default_features = false }
+bstr = { version = "1.10.0", default-features = false, features = ["std"] }
+itertools = "0.13.0"
+mlua = { version = "0.10.1", optional = true, default-features = false }
 serde = { version = "1.0.136", features = ["derive"] }
-serde_json = "1.0.91"
+serde_json = "1.0.132"
 tealr_derive = { version = "0.9.1", optional = true, path = "./tealr_derive" }
-
-# Rlua tests
-[[test]]
-name = "rlua_embed_teal"
-path = "tests/rlua/embed_teal.rs"
-required-features = ["rlua"]
-[[test]]
-name = "rlua_generics"
-path = "tests/rlua/generics.rs"
-required-features = ["rlua"]
-[[test]]
-name = "rlua_type_picker"
-path = "tests/rlua/type_picker.rs"
-required-features = ["rlua"]
-[[test]]
-name = "rlua_function_wrapper"
-path = "tests/rlua/function_wrapper.rs"
-required-features = ["rlua"]
-[[test]]
-name = "rlua_readme_pieces"
-path = "tests/rlua/readme_pieces.rs"
-required-features = ["rlua"]
-
-[[test]]
-name = "rlua_meta_methods"
-path = "tests/rlua/meta_methods.rs"
-required-features = ["rlua"]
-[[test]]
-name = "rlua_to_from_derived"
-path = "tests/rlua/to_from_derived.rs"
-required-features = ["rlua"]
-
-[[test]]
-name = "rlua_export_instances"
-path = "tests/rlua/export_instances.rs"
-required-features = ["rlua"]
-
-[[test]]
-name = "rlua_named_parameters"
-path = "tests/rlua/named_parameters.rs"
-required-features = ["rlua"]
 
 #Mlua tests
 [[test]]
 name = "mlua_embed_teal"
-path = "tests/mlua/embed_teal.rs"
+path = "tests/embed_teal.rs"
 required-features = ["mlua"]
 [[test]]
 name = "mlua_inlined_type"
-path = "tests/mlua/inlined_type.rs"
+path = "tests/inlined_type.rs"
 required-features = ["mlua"]
 
 [[test]]
 name = "mlua_generics"
-path = "tests/mlua/generics.rs"
+path = "tests/generics.rs"
 required-features = ["mlua"]
 [[test]]
 name = "mlua_type_picker"
-path = "tests/mlua/type_picker.rs"
+path = "tests/type_picker.rs"
 required-features = ["mlua"]
 [[test]]
 name = "mlua_async"
-path = "tests/mlua/async.rs"
+path = "tests/async.rs"
 required-features = ["mlua", "mlua_async"]
 [[test]]
 name = "mlua_function_wrapper"
-path = "tests/mlua/function_wrapper.rs"
+path = "tests/function_wrapper.rs"
 required-features = ["mlua"]
 [[test]]
 name = "mlua_readme_pieces"
-path = "tests/mlua/readme_pieces.rs"
+path = "tests/readme_pieces.rs"
 required-features = ["mlua"]
 
 [[test]]
 name = "mlua_meta_methods"
-path = "tests/mlua/meta_methods.rs"
+path = "tests/meta_methods.rs"
 required-features = ["mlua"]
 [[test]]
 name = "mlua_to_from_derived"
-path = "tests/mlua/to_from_derived.rs"
+path = "tests/to_from_derived.rs"
 required-features = ["mlua"]
 
 [[test]]
 name = "mlua_export_instances"
-path = "tests/mlua/export_instances.rs"
+path = "tests/export_instances.rs"
 required-features = ["mlua"]
 
 [[test]]
 name = "mlua_named_parameters"
-path = "tests/mlua/named_parameters.rs"
+path = "tests/named_parameters.rs"
 required-features = ["mlua"]
 
-# Examples using rlua
-[[example]]
-name = "rlua_compile_inline_teal"
-path = "examples/rlua/compile_inline_teal.rs"
-required-features = ["rlua"]
-[[example]]
-name = "rlua_derive"
-path = "examples/rlua/derive.rs"
-required-features = ["rlua"]
-[[example]]
-name = "rlua_embed_teal"
-path = "examples/rlua/embed_teal.rs"
-required-features = ["rlua"]
-[[example]]
-name = "rlua_manual"
-path = "examples/rlua/manual.rs"
-required-features = ["rlua"]
-[[example]]
-name = "rlua_manual_documentation"
-path = "examples/rlua/manual_documentation.rs"
-required-features = ["rlua"]
-[[example]]
-name = "rlua_named_parameters"
-path = "examples/rlua/named_parameters.rs"
-required-features = ["rlua"]
 
 #examples using mlua
 [[example]]
 name = "mlua_compile_inline_teal"
-path = "examples/mlua/compile_inline_teal.rs"
+path = "examples/compile_inline_teal.rs"
 required-features = ["mlua"]
 [[example]]
 name = "mlua_derive"
-path = "examples/mlua/derive.rs"
+path = "examples/derive.rs"
 required-features = ["mlua"]
 [[example]]
 name = "mlua_embed_teal"
-path = "examples/mlua/embed_teal.rs"
+path = "examples/embed_teal.rs"
 required-features = ["mlua"]
 [[example]]
 name = "mlua_manual"
-path = "examples/mlua/manual.rs"
+path = "examples/manual.rs"
 required-features = ["mlua"]
 
 [[example]]
 name = "mlua_manual_documentation"
-path = "examples/mlua/manual_documentation.rs"
+path = "examples/manual_documentation.rs"
 required-features = ["mlua"]
 
 [[example]]
 name = "mlua_userdata_proxy"
-path = "examples/mlua/userdata_proxy.rs"
+path = "examples/userdata_proxy.rs"
 required-features = ["mlua"]
 
 [[example]]
 name = "mlua_named_parameters"
-path = "examples/mlua/named_parameters.rs"
+path = "examples/named_parameters.rs"
 required-features = ["mlua"]
 
 [package.metadata.docs.rs]
-features = [
-  "mlua",
-  "rlua",
-  "rlua_builtin-lua54",
-  "mlua_lua54",
-  "mlua_vendored",
-  "mlua_async",
-  "mlua_serialize",
-]
+features = ["mlua_lua54", "mlua_vendored", "mlua_async", "mlua_serialize"]
 rustdoc-args = ["--cfg", "docsrs"]

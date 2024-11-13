@@ -1,7 +1,7 @@
 use crate::{FunctionParam, MapRepresentation, SingleType, ToTypename, Type};
 macro_rules! impl_type_name_life_time {
     ($teal_type:literal $current_type:ty) => {
-        impl<'lua> ToTypename for $current_type {
+        impl ToTypename for $current_type {
             fn to_typename() -> Type {
                 Type::Single(SingleType {
                     name: $teal_type.into(),
@@ -31,16 +31,9 @@ macro_rules! impl_type_name {
 
 ///Keeps track of any special treatment a type needs to get
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive", not(feature = "rlua")),
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
-#[cfg_attr(
-    all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::ToTypename)
-)]
-#[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua")) ),
+    feature = "derive",
     tealr(tealr_name = crate)
 )]
 pub enum KindOfType {
@@ -125,16 +118,9 @@ macro_rules! new_type {
     };
 }
 #[derive(Debug, Clone, PartialEq, Hash, Eq, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive", not(feature = "rlua")),
-    derive(crate::mlu::FromToLua, crate::ToTypename)
-)]
-#[cfg_attr(
-    all(feature = "rlua", feature = "derive", not(feature = "mlua")),
-    derive(crate::rlu::FromToLua, crate::ToTypename)
-)]
-#[cfg_attr(
-    all(any(feature = "rlua", feature = "mlua"), feature = "derive", not(all(feature = "rlua", feature = "mlua"))),
+    feature = "derive",
     tealr(tealr_name = crate)
 )]
 ///The parts that a name consists of
@@ -143,7 +129,7 @@ pub enum NamePart {
     ///An example could be the `function(` part inside `function(integer):string`
     Symbol(
         #[cfg_attr(
-        all(any(feature = "rlua", feature = "mlua"), feature = "derive",not(all(feature = "rlua", feature = "mlua"))),
+        feature = "derive",
         tealr(remote =  String))]
         Cow<'static, str>,
     ),
@@ -266,42 +252,20 @@ impl_type_name!("string" String,std::ffi::CString,bstr::BString ,&str,&std::ffi:
 impl_type_name!("number" f32,f64);
 impl_type_name!("integer" i8,u8,u16,i16,u32,i32,u64,i64,u128,i128,isize,usize);
 
-#[cfg(feature = "rlua")]
-impl_type_name_life_time!("thread" rlua::Thread<'lua>);
-
-#[cfg(feature = "mlua")]
-impl_type_name_life_time!("thread" mlua::Thread<'lua>);
+impl_type_name_life_time!("thread" mlua::Thread);
 
 #[cfg(feature = "mlua_async")]
-impl<'lua, R> ToTypename for mlua::AsyncThread<'lua, R> {
+impl<A, R> ToTypename for mlua::AsyncThread<A, R> {
     fn to_typename() -> Type {
         Type::new_single("thread", KindOfType::Builtin)
     }
 }
 
-#[cfg(feature = "rlua")]
-impl_type_name_life_time!("any" rlua::Value<'lua>);
+impl_type_name_life_time!("any" mlua::Value);
 
-#[cfg(feature = "mlua")]
-impl_type_name_life_time!("any" mlua::Value<'lua>);
-
-#[cfg(feature = "rlua")]
-use rlua::{Table as TableR, Value as ValueR};
-
-#[cfg(feature = "mlua")]
 use mlua::{Table as TableM, Value as ValueM};
 
-#[cfg(feature = "rlua")]
-impl<'lua> ToTypename for TableR<'lua> {
-    fn to_typename() -> Type {
-        Type::Map(crate::MapRepresentation {
-            key: ValueR::to_typename().into(),
-            value: ValueR::to_typename().into(),
-        })
-    }
-}
-#[cfg(feature = "mlua")]
-impl<'lua> ToTypename for TableM<'lua> {
+impl ToTypename for TableM {
     fn to_typename() -> Type {
         Type::Map(crate::MapRepresentation {
             key: ValueM::to_typename().into(),
@@ -310,31 +274,11 @@ impl<'lua> ToTypename for TableM<'lua> {
     }
 }
 
-#[cfg(feature = "rlua")]
-impl_type_name_life_time!("string" rlua::String<'lua>);
+impl_type_name_life_time!("string" mlua::String);
 
-#[cfg(feature = "mlua")]
-impl_type_name_life_time!("string" mlua::String<'lua>);
-
-#[cfg(feature = "mlua")]
 use mlua::Function as FunctionM;
-#[cfg(feature = "rlua")]
-use rlua::Function as FunctionR;
 
-#[cfg(feature = "rlua")]
-impl<'lua> ToTypename for FunctionR<'lua> {
-    fn to_typename() -> Type {
-        Type::Function(crate::FunctionRepresentation {
-            params: vec![FunctionParam {
-                param_name: Some("...".into()),
-                ty: Type::new_single("any", KindOfType::Builtin),
-            }],
-            returns: vec![Type::new_single("any...", KindOfType::Builtin)],
-        })
-    }
-}
-#[cfg(feature = "mlua")]
-impl<'lua> ToTypename for FunctionM<'lua> {
+impl ToTypename for FunctionM {
     fn to_typename() -> Type {
         Type::Function(crate::FunctionRepresentation {
             params: vec![FunctionParam {
