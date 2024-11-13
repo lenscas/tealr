@@ -8,6 +8,7 @@ pub(crate) fn get_tealr_name(attributes: &[venial::Attribute]) -> TokenStream {
         .unwrap_or_else(|| quote!(::tealr))
 }
 
+#[allow(dead_code)]
 #[cfg(feature = "debug_macros")]
 fn debug_macro(ts: TokenStream) -> TokenStream {
     let hopefully_unique = {
@@ -26,8 +27,9 @@ fn debug_macro(ts: TokenStream) -> TokenStream {
     std::fs::write(file_name, ts.to_string()).unwrap();
     quote!(::core::include! { #file_name })
 }
+
+#[allow(dead_code)]
 #[cfg(not(feature = "debug_macros"))]
-#[warn(unused_imports)]
 fn debug_macro(ts: TokenStream) -> TokenStream {
     ts
 }
