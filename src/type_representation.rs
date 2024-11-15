@@ -1,4 +1,6 @@
+#[allow(unused_imports)]
 use crate::{FunctionParam, MapRepresentation, SingleType, ToTypename, Type};
+#[allow(unused_macros)]
 macro_rules! impl_type_name_life_time {
     ($teal_type:literal $current_type:ty) => {
         impl ToTypename for $current_type {
@@ -31,9 +33,12 @@ macro_rules! impl_type_name {
 
 ///Keeps track of any special treatment a type needs to get
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
-    feature = "derive",
+    all(feature = "mlua", feature = "derive"),
+    derive(crate::mlu::FromToLua, crate::ToTypename)
+)]
+#[cfg_attr(
+    all(feature = "mlua", feature = "derive"),
     tealr(tealr_name = crate)
 )]
 pub enum KindOfType {
@@ -118,9 +123,12 @@ macro_rules! new_type {
     };
 }
 #[derive(Debug, Clone, PartialEq, Hash, Eq, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
-    feature = "derive",
+    all(feature = "mlua", feature = "derive"),
+    derive(crate::mlu::FromToLua, crate::ToTypename)
+)]
+#[cfg_attr(
+    all(feature = "mlua", feature = "derive"),
     tealr(tealr_name = crate)
 )]
 ///The parts that a name consists of
@@ -129,7 +137,7 @@ pub enum NamePart {
     ///An example could be the `function(` part inside `function(integer):string`
     Symbol(
         #[cfg_attr(
-        feature = "derive",
+            all(feature = "mlua", feature = "derive"),
         tealr(remote =  String))]
         Cow<'static, str>,
     ),
@@ -251,7 +259,7 @@ impl_type_name!("boolean" bool);
 impl_type_name!("string" String,std::ffi::CString,bstr::BString ,&str,&std::ffi::CStr,&bstr::BStr);
 impl_type_name!("number" f32,f64);
 impl_type_name!("integer" i8,u8,u16,i16,u32,i32,u64,i64,u128,i128,isize,usize);
-
+#[cfg(feature = "mlua")]
 impl_type_name_life_time!("thread" mlua::Thread);
 
 #[cfg(feature = "mlua_async")]
@@ -260,11 +268,11 @@ impl<A, R> ToTypename for mlua::AsyncThread<A, R> {
         Type::new_single("thread", KindOfType::Builtin)
     }
 }
-
+#[cfg(feature = "mlua")]
 impl_type_name_life_time!("any" mlua::Value);
-
+#[cfg(feature = "mlua")]
 use mlua::{Table as TableM, Value as ValueM};
-
+#[cfg(feature = "mlua")]
 impl ToTypename for TableM {
     fn to_typename() -> Type {
         Type::Map(crate::MapRepresentation {
@@ -273,11 +281,11 @@ impl ToTypename for TableM {
         })
     }
 }
-
+#[cfg(feature = "mlua")]
 impl_type_name_life_time!("string" mlua::String);
-
+#[cfg(feature = "mlua")]
 use mlua::Function as FunctionM;
-
+#[cfg(feature = "mlua")]
 impl ToTypename for FunctionM {
     fn to_typename() -> Type {
         Type::Function(crate::FunctionRepresentation {

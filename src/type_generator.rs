@@ -5,17 +5,17 @@ use std::{
     string::FromUtf8Error,
 };
 
-use serde::{Deserialize, Serialize};
-
+#[cfg(feature = "mlua")]
 use crate::mlu::{
-    get_meta_name as get_meta_name_mlua, MaybeSend, TealData as TealDataM, TealDataFields,
-    TealDataMethods as TealDataMethodsM,
+    get_meta_name as get_meta_name_mlua,
+    mlua::{
+        FromLua as FromLuaM, FromLuaMulti as FromLuaMultiM, IntoLua as ToLuaM,
+        IntoLuaMulti as ToLuaMultiM, Lua, MetaMethod as MetaMethodM, Result as ResultM,
+        UserData as UserDataM,
+    },
+    MaybeSend, TealData as TealDataM, TealDataFields, TealDataMethods as TealDataMethodsM,
 };
-use mlua::{
-    FromLua as FromLuaM, FromLuaMulti as FromLuaMultiM, IntoLua as ToLuaM,
-    IntoLuaMulti as ToLuaMultiM, Lua, MetaMethod as MetaMethodM, Result as ResultM,
-    UserData as UserDataM,
-};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     exported_function::ExportedFunction, type_parts_to_str, NamePart, ToTypename, Type, TypeName,
@@ -41,6 +41,7 @@ impl ToTypename for NameContainer {
     }
 }
 
+#[cfg(feature = "mlua")]
 impl FromLuaM for NameContainer {
     fn from_lua(lua_value: mlua::Value, lua: &Lua) -> ResultM<Self> {
         Ok(<String as FromLuaM>::from_lua(lua_value, lua)?
@@ -48,7 +49,7 @@ impl FromLuaM for NameContainer {
             .into())
     }
 }
-
+#[cfg(feature = "mlua")]
 impl ToLuaM for NameContainer {
     fn into_lua(self, lua: &Lua) -> ResultM<mlua::Value> {
         lua.create_string(self.0).and_then(|x| x.into_lua(lua))
@@ -84,7 +85,7 @@ impl From<Cow<'static, str>> for NameContainer {
         a.as_bytes().to_owned().into()
     }
 }
-
+#[allow(dead_code)]
 pub(crate) fn get_method_data<A: TealMultiValue, R: TealMultiValue, S: ToString + AsRef<str>>(
     name: S,
     is_meta_method: bool,
@@ -94,16 +95,19 @@ pub(crate) fn get_method_data<A: TealMultiValue, R: TealMultiValue, S: ToString 
 }
 ///Container of all the information needed to create the `.d.tl` file for your type.
 #[derive(serde::Serialize, serde::Deserialize, Clone)]
-#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
-    feature = "derive",
+    all(feature = "mlua", feature = "derive"),
+    derive(crate::mlu::FromToLua, crate::ToTypename)
+)]
+#[cfg_attr(
+    all(feature = "mlua", feature = "derive"),
     tealr(tealr_name = crate)
 )]
 pub enum TypeGenerator {
     ///the type should be represented as a struct
     Record(
         #[cfg_attr(
-        feature = "derive",
+        all(feature = "mlua", feature = "derive"),
         tealr(remote =  RecordGenerator))]
         Box<RecordGenerator>,
     ),
@@ -119,20 +123,23 @@ impl TypeGenerator {
         }
     }
 }
-
+#[allow(dead_code)]
 type V = Vec<NamePart>;
 ///contains all the information needed to create a teal enum.
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
-    feature = "derive",
+    all(feature = "mlua", feature = "derive"),
+    derive(crate::mlu::FromToLua, crate::ToTypename)
+)]
+#[cfg_attr(
+    all(feature = "mlua", feature = "derive"),
     tealr(tealr_name = crate)
 )]
 
 pub struct EnumGenerator {
     ///the name of this enum
     #[cfg_attr(
-    feature = "derive",
+        all(feature = "mlua", feature = "derive"),
     tealr(remote = V)
 )]
     pub name: Cow<'static, [NamePart]>,
@@ -177,9 +184,12 @@ impl EnumGenerator {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone)]
-#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
-    feature = "derive",
+    all(feature = "mlua", feature = "derive"),
+    derive(crate::mlu::FromToLua, crate::ToTypename)
+)]
+#[cfg_attr(
+    all(feature = "mlua", feature = "derive"),
     tealr(tealr_name = crate)
 )]
 
@@ -190,7 +200,7 @@ pub struct Field {
 
     ///the type of the field, according to the old format
     #[cfg_attr(
-    feature = "derive",
+        all(feature = "mlua", feature = "derive"),
     tealr(remote = V)
 )]
     pub teal_type: Cow<'static, [NamePart]>,
@@ -224,9 +234,12 @@ impl From<Field> for (NameContainer, Cow<'static, [NamePart]>) {
 
 ///contains all the information needed to create a record
 #[derive(Default, Clone, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
-    feature = "derive",
+    all(feature = "mlua", feature = "derive"),
+    derive(crate::mlu::FromToLua, crate::ToTypename)
+)]
+#[cfg_attr(
+    all(feature = "mlua", feature = "derive"),
     tealr(tealr_name = crate)
 )]
 
@@ -237,7 +250,7 @@ pub struct RecordGenerator {
     pub is_user_data: bool,
     ///The name of the type in teal
     #[cfg_attr(
-        feature = "derive",
+        all(feature = "mlua", feature = "derive"),
         tealr(remote = V)
     )]
     pub type_name: Cow<'static, [NamePart]>,
@@ -502,6 +515,8 @@ impl RecordGenerator {
     }
 }
 
+#[cfg(feature = "mlua")]
+
 impl<T> TealDataMethodsM<T> for RecordGenerator
 where
     T: 'static + TealDataM + UserDataM + ToTypename,
@@ -661,6 +676,7 @@ where
     }
 }
 
+#[cfg(feature = "mlua")]
 impl<T> TealDataFields<T> for RecordGenerator
 where
     T: 'static + TealDataM + UserDataM + ToTypename,

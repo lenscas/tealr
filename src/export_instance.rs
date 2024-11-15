@@ -6,7 +6,7 @@ pub(crate) struct InstanceWalker {
     doc: String,
     pub(crate) instances: Vec<GlobalInstance>,
 }
-
+#[cfg(feature = "mlua")]
 impl crate::mlu::InstanceCollector for InstanceWalker {
     fn add_instance<P, T, F>(&mut self, global_name: P, _: F) -> Result<&mut Self, mlua::Error>
     where
@@ -30,6 +30,7 @@ impl InstanceWalker {
             instances: Default::default(),
         }
     }
+    #[allow(dead_code)]
     fn add_instance<T: ToTypename>(&mut self, name: Cow<'static, str>) {
         let teal_type = T::get_type_parts_as_global();
         let z = T::get_type_kind();
@@ -43,6 +44,7 @@ impl InstanceWalker {
             ty: T::to_typename(),
         });
     }
+    #[allow(dead_code)]
     fn document_instance(&mut self, doc: &'static str) {
         self.doc.push_str(doc);
         self.doc.push('\n');

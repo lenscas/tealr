@@ -5,14 +5,17 @@ use std::{
 };
 
 use crate::{get_generics, type_generator::NameContainer, FunctionParam, Name, NamePart, Type};
-
+#[allow(dead_code)]
 type X = Vec<NamePart>;
 
 ///Contains the data needed to write down the type of a function
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
-    feature = "derive",
+    all(feature = "derive", feature = "mlua"),
+    derive(crate::mlu::FromToLua, crate::ToTypename)
+)]
+#[cfg_attr(
+    all(feature = "derive", feature = "mlua"),
     tealr(tealr_name = crate)
 )]
 pub struct ExportedFunction {
@@ -21,7 +24,7 @@ pub struct ExportedFunction {
     ///The full layout of the function based on teal's syntax
     #[deprecated]
     #[cfg_attr(
-        feature = "derive",
+        all(feature = "derive", feature = "mlua"),
         tealr(remote = X)
     )]
     pub signature: Cow<'static, [crate::NamePart]>,
