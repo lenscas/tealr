@@ -1,6 +1,7 @@
 # Tealr_derive
-The derive macro used by [tealr](https://github.com/lenscas/tealr/tree/master/tealr).
 
-Tealr is a crate that can generate `.d.tl` files for types that are exposed to `lua`/`teal` through [mlua](https://crates.io/crates/mlua)
+The derive macro used by [tealr](https://github.com/lenscas/tealr/tree/master/).
 
-Read the [README.md](https://github.com/lenscas/tealr/tree/master/tealr/README.md) in [tealr](https://github.com/lenscas/tealr/tree/master/tealr) for more information.
+Tealr is a crate that can generate definition files and online documentation for types and functions that are exposed to `lua`/`teal` through [mlua](https://crates.io/crates/mlua)
+
+Read the [README.md](https://github.com/lenscas/tealr/tree/master/README.md) in [tealr](https://github.com/lenscas/tealr/tree/master) for more information.

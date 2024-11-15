@@ -1,17 +1,23 @@
 # tealr
 
-A crate to enhance the APIs provided by the [mlua](https://crates.io/crates/mlua) crates
+A crate to enhance the APIs provided by [mlua](https://crates.io/crates/mlua)
 
 It aims to do this by improving the following:
 
-- Allow the api to have easily accessible documentation embedded into it
 - Allow the documentation to be built to web pages (using [tealr_doc_gen](https://github.com/lenscas/tealr_doc_gen) )
-- To go along with the documentation, `tealr` also allow you to be more precise in the types your api works with. Think generic methods and typed lambdas. No more `Lua::Value`
-- Add macros to make it easier to work with teal, a statically typed dialect of lua.
 
-It does this by adding new traits and replacing/extending the existing ones from [mlua](https://crates.io/crates/mlua). As a result, the api that tealr exposes is as similar as the api from those 2 crates as possible.
+- Generate definition files describing your API (using [tealr_doc_gen](https://github.com/lenscas/tealr_doc_gen) )
 
-It also contains some macro's to easily generate new types to better express the API type wise.
+- Allow the api to have easily accessible documentation embedded into it
+
+- To go along with the documentation, `tealr` also allow you to be more precise in the types your api works with. Think generic methods and typed lambdas.
+
+- macro's to make new types easier to create. No more `mlua::Value`!
+
+- Add macros to make it easier to work with teal, a statically typed dialect of
+  lua.
+
+It does this by adding new traits and replacing/extending the existing ones from [mlua](https://crates.io/crates/mlua). As a result, the api that tealr exposes is as similar as the api from mlua as possible.
 
 ## Example of `instance.help()`
 
@@ -26,7 +32,6 @@ Rendered html is also available at <https://lenscas.github.io/tealsql/>
 ## Expose a value to lua/teal
 
 Exposing types to lua as userdata is almost the same using tealr as it is using mlua
-
 
 #### Mlua:
 
@@ -73,7 +78,7 @@ Though it is perfectly possible to use the `lua::Value` from `mlua` it isn't the
 To help avoid `lua::Value` tealr comes with new types and macros that help you define your API better type wise.
 
 - [Simple Unions](#simple-unions)
-- [Typed Function]()
+- [Typed Function](#typed-functions)
 - [Generics](#generics)
 
 ### Simple unions:
@@ -154,7 +159,7 @@ impl FromLua for Example {
 
 ## Teal integration
 
-The [teal](https://github.com/teal-language/tl) language is basically just a statically typed variant of lua and can even be made to run in the lua vm without compiling to lua first.
+The [teal](https://github.com/teal-language/tl) language is a statically typed variant of lua and can even be made to run in the lua vm without compiling to lua first.
 
 As a result of this and `tealr`'s focus on enabling a richer typed api causes the 2 projects to work well together. However, to further help bind the 2 projects, `tealr` contains some extra helpers for those that want to use teal.
 
@@ -203,4 +208,4 @@ embed_compiler!(GitHub(version = "v0.13.1"));
 embed_compiler!(Luarocks(version = "v0.13.1"));
 ```
 
-You can find longer ones with comments on what each call does [here](https://github.com/lenscas/tealr/tree/master/tealr/examples)
+You can find longer ones with comments on what each call does [here](https://github.com/lenscas/tealr/tree/master/examples)
