@@ -1,25 +1,28 @@
 use std::{borrow::Cow, string::FromUtf8Error};
 
 use crate::{type_parts_to_str, NamePart, ToTypename, Type, TypeBody, TypeGenerator};
-
+#[allow(dead_code)]
 type V = Vec<NamePart>;
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 ///Used to document what global instances get made by the module
-#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
-    feature = "derive",
+    all(feature = "mlua", feature = "derive"),
+    derive(crate::mlu::FromToLua, crate::ToTypename)
+)]
+#[cfg_attr(
+    all(feature = "mlua", feature = "derive"),
     tealr(tealr_name = crate)
 )]
 pub struct GlobalInstance {
     ///name of the global
     #[cfg_attr(
-        feature = "derive",
+        all(feature = "mlua", feature = "derive"),
         tealr(remote =  String))]
     pub name: Cow<'static, str>,
     ///the type according to the old format
     #[cfg_attr(
-        feature = "derive",
+        all(feature = "mlua", feature = "derive"),
         tealr(remote =  V))]
     pub teal_type: Cow<'static, [NamePart]>,
     ///the type
@@ -32,9 +35,12 @@ pub struct GlobalInstance {
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 ///Used to document what global instances get made by the module
-#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
-    feature = "derive",
+    all(feature = "mlua", feature = "derive"),
+    derive(crate::mlu::FromToLua, crate::ToTypename)
+)]
+#[cfg_attr(
+    all(feature = "mlua", feature = "derive"),
     tealr(tealr_name = crate)
 )]
 pub struct ExtraPage {
@@ -46,9 +52,12 @@ pub struct ExtraPage {
 
 ///This generates the .d.tl files
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "derive", derive(crate::mlu::FromToLua, crate::ToTypename))]
 #[cfg_attr(
-    feature = "derive",
+    all(feature = "mlua", feature = "derive"),
+    derive(crate::mlu::FromToLua, crate::ToTypename)
+)]
+#[cfg_attr(
+    all(feature = "mlua", feature = "derive"),
     tealr(tealr_name = crate)
 )]
 pub struct TypeWalker {
@@ -220,6 +229,7 @@ impl TypeWalker {
 }
 
 impl TypeWalker {
+    #[cfg(feature = "mlua")]
     ///collect every instance that is getting shared with lua
     pub fn document_global_instance<T: crate::mlu::ExportInstances>(
         mut self,

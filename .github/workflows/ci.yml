@@ -3,58 +3,59 @@ on:
   pull_request:
     paths:
       - "**/*.rs"
-      - 'Cargo.toml'
-      - 'tealr/Cargo.lock'
-      - 'tealr_derive/Cargo.toml'
-      - '.github/workflows/ci.yml'
+      - "Cargo.toml"
+      - "tealr/Cargo.lock"
+      - "tealr_derive/Cargo.toml"
+      - ".github/workflows/ci.yml"
 jobs:
   formatting:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: hecrj/setup-rust-action@v1
-      with:
-        rust-version: stable
-        components: rustfmt
-    - name: Formatting check
-      run: cargo fmt --all -- --check
+      - uses: actions/checkout@v2
+      - uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: stable
+          components: rustfmt
+      - name: Formatting check
+        run: cargo fmt --all -- --check
 
   test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest]
-        tests : 
+        tests:
           - "cargo test --features mlua,mlua_vendored,mlua_lua53,mlua_async,mlua_send"
           - "cargo test --features mlua,mlua_vendored,mlua_lua54,mlua_async,mlua_send"
           - "cargo test --features mlua,mlua_vendored,mlua_lua53,mlua_async --no-run"
           - "cargo test --features mlua,mlua_vendored,mlua_lua54,mlua_async --no-run"
+          - "cargo build"
     steps:
-    - uses: actions/checkout@master
-    - uses: hecrj/setup-rust-action@v1.3.4 
-      with:
-        rust-version: stable
-    - uses: leafo/gh-actions-lua@v8.0.0
-      with:
-        luaVersion: "5.4"
-    - uses: leafo/gh-actions-luarocks@v4.0.0
-    - name:  Install dependencies
-      run: luarocks install tl
-    - name: run tests
-      run: ${{matrix.tests}}
+      - uses: actions/checkout@master
+      - uses: hecrj/setup-rust-action@v1.3.4
+        with:
+          rust-version: stable
+      - uses: leafo/gh-actions-lua@v8.0.0
+        with:
+          luaVersion: "5.4"
+      - uses: leafo/gh-actions-luarocks@v4.0.0
+      - name: Install dependencies
+        run: luarocks install tl
+      - name: run tests
+        run: ${{matrix.tests}}
   clippy:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tests :
+        tests:
           - "cargo clippy --features mlua,mlua_vendored,mlua_lua54,mlua_async,mlua_send -- -D warnings"
           - "cargo clippy --features mlua,mlua_vendored,mlua_lua53,mlua_async,mlua_send -- -D warnings"
           - "cargo clippy --features mlua,mlua_vendored,mlua_luau,mlua_async,mlua_send -- -D warnings"
     steps:
-    - uses: hecrj/setup-rust-action@v1.3.4 
-      with:
-        rust-version: stable
-        components: clippy
-    - uses: actions/checkout@master
-    - name: Clippy
-      run: ${{matrix.tests}}
+      - uses: hecrj/setup-rust-action@v1.3.4
+        with:
+          rust-version: stable
+          components: clippy
+      - uses: actions/checkout@master
+      - name: Clippy
+        run: ${{matrix.tests}}
