@@ -1,7 +1,9 @@
 use bstr::{ByteSlice, ByteVec};
+#[cfg(feature = "mlua_async")]
+use mlua::UserDataRef;
 use mlua::{
     FromLuaMulti, IntoLuaMulti as ToLuaMulti, Lua, MetaMethod, Result, UserData, UserDataFields,
-    UserDataMethods, UserDataRef,
+    UserDataMethods,
 };
 use std::{collections::HashMap, marker::PhantomData};
 

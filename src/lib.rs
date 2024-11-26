@@ -71,7 +71,7 @@ impl<T: AsRef<str>> From<T> for Name {
         Name(value.as_ref().to_owned().into())
     }
 }
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[cfg_attr(
     all(feature = "mlua", feature = "derive"),
     derive(crate::mlu::FromToLua, crate::ToTypename)
@@ -87,7 +87,7 @@ pub struct SingleType {
     ///The kind of type that is being represented
     pub kind: KindOfType,
 }
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[cfg_attr(
     all(feature = "mlua", feature = "derive"),
     derive(crate::mlu::FromToLua, crate::ToTypename)
@@ -103,7 +103,7 @@ pub struct FunctionParam {
     ///The type of the parameter
     pub ty: Type,
 }
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[cfg_attr(
     all(feature = "mlua", feature = "derive"),
     derive(crate::mlu::FromToLua, crate::ToTypename)
@@ -119,7 +119,7 @@ pub struct FunctionRepresentation {
     ///the return types
     pub returns: Vec<Type>,
 }
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[cfg_attr(
     all(feature = "mlua", feature = "derive"),
     derive(crate::mlu::FromToLua, crate::ToTypename)
@@ -144,7 +144,7 @@ pub struct MapRepresentation {
 #[allow(dead_code)]
 type NewTypeArray = Vec<Type>;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[cfg_attr(
     all(feature = "mlua", feature = "derive"),
     derive(crate::mlu::FromToLua, crate::ToTypename)
