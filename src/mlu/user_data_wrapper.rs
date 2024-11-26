@@ -1,7 +1,7 @@
 use bstr::{ByteSlice, ByteVec};
 use mlua::{
     FromLuaMulti, IntoLuaMulti as ToLuaMulti, Lua, MetaMethod, Result, UserData, UserDataFields,
-    UserDataMethods, UserDataRef,
+    UserDataMethods,
 };
 use std::{collections::HashMap, marker::PhantomData};
 
