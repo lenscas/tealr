@@ -51,6 +51,7 @@ impl TealData for Example {
         });
         methods.generate_help();
     }
+
     fn add_fields<F: tealr::mlu::TealDataFields<Self>>(fields: &mut F) {
         fields.document("This is an example field");
         fields.add_field_method_get("example", |_, this| Ok(this.0));
@@ -74,6 +75,7 @@ impl UserData for Example {
         let mut wrapper = UserDataWrapper::from_user_data_fields(fields);
         <Self as TealData>::add_fields(&mut wrapper);
     }
+
     fn add_methods<T: UserDataMethods<Self>>(methods: &mut T) {
         let mut wrapper = UserDataWrapper::from_user_data_methods(methods);
         <Self as TealData>::add_methods(&mut wrapper);

@@ -16,7 +16,7 @@ pub(crate) fn download_teal(url: String, main_folder: String) -> String {
             eprintln!("Did not get a success status. Got: {}", state);
             eprintln!("Message: {:?}", res);
             res
-        }
+        },
         Err(x) => panic!("Failed downloading teal compiler. Error:{}", x),
     };
     let mut reader = res.into_reader();

@@ -2,9 +2,8 @@ use std::borrow::Cow;
 
 use mlua::{FromLuaMulti, IntoLua as ToLua, IntoLuaMulti as ToLuaMulti, Lua, MetaMethod, Result};
 
-use crate::{TealMultiValue, ToTypename};
-
 use super::MaybeSend;
+use crate::{ExportedFunction, TealMultiValue, ToTypename};
 
 ///The teal version of [UserDataMethods](mlua::UserDataMethods)
 ///
@@ -16,14 +15,14 @@ use super::MaybeSend;
 
 pub trait TealDataMethods<T: ToTypename> {
     ///Exposes a method to lua
-    fn add_method<S, A, R, M>(&mut self, name: S, method: M)
+    fn add_method<S, A, R, M>(&mut self, name: S, method: M) -> &mut ExportedFunction
     where
         S: ToString + AsRef<str>,
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         M: 'static + MaybeSend + Fn(&Lua, &T, A) -> Result<R>;
     ///Exposes a method to lua that has a mutable reference to Self
-    fn add_method_mut<S, A, R, M>(&mut self, name: S, method: M)
+    fn add_method_mut<S, A, R, M>(&mut self, name: S, method: M) -> &mut ExportedFunction
     where
         S: ToString + AsRef<str>,
         A: FromLuaMulti + TealMultiValue,
@@ -32,7 +31,11 @@ pub trait TealDataMethods<T: ToTypename> {
 
     #[cfg(feature = "mlua_async")]
     ///exposes an async method to lua
-    fn add_async_method<S: ToString + AsRef<str>, A, R, M, MR>(&mut self, name: S, method: M)
+    fn add_async_method<S: ToString + AsRef<str>, A, R, M, MR>(
+        &mut self,
+        name: S,
+        method: M,
+    ) -> &mut ExportedFunction
     where
         T: 'static,
         M: Fn(Lua, mlua::UserDataRef<T>, A) -> MR + MaybeSend + 'static,
@@ -41,7 +44,7 @@ pub trait TealDataMethods<T: ToTypename> {
         R: ToLuaMulti + TealMultiValue;
 
     ///Exposes a function to lua (its a method that does not take Self)
-    fn add_function<S, A, R, F>(&mut self, name: S, function: F)
+    fn add_function<S, A, R, F>(&mut self, name: S, function: F) -> &mut ExportedFunction
     where
         S: ToString + AsRef<str>,
         A: FromLuaMulti + TealMultiValue,
@@ -49,7 +52,7 @@ pub trait TealDataMethods<T: ToTypename> {
         F: 'static + MaybeSend + Fn(&Lua, A) -> Result<R>;
 
     ///Exposes a mutable function to lua
-    fn add_function_mut<S, A, R, F>(&mut self, name: S, function: F)
+    fn add_function_mut<S, A, R, F>(&mut self, name: S, function: F) -> &mut ExportedFunction
     where
         S: ToString + AsRef<str>,
         A: FromLuaMulti + TealMultiValue,
@@ -58,7 +61,7 @@ pub trait TealDataMethods<T: ToTypename> {
 
     #[cfg(feature = "mlua_async")]
     ///exposes an async function to lua
-    fn add_async_function<S, A, R, F, FR>(&mut self, name: S, function: F)
+    fn add_async_function<S, A, R, F, FR>(&mut self, name: S, function: F) -> &mut ExportedFunction
     where
         S: AsRef<str> + ToString,
         A: FromLuaMulti + TealMultiValue,
@@ -67,25 +70,37 @@ pub trait TealDataMethods<T: ToTypename> {
         FR: std::future::Future<Output = Result<R>> + mlua::MaybeSend + 'static;
 
     ///Exposes a meta method to lua [http://lua-users.org/wiki/MetatableEvents](http://lua-users.org/wiki/MetatableEvents)
-    fn add_meta_method<A, R, M>(&mut self, meta: MetaMethod, method: M)
+    fn add_meta_method<A, R, M>(&mut self, meta: MetaMethod, method: M) -> &mut ExportedFunction
     where
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         M: 'static + MaybeSend + Fn(&Lua, &T, A) -> Result<R>;
     ///Exposes a meta and mutable method to lua [http://lua-users.org/wiki/MetatableEvents](http://lua-users.org/wiki/MetatableEvents)
-    fn add_meta_method_mut<A, R, M>(&mut self, meta: MetaMethod, method: M)
+    fn add_meta_method_mut<A, R, M>(
+        &mut self,
+        meta: MetaMethod,
+        method: M,
+    ) -> &mut ExportedFunction
     where
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         M: 'static + MaybeSend + FnMut(&Lua, &mut T, A) -> Result<R>;
     ///Exposes a meta function to lua [http://lua-users.org/wiki/MetatableEvents](http://lua-users.org/wiki/MetatableEvents)
-    fn add_meta_function<A, R, F>(&mut self, meta: MetaMethod, function: F)
+    fn add_meta_function<A, R, F>(
+        &mut self,
+        meta: MetaMethod,
+        function: F,
+    ) -> &mut ExportedFunction
     where
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         F: 'static + MaybeSend + Fn(&Lua, A) -> Result<R>;
     ///Exposes a meta and mutable function to lua [http://lua-users.org/wiki/MetatableEvents](http://lua-users.org/wiki/MetatableEvents)
-    fn add_meta_function_mut<A, R, F>(&mut self, meta: MetaMethod, function: F)
+    fn add_meta_function_mut<A, R, F>(
+        &mut self,
+        meta: MetaMethod,
+        function: F,
+    ) -> &mut ExportedFunction
     where
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
@@ -128,6 +143,7 @@ impl InstanceCollector for (mlua::Table, &Lua) {
         self.0.set(global_name.into(), instance)?;
         Ok(self)
     }
+
     fn document_instance(&mut self, _: &'static str) -> &mut Self {
         self
     }

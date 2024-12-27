@@ -61,6 +61,7 @@ where
     pub fn call(&self, params: Params) -> mlua::Result<Response> {
         self.inner_function.call(params)
     }
+
     ///Calls the function with the given parameters. Panics if something has gone wrong.
     pub fn force_call(&self, params: Params) -> Response {
         self.inner_function.call(params).unwrap()
@@ -106,6 +107,7 @@ where
             _r: PhantomData,
         })
     }
+
     ///make a typed function directly from a Rust one.
     pub fn from_rust_mut<
         Func: 'static + crate::mlu::MaybeSend + FnMut(&Lua, Params) -> mlua::Result<Response>,

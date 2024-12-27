@@ -11,6 +11,10 @@ pub mod user_data_proxy;
 pub(crate) mod user_data_wrapper;
 use std::borrow::Cow;
 
+pub use mlua;
+use mlua::{UserDataRef, UserDataRefMut};
+pub use teal_data_fields::TealDataFields;
+
 pub use self::{
     picker_macro::FromLuaExact,
     teal_data::TealData,
@@ -24,9 +28,6 @@ pub use crate::{
     mlua_create_named_parameters as create_named_parameters,
 };
 use crate::{ToTypename, Type};
-pub use mlua;
-use mlua::{UserDataRef, UserDataRefMut};
-pub use teal_data_fields::TealDataFields;
 
 pub(crate) fn get_meta_name(name: mlua::MetaMethod) -> Cow<'static, str> {
     use mlua::MetaMethod;
@@ -82,25 +83,25 @@ pub(crate) fn get_meta_name(name: mlua::MetaMethod) -> Cow<'static, str> {
 ///used by the `mlua_send` feature
 pub trait MaybeSend: Send {}
 #[cfg(feature = "mlua_send")]
-impl<T: Send> MaybeSend for T {}
+impl<T: Send> MaybeSend for T {
+}
 
 #[cfg(not(feature = "mlua_send"))]
 ///used by the `mlua_send` feature
 pub trait MaybeSend {}
 #[cfg(not(feature = "mlua_send"))]
-impl<T> MaybeSend for T {}
+impl<T> MaybeSend for T {
+}
 
 #[doc = include_str!("mlu/to_from_macro_doc.md")]
 #[cfg(feature = "derive")]
 pub use tealr_derive::MluaFromToLua as FromToLua;
-
 ///Implement both [mlua::UserData](mlua::UserData) and [TypeName](crate::ToTypename).
 ///
 ///Look at [tealr_derive::MluaUserData](tealr_derive::MluaUserData) and [tealr_derive::TypeName](tealr_derive::TypeName)
 ///for more information on how the implemented traits will behave.
 #[cfg(feature = "derive")]
 pub use tealr_derive::MluaTealDerive as TealDerive;
-
 ///Implements [UserData](mlua::UserData) and [TypeBody](crate::TypeBody)
 ///
 ///It wraps the [mlua::UserDataMethods](mlua::UserDataMethods) into [UserDataWrapper](crate::mlu::UserDataWrapper)
@@ -114,9 +115,11 @@ impl<T: ToTypename> ToTypename for UserDataRef<T> {
     fn to_typename() -> Type {
         T::to_typename()
     }
+
     fn to_function_param() -> Vec<crate::FunctionParam> {
         T::to_function_param()
     }
+
     fn to_old_type_parts() -> Cow<'static, [crate::NamePart]> {
         #[allow(deprecated)]
         T::to_old_type_parts()
@@ -127,9 +130,11 @@ impl<T: ToTypename> ToTypename for UserDataRefMut<T> {
     fn to_typename() -> Type {
         T::to_typename()
     }
+
     fn to_function_param() -> Vec<crate::FunctionParam> {
         T::to_function_param()
     }
+
     fn to_old_type_parts() -> Cow<'static, [crate::NamePart]> {
         #[allow(deprecated)]
         T::to_old_type_parts()

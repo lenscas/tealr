@@ -71,6 +71,7 @@ impl TealData for Example {
             |_, _, fun: TypedFunction<String, X>| fun.call("A nice string!".to_string()),
         );
     }
+
     fn add_fields<F: tealr::mlu::TealDataFields<Self>>(fields: &mut F) {
         fields.add_field_method_get("example", |_, this| Ok(this.example));
         fields.add_field_method_set("example", |_, this, value| {

@@ -74,6 +74,23 @@ impl ExportedFunction {
             returns: R::get_types(),
         }
     }
+
+    /// Give the [`params`] a name in case this is not automatically derived.
+    ///
+    /// # Panics
+    ///
+    /// Will panic if the given argument does not have the same number of fields as [`params`].
+    pub fn name_parameters(
+        &mut self,
+        names: impl ExactSizeIterator<Item = impl Into<Name>>,
+    ) -> &mut Self {
+        assert_eq!(names.len(), self.params.len());
+        for (name, p) in names.into_iter().zip(self.params.iter_mut()) {
+            p.param_name = Some(name.into());
+        }
+        self
+    }
+
     pub(crate) fn generate(
         self,
         documentation: &HashMap<NameContainer, String>,
@@ -102,6 +119,7 @@ impl ExportedFunction {
         );
         Ok(format!("{documentation}{metamethod}{name}: {signature}",))
     }
+
     ///Get all the generics that this function uses.
     pub fn get_generics(&self) -> HashSet<&Name> {
         self.params

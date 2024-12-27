@@ -1,10 +1,11 @@
-use mlua::{Error, Function, Lua, Table, Value};
-use std::ops::Deref;
 use std::{
     collections::{BTreeMap, HashMap},
     ffi::{CStr, CString},
     num::TryFromIntError,
+    ops::Deref,
 };
+
+use mlua::{Error, Function, Lua, Table, Value};
 
 /// similar to [mlua::FromLua](mlua::FromLua). However,
 /// however going through this trait you promise that the conversion to a rust value prefers failing over converting/casting

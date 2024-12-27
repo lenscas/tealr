@@ -6,7 +6,8 @@ use crate::{EnumGenerator, RecordGenerator, ToTypename, Type, TypeBody, TypeName
 
 /// A userdata which can be used as a static proxy
 pub trait StaticUserdata: UserData + 'static {}
-impl<T: UserData + 'static> StaticUserdata for T {}
+impl<T: UserData + 'static> StaticUserdata for T {
+}
 
 /// A newtype storing proxy userdata created via [`mlua::Lua::create_proxy`].
 ///
@@ -72,13 +73,13 @@ impl<T: StaticUserdata + TypeBody + ToTypename> TypeBody for UserDataProxy<T> {
                     meta_method_mut: Default::default(),
                     ..record_generator.as_ref().clone()
                 }))
-            }
+            },
             crate::TypeGenerator::Enum(enum_generator) => {
                 crate::TypeGenerator::Enum(EnumGenerator {
                     name: Self::get_type_parts(),
                     ..enum_generator
                 })
-            }
+            },
         }
     }
 }

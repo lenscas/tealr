@@ -86,11 +86,13 @@ impl TypeWalker {
     pub fn new() -> Self {
         Default::default()
     }
+
     ///Adds a new page that should be included in the documentation
     pub fn add_page(mut self, name: String, content: String) -> Self {
         self.extra_page.push(ExtraPage { name, content });
         self
     }
+
     ///reads a file and adds it as an extra page
     pub fn add_page_from(
         &mut self,
@@ -101,10 +103,12 @@ impl TypeWalker {
         self.extra_page.push(ExtraPage { name, content });
         Ok(self)
     }
+
     ///gives an iterator back over every type
     pub fn iter(&self) -> std::slice::Iter<'_, TypeGenerator> {
         self.given_types.iter()
     }
+
     ///Process a type such that the body will be added directly into the module instead of becoming a child record.
     ///
     ///When embedding teal/lua there is probably not really a reason to do so.
@@ -114,18 +118,20 @@ impl TypeWalker {
         match &mut x {
             TypeGenerator::Record(x) => {
                 x.should_be_inlined = true;
-            }
+            },
             TypeGenerator::Enum(_) => (),
         }
         self.given_types.push(x);
         self
     }
+
     ///prepares a type to have a `.d.tl` file generated, and adds it to the list of types to generate.
     pub fn process_type<A: ToTypename + TypeBody>(mut self) -> Self {
         let x = <A as TypeBody>::get_type_body();
         self.given_types.push(x);
         self
     }
+
     ///generates the `.d.tl` file. It outputs the string, its up to you to store it.
     #[deprecated(
         since = "0.9.0",
@@ -187,6 +193,7 @@ impl TypeWalker {
             record = v
         ))
     }
+
     ///Same as calling [Typewalker::generate(outer_name,true)](crate::TypeWalker::generate).
     #[deprecated(
         since = "0.9.0",
@@ -196,6 +203,7 @@ impl TypeWalker {
         #[allow(deprecated)]
         self.generate(outer_name, true)
     }
+
     ///Same as calling [Typewalker::generate(outer_name,false)](crate::TypeWalker::generate).
     #[deprecated(
         since = "0.9.0",
@@ -205,12 +213,14 @@ impl TypeWalker {
         #[allow(deprecated)]
         self.generate(outer_name, false)
     }
+
     /// Generates the json needed by [tealr_doc_gen](https://crates.io/crates/tealr_doc_gen) to generate the documentation.
     ///
     /// It is up to you to store it properly
     pub fn to_json(&self) -> serde_json::Result<String> {
         serde_json::to_string(self)
     }
+
     /// Generates the json needed by [tealr_doc_gen](https://crates.io/crates/tealr_doc_gen) to generate the documentation in a pretty-printed way.
     ///
     /// It is up to you to store it properly.
@@ -218,10 +228,12 @@ impl TypeWalker {
     pub fn to_json_pretty(&self) -> serde_json::Result<String> {
         serde_json::to_string_pretty(self)
     }
+
     /// Checks if the version of tealr to create this [TypeWalker] is the same version as the current [tealr](crate) version
     pub fn check_correct_version(&self) -> bool {
         self.tealr_version_used == crate::get_tealr_version()
     }
+
     /// Gets the version of [tealr](crate) that was used to create this [TypeWalker]
     pub fn get_tealr_version_used(&self) -> &str {
         &self.tealr_version_used

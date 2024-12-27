@@ -20,7 +20,7 @@ impl CompileConfig {
             Some(TokenTree::Literal(x)) => {
                 let stringified = x.to_string().trim().to_string();
                 stringified[1..(stringified.len() - 1)].to_string()
-            }
+            },
             Some(_) => return Err(venial::Error::new("Expected string literal")),
             None => return Err(venial::Error::new("Missing code to run")),
         };
@@ -32,7 +32,7 @@ impl CompileConfig {
                         x.as_char()
                     )));
                 }
-            }
+            },
             Some(x) => return Err(venial::Error::new(format!("Expected `,` got `{}`.", x))),
             None => (),
         }

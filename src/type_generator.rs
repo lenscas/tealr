@@ -5,6 +5,8 @@ use std::{
     string::FromUtf8Error,
 };
 
+use serde::{Deserialize, Serialize};
+
 #[cfg(feature = "mlua")]
 use crate::mlu::{
     get_meta_name as get_meta_name_mlua,
@@ -15,13 +17,10 @@ use crate::mlu::{
     },
     MaybeSend, TealData as TealDataM, TealDataFields, TealDataMethods as TealDataMethodsM,
 };
-use serde::{Deserialize, Serialize};
-
 use crate::{
-    exported_function::ExportedFunction, type_parts_to_str, NamePart, ToTypename, Type, TypeName,
+    exported_function::ExportedFunction, type_parts_to_str, NamePart, TealMultiValue, ToTypename,
+    Type, TypeName,
 };
-
-use crate::TealMultiValue;
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 ///Simple wrapper around `Vec<u8>`
@@ -162,6 +161,7 @@ impl EnumGenerator {
             type_doc: Default::default(),
         }
     }
+
     ///Add type level documentation to this enum
     pub fn document_type(&mut self, documentation: &str) -> &mut Self {
         self.type_doc.push_str(documentation);
@@ -169,6 +169,7 @@ impl EnumGenerator {
         self.type_doc.push('\n');
         self
     }
+
     pub(crate) fn generate(self) -> String {
         let variants = self
             .variants
@@ -454,6 +455,7 @@ impl RecordGenerator {
             type_end
         ))
     }
+
     fn combine_function_names<T: AsRef<str>>(function_list: Vec<T>, top_doc: &str) -> String {
         if function_list.is_empty() {
             "".into()
@@ -485,16 +487,17 @@ impl RecordGenerator {
             match self.documentation.entry(to.to_owned().into()) {
                 std::collections::hash_map::Entry::Vacant(x) => {
                     x.insert(docs);
-                }
+                },
                 std::collections::hash_map::Entry::Occupied(mut x) => {
                     let current_docs = x.get_mut();
                     current_docs.push('\n');
                     current_docs.push('\n');
                     current_docs.push_str(&docs);
-                }
+                },
             }
         }
     }
+
     ///adds documentation to the next field.
     pub fn document(&mut self, documentation: &str) {
         match &mut self.next_docs {
@@ -502,10 +505,11 @@ impl RecordGenerator {
                 x.push('\n');
                 x.push('\n');
                 x.push_str(documentation)
-            }
+            },
             None => self.next_docs = Some(documentation.to_owned()),
         };
     }
+
     ///adds documentation to the type itself
     pub fn document_type(&mut self, documentation: &str) -> &mut Self {
         self.type_doc.push_str(documentation);
@@ -521,7 +525,7 @@ impl<T> TealDataMethodsM<T> for RecordGenerator
 where
     T: 'static + TealDataM + UserDataM + ToTypename,
 {
-    fn add_method<S, A, R, M>(&mut self, name: S, _: M)
+    fn add_method<S, A, R, M>(&mut self, name: S, _: M) -> &mut ExportedFunction
     where
         S: ToString + AsRef<str>,
         A: FromLuaMultiM + TealMultiValue,
@@ -533,10 +537,11 @@ where
             name,
             false,
             Some(T::to_typename()),
-        ))
+        ));
+        self.methods.last_mut().unwrap()
     }
 
-    fn add_method_mut<S, A, R, M>(&mut self, name: S, _: M)
+    fn add_method_mut<S, A, R, M>(&mut self, name: S, _: M) -> &mut ExportedFunction
     where
         S: ToString + AsRef<str>,
         A: FromLuaMultiM + TealMultiValue,
@@ -548,11 +553,16 @@ where
             name,
             false,
             Some(T::to_typename()),
-        ))
+        ));
+        self.methods.last_mut().unwrap()
     }
 
     #[cfg(feature = "mlua_async")]
-    fn add_async_method<S: ToString + AsRef<str>, A, R, M, MR>(&mut self, name: S, _: M)
+    fn add_async_method<S: ToString + AsRef<str>, A, R, M, MR>(
+        &mut self,
+        name: S,
+        _: M,
+    ) -> &mut ExportedFunction
     where
         T: 'static,
         M: Fn(Lua, mlua::UserDataRef<T>, A) -> MR + MaybeSend + 'static,
@@ -565,10 +575,11 @@ where
             name,
             false,
             Some(T::to_typename()),
-        ))
+        ));
+        self.methods.last_mut().unwrap()
     }
 
-    fn add_function<S, A, R, F>(&mut self, name: S, _: F)
+    fn add_function<S, A, R, F>(&mut self, name: S, _: F) -> &mut ExportedFunction
     where
         S: ToString + AsRef<str>,
         A: FromLuaMultiM + TealMultiValue,
@@ -577,10 +588,11 @@ where
     {
         self.copy_docs(name.as_ref().as_bytes());
         self.functions
-            .push(get_method_data::<A, R, _>(name, false, None))
+            .push(get_method_data::<A, R, _>(name, false, None));
+        self.functions.last_mut().unwrap()
     }
 
-    fn add_function_mut<S, A, R, F>(&mut self, name: S, _: F)
+    fn add_function_mut<S, A, R, F>(&mut self, name: S, _: F) -> &mut ExportedFunction
     where
         S: ToString + AsRef<str>,
         A: FromLuaMultiM + TealMultiValue,
@@ -589,11 +601,12 @@ where
     {
         self.copy_docs(name.as_ref().as_bytes());
         self.mut_functions
-            .push(get_method_data::<A, R, _>(name, false, None))
+            .push(get_method_data::<A, R, _>(name, false, None));
+        self.mut_functions.last_mut().unwrap()
     }
 
     #[cfg(feature = "mlua_async")]
-    fn add_async_function<S, A, R, F, FR>(&mut self, name: S, _: F)
+    fn add_async_function<S, A, R, F, FR>(&mut self, name: S, _: F) -> &mut ExportedFunction
     where
         S: AsRef<str> + ToString,
         A: FromLuaMultiM + TealMultiValue,
@@ -603,10 +616,11 @@ where
     {
         self.copy_docs(name.as_ref().as_bytes());
         self.functions
-            .push(get_method_data::<A, R, _>(name, false, None))
+            .push(get_method_data::<A, R, _>(name, false, None));
+        self.functions.last_mut().unwrap()
     }
 
-    fn add_meta_method<A, R, M>(&mut self, name: MetaMethodM, _: M)
+    fn add_meta_method<A, R, M>(&mut self, name: MetaMethodM, _: M) -> &mut ExportedFunction
     where
         A: FromLuaMultiM + TealMultiValue,
         R: ToLuaMultiM + TealMultiValue,
@@ -617,10 +631,11 @@ where
             &get_meta_name_mlua(name),
             true,
             Some(T::to_typename()),
-        ))
+        ));
+        self.meta_method.last_mut().unwrap()
     }
 
-    fn add_meta_method_mut<A, R, M>(&mut self, name: MetaMethodM, _: M)
+    fn add_meta_method_mut<A, R, M>(&mut self, name: MetaMethodM, _: M) -> &mut ExportedFunction
     where
         A: FromLuaMultiM + TealMultiValue,
         R: ToLuaMultiM + TealMultiValue,
@@ -631,9 +646,11 @@ where
             &get_meta_name_mlua(name),
             true,
             Some(T::to_typename()),
-        ))
+        ));
+        self.meta_method_mut.last_mut().unwrap()
     }
-    fn add_meta_function<A, R, F>(&mut self, name: MetaMethodM, _: F)
+
+    fn add_meta_function<A, R, F>(&mut self, name: MetaMethodM, _: F) -> &mut ExportedFunction
     where
         A: FromLuaMultiM + TealMultiValue,
         R: ToLuaMultiM + TealMultiValue,
@@ -644,10 +661,11 @@ where
             get_meta_name_mlua(name).as_ref(),
             true,
             None,
-        ))
+        ));
+        self.meta_function.last_mut().unwrap()
     }
 
-    fn add_meta_function_mut<A, R, F>(&mut self, name: MetaMethodM, _: F)
+    fn add_meta_function_mut<A, R, F>(&mut self, name: MetaMethodM, _: F) -> &mut ExportedFunction
     where
         A: FromLuaMultiM + TealMultiValue,
         R: ToLuaMultiM + TealMultiValue,
@@ -658,21 +676,24 @@ where
             &get_meta_name_mlua(name),
             true,
             None,
-        ))
+        ));
+        self.meta_function_mut.last_mut().unwrap()
     }
 
     fn document(&mut self, documentation: &str) -> &mut Self {
         self.document(documentation);
         self
     }
+
     fn document_type(&mut self, documentation: &str) -> &mut Self {
         self.document_type(documentation)
     }
+
     fn generate_help(&mut self) {
         self.functions
             .push(get_method_data::<Option<String>, String, _>(
                 "help", false, None,
-            ))
+            ));
     }
 }
 

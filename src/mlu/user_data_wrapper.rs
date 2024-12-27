@@ -1,3 +1,5 @@
+use std::{collections::HashMap, marker::PhantomData};
+
 use bstr::{ByteSlice, ByteVec};
 #[cfg(feature = "mlua_async")]
 use mlua::UserDataRef;
@@ -5,10 +7,11 @@ use mlua::{
     FromLuaMulti, IntoLuaMulti as ToLuaMulti, Lua, MetaMethod, Result, UserData, UserDataFields,
     UserDataMethods,
 };
-use std::{collections::HashMap, marker::PhantomData};
 
 use super::{MaybeSend, TealData, TealDataFields, TealDataMethods};
-use crate::{type_generator::get_method_data, TealMultiValue, ToTypename, TypeName};
+use crate::{
+    type_generator::get_method_data, ExportedFunction, TealMultiValue, ToTypename, TypeName,
+};
 
 ///Used to turn [UserDataMethods](mlua::UserDataMethods) into [TealDataMethods](crate::mlu::TealDataMethods).
 ///
@@ -22,6 +25,7 @@ where
     cont: &'a mut Container,
     _t: PhantomData<T>,
     documentation: HashMap<Vec<u8>, String>,
+    functions: Vec<ExportedFunction>,
     type_doc: String,
     next_docs: Option<String>,
 }
@@ -54,6 +58,7 @@ where
         Self {
             cont,
             _t: PhantomData,
+            functions: Vec::new(),
             documentation: Default::default(),
             next_docs: Default::default(),
             type_doc: Default::default(),
@@ -89,6 +94,7 @@ where
         Self {
             cont,
             _t: PhantomData,
+            functions: Vec::new(),
             documentation: Default::default(),
             next_docs: Default::default(),
             type_doc: Default::default(),
@@ -100,20 +106,24 @@ where
     T: UserData,
     //Container: UserDataMethods<T>,
 {
-    fn copy_method_docs<A, R>(&mut self, to: &str, self_type: bool)
+    fn copy_method_docs<A, R>(&mut self, to: &str, self_type: bool) -> &mut ExportedFunction
     where
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
     {
         let type_def = get_method_data::<A, R, _>(to, false, self_type.then(|| T::to_typename()));
         let generated = type_def
+            .clone()
             .generate(&Default::default())
             .map(|v| "Signature: ".to_string() + &v)
             .unwrap_or_default();
         let docs = generated + "\n\ndocs:\n" + &self.next_docs.take().unwrap_or_default();
         let documentation = &mut self.documentation;
         documentation.insert(to.as_bytes().to_owned(), docs);
+        self.functions.push(type_def);
+        self.functions.last_mut().unwrap()
     }
+
     fn copy_field_docs<F: ToTypename>(&mut self, name: &str) {
         let name = name.as_bytes().to_vec();
         let documentation = &mut self.documentation;
@@ -125,12 +135,13 @@ where
         current_doc.push_str(&self.next_docs.take().unwrap_or_default());
         documentation.insert(name, current_doc);
     }
+
     fn document(&mut self, documentation: &str) {
         match &mut self.next_docs {
             Some(x) => {
                 x.push('\n');
                 x.push_str(documentation)
-            }
+            },
             None => self.next_docs = Some(documentation.to_owned()),
         };
     }
@@ -142,30 +153,38 @@ where
     Container: UserDataMethods<T>,
 {
     #[inline(always)]
-    fn add_method<S, A, R, M>(&mut self, name: S, method: M)
+    fn add_method<S, A, R, M>(&mut self, name: S, method: M) -> &mut ExportedFunction
     where
         S: ToString + AsRef<str>,
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         M: 'static + MaybeSend + Fn(&Lua, &T, A) -> Result<R>,
     {
-        self.copy_method_docs::<A, R>(name.as_ref(), true);
-        self.cont.add_method(name, method)
+        let name = name.to_string();
+        self.cont.add_method(name.clone(), method);
+        self.copy_method_docs::<A, R>(name.as_ref(), true)
     }
+
     #[inline(always)]
-    fn add_method_mut<S, A, R, M>(&mut self, name: S, method: M)
+    fn add_method_mut<S, A, R, M>(&mut self, name: S, method: M) -> &mut ExportedFunction
     where
         S: ToString + AsRef<str>,
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         M: 'static + MaybeSend + FnMut(&Lua, &mut T, A) -> Result<R>,
     {
-        self.copy_method_docs::<A, R>(name.as_ref(), true);
-        self.cont.add_method_mut(name, method)
+        let name = name.to_string();
+        self.cont.add_method_mut(name.clone(), method);
+        self.copy_method_docs::<A, R>(name.as_ref(), true)
     }
+
     #[cfg(feature = "mlua_async")]
     #[inline(always)]
-    fn add_async_method<S: ToString + AsRef<str>, A, R, M, MR>(&mut self, name: S, method: M)
+    fn add_async_method<S: ToString + AsRef<str>, A, R, M, MR>(
+        &mut self,
+        name: S,
+        method: M,
+    ) -> &mut ExportedFunction
     where
         T: 'static,
         M: Fn(Lua, UserDataRef<T>, A) -> MR + MaybeSend + 'static,
@@ -173,34 +192,39 @@ where
         MR: std::future::Future<Output = Result<R>> + mlua::MaybeSend + 'static,
         R: ToLuaMulti + TealMultiValue,
     {
-        self.copy_method_docs::<A, R>(name.as_ref(), true);
-        self.cont.add_async_method(name, method)
+        self.cont.add_async_method(name, method);
+        self.copy_method_docs::<A, R>(name.as_ref(), true)
     }
+
     #[inline(always)]
-    fn add_function<S, A, R, F>(&mut self, name: S, function: F)
+    fn add_function<S, A, R, F>(&mut self, name: S, function: F) -> &mut ExportedFunction
     where
         S: ToString + AsRef<str>,
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         F: 'static + MaybeSend + Fn(&Lua, A) -> Result<R>,
     {
-        self.copy_method_docs::<A, R>(name.as_ref(), false);
-        self.cont.add_function(name, function)
+        let name = name.to_string();
+        self.cont.add_function(name.clone(), function);
+        self.copy_method_docs::<A, R>(name.as_ref(), false)
     }
+
     #[inline(always)]
-    fn add_function_mut<S, A, R, F>(&mut self, name: S, function: F)
+    fn add_function_mut<S, A, R, F>(&mut self, name: S, function: F) -> &mut ExportedFunction
     where
         S: ToString + AsRef<str>,
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         F: 'static + MaybeSend + FnMut(&Lua, A) -> Result<R>,
     {
-        self.copy_method_docs::<A, R>(name.as_ref(), false);
-        self.cont.add_function_mut(name, function)
+        let name = name.to_string();
+        self.cont.add_function_mut(name.clone(), function);
+        self.copy_method_docs::<A, R>(name.as_ref(), false)
     }
+
     #[cfg(feature = "mlua_async")]
     #[inline(always)]
-    fn add_async_function<S, A, R, F, FR>(&mut self, name: S, function: F)
+    fn add_async_function<S, A, R, F, FR>(&mut self, name: S, function: F) -> &mut ExportedFunction
     where
         S: AsRef<str> + ToString,
         A: FromLuaMulti + TealMultiValue,
@@ -208,56 +232,63 @@ where
         F: Fn(Lua, A) -> FR + mlua::MaybeSend + 'static,
         FR: std::future::Future<Output = Result<R>> + mlua::MaybeSend + 'static,
     {
-        self.copy_method_docs::<A, R>(name.as_ref(), false);
-        self.cont.add_async_function(name, function)
+        self.cont.add_async_function(name, function);
+        self.copy_method_docs::<A, R>(name.as_ref(), false)
     }
+
     #[inline(always)]
-    fn add_meta_method<A, R, M>(&mut self, meta: MetaMethod, method: M)
+    fn add_meta_method<A, R, M>(&mut self, meta: MetaMethod, method: M) -> &mut ExportedFunction
     where
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         M: 'static + MaybeSend + Fn(&Lua, &T, A) -> Result<R>,
     {
-        self.copy_method_docs::<A, R>(meta.name(), true);
-        self.cont.add_meta_method(meta, method)
+        self.cont.add_meta_method(meta, method);
+        self.copy_method_docs::<A, R>(meta.name(), true)
     }
+
     #[inline(always)]
-    fn add_meta_method_mut<A, R, M>(&mut self, meta: MetaMethod, method: M)
+    fn add_meta_method_mut<A, R, M>(&mut self, meta: MetaMethod, method: M) -> &mut ExportedFunction
     where
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         M: 'static + MaybeSend + FnMut(&Lua, &mut T, A) -> Result<R>,
     {
-        self.copy_method_docs::<A, R>(meta.name(), true);
-        self.cont.add_meta_method_mut(meta, method)
+        self.cont.add_meta_method_mut(meta, method);
+        self.copy_method_docs::<A, R>(meta.name(), true)
     }
 
     #[inline(always)]
-    fn add_meta_function<A, R, F>(&mut self, meta: MetaMethod, function: F)
+    fn add_meta_function<A, R, F>(&mut self, meta: MetaMethod, function: F) -> &mut ExportedFunction
     where
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         F: 'static + MaybeSend + Fn(&Lua, A) -> Result<R>,
     {
-        self.copy_method_docs::<A, R>(meta.name(), false);
-        self.cont.add_meta_function(meta, function)
+        self.cont.add_meta_function(meta, function);
+        self.copy_method_docs::<A, R>(meta.name(), false)
     }
 
     #[inline(always)]
-    fn add_meta_function_mut<A, R, F>(&mut self, meta: MetaMethod, function: F)
+    fn add_meta_function_mut<A, R, F>(
+        &mut self,
+        meta: MetaMethod,
+        function: F,
+    ) -> &mut ExportedFunction
     where
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         F: 'static + MaybeSend + FnMut(&Lua, A) -> Result<R>,
     {
-        self.copy_method_docs::<A, R>(meta.name(), false);
-        self.cont.add_meta_function_mut(meta, function)
+        self.cont.add_meta_function_mut(meta, function);
+        self.copy_method_docs::<A, R>(meta.name(), false)
     }
 
     fn document(&mut self, documentation: &str) -> &mut Self {
         self.document(documentation);
         self
     }
+
     fn document_type(&mut self, documentation: &str) -> &mut Self {
         self.type_doc.push_str(documentation);
         self.type_doc.push('\n');
@@ -289,11 +320,11 @@ where
                     let mut y = (type_doc.clone() + "\n" + "Available pages:\n").into_bytes();
                     y.append(&mut x);
                     y
-                }
+                },
             };
 
             lua.create_string(doc)
-        })
+        });
     }
 }
 

@@ -63,6 +63,7 @@ impl KindOfType {
     pub fn is_generic(&self) -> bool {
         self == &Self::Generic
     }
+
     ///```
     ///# use tealr::KindOfType;
     ///assert!(KindOfType::Builtin.is_builtin());
@@ -70,6 +71,7 @@ impl KindOfType {
     pub fn is_builtin(&self) -> bool {
         self == &Self::Builtin
     }
+
     ///```
     ///# use tealr::KindOfType;
     ///assert!(KindOfType::External.is_external());
@@ -168,6 +170,7 @@ impl NamePart {
             NamePart::Type(x) => &x.name,
         }
     }
+
     ///checks if `&self` is of the `Symbol(_)` variant
     pub fn is_symbol(&self) -> bool {
         matches!(&self, NamePart::Symbol(_))
@@ -244,7 +247,8 @@ pub trait TypeName {
     }
     ///Creates/updates a list of every child type this type has
     ///This is used to properly label methods/functions as being generic.
-    fn collect_children(_: &mut Vec<TealType>) {}
+    fn collect_children(_: &mut Vec<TealType>) {
+    }
 }
 
 use std::{

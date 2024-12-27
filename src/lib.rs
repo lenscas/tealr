@@ -17,25 +17,21 @@ use std::{borrow::Cow, collections::HashSet};
 pub use exported_function::ExportedFunction;
 use serde::{Deserialize, Serialize};
 pub use teal_multivalue::{TealMultiValue, TealType};
-
-///Implements [ToTypename](crate::ToTypename).
-///
-///`TypeName::get_type_name` will return the name of the rust type.
-#[cfg(feature = "derive")]
-pub use tealr_derive::ToTypename;
-
-pub use type_generator::{EnumGenerator, Field, NameContainer, RecordGenerator, TypeGenerator};
-pub use type_representation::{type_parts_to_str, KindOfType, NamePart, TypeBody, TypeName};
-pub use type_walker::{ExtraPage, GlobalInstance, TypeWalker};
-
 #[cfg(feature = "compile")]
 pub use tealr_derive::compile_inline_teal;
-
 #[cfg(any(
     feature = "embed_compiler_from_local",
     feature = "embed_compiler_from_download"
 ))]
 pub use tealr_derive::embed_compiler;
+///Implements [ToTypename](crate::ToTypename).
+///
+///`TypeName::get_type_name` will return the name of the rust type.
+#[cfg(feature = "derive")]
+pub use tealr_derive::ToTypename;
+pub use type_generator::{EnumGenerator, Field, NameContainer, RecordGenerator, TypeGenerator};
+pub use type_representation::{type_parts_to_str, KindOfType, NamePart, TypeBody, TypeName};
+pub use type_walker::{ExtraPage, GlobalInstance, TypeWalker};
 
 /// Gets the current version of tealr.
 ///
@@ -244,7 +240,7 @@ pub fn new_type_to_old(a: Type, is_callback: bool) -> Cow<'static, [NamePart]> {
             parts.extend(new_type_to_old(*x, true).iter().cloned());
             parts.push(NamePart::symbol("}"));
             parts.into()
-        }
+        },
         Type::Map(MapRepresentation { key, value }) => {
             let mut parts = Vec::with_capacity(5);
             parts.push(NamePart::symbol("{"));
@@ -253,7 +249,7 @@ pub fn new_type_to_old(a: Type, is_callback: bool) -> Cow<'static, [NamePart]> {
             parts.extend(new_type_to_old(*value, true).iter().cloned());
             parts.push(NamePart::symbol("}"));
             parts.into()
-        }
+        },
         Type::Or(x) => {
             if x.is_empty() {
                 eprintln!("An NewType::Or found with empty contents. Skipping");
@@ -269,7 +265,7 @@ pub fn new_type_to_old(a: Type, is_callback: bool) -> Cow<'static, [NamePart]> {
             parts.pop();
             parts.push(NamePart::symbol(")"));
             parts.into()
-        }
+        },
         Type::Tuple(x) => {
             if x.is_empty() {
                 eprintln!("An NewType::Tuple found with empty contents. Skipping");
@@ -284,7 +280,7 @@ pub fn new_type_to_old(a: Type, is_callback: bool) -> Cow<'static, [NamePart]> {
             parts.pop();
             parts.push(NamePart::symbol(")"));
             parts.into()
-        }
+        },
         Type::Function(FunctionRepresentation { params, returns }) => {
             let mut parts = Vec::with_capacity(params.len() + returns.len());
             parts.push(NamePart::symbol("function"));
@@ -333,7 +329,7 @@ pub fn new_type_to_old(a: Type, is_callback: bool) -> Cow<'static, [NamePart]> {
             }
 
             Cow::Owned(parts)
-        }
+        },
     }
 }
 ///Gets the generics of any given type
@@ -353,12 +349,12 @@ pub fn get_generics(to_check: &Type) -> HashSet<&Name> {
                 set.insert(&x.name);
             }
             set
-        }
+        },
         Type::Or(x) | Type::Tuple(x) => x.iter().flat_map(get_generics).collect(),
         Type::Map(MapRepresentation { key, value }) => {
             let mut generics = get_generics(key);
             generics.extend(get_generics(value));
             generics
-        }
+        },
     }
 }

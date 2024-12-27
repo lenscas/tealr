@@ -17,6 +17,7 @@ impl crate::mlu::InstanceCollector for InstanceWalker {
         self.add_instance::<T>(global_name.into());
         Ok(self)
     }
+
     fn document_instance(&mut self, doc: &'static str) -> &mut Self {
         self.document_instance(doc);
         self
@@ -30,6 +31,7 @@ impl InstanceWalker {
             instances: Default::default(),
         }
     }
+
     #[allow(dead_code)]
     fn add_instance<T: ToTypename>(&mut self, name: Cow<'static, str>) {
         let teal_type = T::get_type_parts_as_global();
@@ -44,6 +46,7 @@ impl InstanceWalker {
             ty: T::to_typename(),
         });
     }
+
     #[allow(dead_code)]
     fn document_instance(&mut self, doc: &'static str) {
         self.doc.push_str(doc);

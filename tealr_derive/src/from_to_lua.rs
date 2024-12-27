@@ -45,8 +45,8 @@ fn find_tag_with_value(to_find: &str, tags: &[venial::Attribute]) -> Option<Toke
                 } else {
                     None
                 }
-            }
-            venial::AttributeValue::Equals(_, _) => None,
+            },
+            venial::AttributeValue::Equals(..) => None,
         })
 }
 
@@ -57,7 +57,7 @@ fn find_doc_tags(tags: &[venial::Attribute]) -> impl Iterator<Item = String> + '
             name == "lua_doc" || name == "doc" || name == "tealr_doc"
         })
         .filter_map(|v| match &v.value {
-            venial::AttributeValue::Group(_, _) => None,
+            venial::AttributeValue::Group(..) => None,
             venial::AttributeValue::Equals(_, y) => Some(
                 y.iter()
                     .flat_map(|v| {

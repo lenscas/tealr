@@ -47,10 +47,10 @@ pub(crate) fn get_local_teal(path: String) -> String {
                 match e.kind() {
                     std::io::ErrorKind::NotFound => {
                         "Could not compile teal. Command `tl` not found."
-                    }
+                    },
                     std::io::ErrorKind::PermissionDenied => {
                         "Permission denied when running the teal compiler."
-                    }
+                    },
                     _ => "Error while running teal. Is it available as `tl` in the path?",
                 },
                 e,
@@ -70,7 +70,7 @@ pub(crate) fn get_local_teal(path: String) -> String {
                     .unwrap_or_default(),
                 e.kind()
             )
-        }
+        },
     };
 
     if !compiler

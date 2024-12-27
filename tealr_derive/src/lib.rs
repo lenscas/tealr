@@ -48,8 +48,9 @@ pub fn type_representation_derive(input: TokenStream) -> TokenStream {
 #[cfg(feature = "derive")]
 #[proc_macro_derive(MluaTealDerive, attributes(tealr))]
 pub fn mlua_teal_derive(input: TokenStream) -> TokenStream {
-    use crate::user_data::impl_type_representation_derive;
     use user_data::impl_mlua_user_data_derive;
+
+    use crate::user_data::impl_type_representation_derive;
 
     let ast = parse_item(input.into()).unwrap();
 
@@ -73,7 +74,6 @@ mod compile_inline_teal;
 ///# use tealr_derive::compile_inline_teal;
 ///assert_eq!(compile_inline_teal!("local a : number = 1"),"local a = 1\n")
 ///```
-
 #[cfg(feature = "compile")]
 #[proc_macro]
 pub fn compile_inline_teal(input: TokenStream) -> TokenStream {

@@ -51,7 +51,7 @@ pub(crate) fn impl_mlua_user_data_derive(ast: &Item) -> TokenStream {
         _ => {
             return Error::new("As of right now, only structs and enums are supported.")
                 .to_compile_error()
-        }
+        },
     };
     let type_body = generate_type_body(
         name,

@@ -1,8 +1,7 @@
 use mlua::{AnyUserData, FromLua, IntoLua, Lua, MetaMethod};
 
-use crate::ToTypename;
-
 use super::{MaybeSend, TealData};
+use crate::ToTypename;
 
 ///The teal version of [UserDataFields](mlua::UserDataFields)
 ///
