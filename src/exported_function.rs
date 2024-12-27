@@ -82,10 +82,11 @@ impl ExportedFunction {
     /// Will panic if the given argument does not have the same number of fields as [`params`].
     pub fn name_parameters(
         &mut self,
-        names: impl ExactSizeIterator<Item = impl Into<Name>>,
+        names: impl IntoIterator<IntoIter = impl ExactSizeIterator<Item = impl Into<Name>>>,
     ) -> &mut Self {
+        let names = names.into_iter();
         assert_eq!(names.len(), self.params.len());
-        for (name, p) in names.into_iter().zip(self.params.iter_mut()) {
+        for (name, p) in names.zip(self.params.iter_mut()) {
             p.param_name = Some(name.into());
         }
         self
