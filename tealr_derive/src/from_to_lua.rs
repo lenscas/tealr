@@ -38,16 +38,7 @@ fn find_tag_with_value(to_find: &str, tags: &[venial::Attribute]) -> Option<Toke
         .filter_map(|v| match &v.value {
             venial::AttributeValue::Empty => None,
             venial::AttributeValue::Group(_, y) => {
-                if y.first()
-                    .map(|v| {
-                        let res = v.to_string() == to_find;
-                        if (!res) && to_find == "extend_methods" {
-                            println!("v: {:#?}", v);
-                        }
-                        res
-                    })
-                    .unwrap_or(false)
-                {
+                if y.first().map(|v| v.to_string() == to_find).unwrap_or(false) {
                     y.get(2).map(|v| v.clone().into_token_stream())
                 } else {
                     None

@@ -1,10 +1,17 @@
 {
-  "tealr_version_used": "0.9.0-alpha4",
+  "tealr_version_used": "0.10.0",
   "given_types": [
     {
       "Record": {
         "should_be_inlined": true,
         "is_user_data": true,
+        "ty": {
+          "Single": {
+            "name": "Example",
+            "kind": "External",
+            "generics": []
+          }
+        },
         "type_name": [
           {
             "Type": {
@@ -72,7 +79,8 @@
                 "ty": {
                   "Single": {
                     "name": "Example",
-                    "kind": "External"
+                    "kind": "External",
+                    "generics": []
                   }
                 }
               },
@@ -81,7 +89,8 @@
                 "ty": {
                   "Single": {
                     "name": "integer",
-                    "kind": "Builtin"
+                    "kind": "Builtin",
+                    "generics": []
                   }
                 }
               }
@@ -90,7 +99,8 @@
               {
                 "Single": {
                   "name": "integer",
-                  "kind": "Builtin"
+                  "kind": "Builtin",
+                  "generics": []
                 }
               }
             ],
@@ -163,7 +173,8 @@
                 "ty": {
                   "Single": {
                     "name": "Example",
-                    "kind": "External"
+                    "kind": "External",
+                    "generics": []
                   }
                 }
               },
@@ -172,7 +183,8 @@
                 "ty": {
                   "Single": {
                     "name": "integer",
-                    "kind": "Builtin"
+                    "kind": "Builtin",
+                    "generics": []
                   }
                 }
               },
@@ -181,7 +193,8 @@
                 "ty": {
                   "Single": {
                     "name": "string",
-                    "kind": "Builtin"
+                    "kind": "Builtin",
+                    "generics": []
                   }
                 }
               }
@@ -190,7 +203,8 @@
               {
                 "Single": {
                   "name": "string",
-                  "kind": "Builtin"
+                  "kind": "Builtin",
+                  "generics": []
                 }
               }
             ],
@@ -260,7 +274,8 @@
                   "Array": {
                     "Single": {
                       "name": "string",
-                      "kind": "Builtin"
+                      "kind": "Builtin",
+                      "generics": []
                     }
                   }
                 }
@@ -271,14 +286,16 @@
                 "Array": {
                   "Single": {
                     "name": "string",
-                    "kind": "Builtin"
+                    "kind": "Builtin",
+                    "generics": []
                   }
                 }
               },
               {
                 "Single": {
                   "name": "integer",
-                  "kind": "Builtin"
+                  "kind": "Builtin",
+                  "generics": []
                 }
               }
             ],
@@ -345,7 +362,8 @@
                 "ty": {
                   "Single": {
                     "name": "boolean",
-                    "kind": "Builtin"
+                    "kind": "Builtin",
+                    "generics": []
                   }
                 }
               },
@@ -354,7 +372,8 @@
                 "ty": {
                   "Single": {
                     "name": "Example",
-                    "kind": "External"
+                    "kind": "External",
+                    "generics": []
                   }
                 }
               }
@@ -363,13 +382,15 @@
               {
                 "Single": {
                   "name": "boolean",
-                  "kind": "Builtin"
+                  "kind": "Builtin",
+                  "generics": []
                 }
               },
               {
                 "Single": {
                   "name": "Example",
-                  "kind": "External"
+                  "kind": "External",
+                  "generics": []
                 }
               }
             ],
@@ -390,6 +411,13 @@
       "Record": {
         "should_be_inlined": false,
         "is_user_data": true,
+        "ty": {
+          "Single": {
+            "name": "Example",
+            "kind": "External",
+            "generics": []
+          }
+        },
         "type_name": [
           {
             "Type": {
@@ -457,7 +485,8 @@
                 "ty": {
                   "Single": {
                     "name": "Example",
-                    "kind": "External"
+                    "kind": "External",
+                    "generics": []
                   }
                 }
               },
@@ -466,7 +495,8 @@
                 "ty": {
                   "Single": {
                     "name": "integer",
-                    "kind": "Builtin"
+                    "kind": "Builtin",
+                    "generics": []
                   }
                 }
               }
@@ -475,7 +505,8 @@
               {
                 "Single": {
                   "name": "integer",
-                  "kind": "Builtin"
+                  "kind": "Builtin",
+                  "generics": []
                 }
               }
             ],
@@ -548,7 +579,8 @@
                 "ty": {
                   "Single": {
                     "name": "Example",
-                    "kind": "External"
+                    "kind": "External",
+                    "generics": []
                   }
                 }
               },
@@ -557,7 +589,8 @@
                 "ty": {
                   "Single": {
                     "name": "integer",
-                    "kind": "Builtin"
+                    "kind": "Builtin",
+                    "generics": []
                   }
                 }
               },
@@ -566,7 +599,8 @@
                 "ty": {
                   "Single": {
                     "name": "string",
-                    "kind": "Builtin"
+                    "kind": "Builtin",
+                    "generics": []
                   }
                 }
               }
@@ -575,7 +609,8 @@
               {
                 "Single": {
                   "name": "string",
-                  "kind": "Builtin"
+                  "kind": "Builtin",
+                  "generics": []
                 }
               }
             ],
@@ -645,7 +680,8 @@
                   "Array": {
                     "Single": {
                       "name": "string",
-                      "kind": "Builtin"
+                      "kind": "Builtin",
+                      "generics": []
                     }
                   }
                 }
@@ -656,14 +692,16 @@
                 "Array": {
                   "Single": {
                     "name": "string",
-                    "kind": "Builtin"
+                    "kind": "Builtin",
+                    "generics": []
                   }
                 }
               },
               {
                 "Single": {
                   "name": "integer",
-                  "kind": "Builtin"
+                  "kind": "Builtin",
+                  "generics": []
                 }
               }
             ],
@@ -730,7 +768,8 @@
                 "ty": {
                   "Single": {
                     "name": "boolean",
-                    "kind": "Builtin"
+                    "kind": "Builtin",
+                    "generics": []
                   }
                 }
               },
@@ -739,7 +778,8 @@
                 "ty": {
                   "Single": {
                     "name": "Example",
-                    "kind": "External"
+                    "kind": "External",
+                    "generics": []
                   }
                 }
               }
@@ -748,13 +788,15 @@
               {
                 "Single": {
                   "name": "boolean",
-                  "kind": "Builtin"
+                  "kind": "Builtin",
+                  "generics": []
                 }
               },
               {
                 "Single": {
                   "name": "Example",
-                  "kind": "External"
+                  "kind": "External",
+                  "generics": []
                 }
               }
             ],
