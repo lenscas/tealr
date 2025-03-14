@@ -36,11 +36,20 @@ fn debug_macro(ts: TokenStream) -> TokenStream {
 
 fn find_tag_with_value(to_find: &str, tags: &[venial::Attribute]) -> Option<TokenStream> {
     tags.iter()
-        .find(|v| v.path.iter().cloned().collect::<TokenStream>().to_string() == "tealr")
-        .and_then(|v| match &v.value {
+        .filter(|v| v.path.iter().cloned().collect::<TokenStream>().to_string() == "tealr")
+        .filter_map(|v| match &v.value {
             venial::AttributeValue::Empty => None,
             venial::AttributeValue::Group(_, y) => {
-                if y.first().map(|v| v.to_string() == to_find).unwrap_or(false) {
+                if y.first()
+                    .map(|v| {
+                        let res = v.to_string() == to_find;
+                        if (!res) && to_find == "extend_methods" {
+                            println!("v: {:#?}", v);
+                        }
+                        res
+                    })
+                    .unwrap_or(false)
+                {
                     y.get(2).map(|v| v.clone().into_token_stream())
                 } else {
                     None
@@ -48,6 +57,7 @@ fn find_tag_with_value(to_find: &str, tags: &[venial::Attribute]) -> Option<Toke
             }
             venial::AttributeValue::Equals(_, _) => None,
         })
+        .next()
 }
 
 fn find_doc_tags(tags: &[venial::Attribute]) -> impl Iterator<Item = String> + '_ {
@@ -418,8 +428,8 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
         impl #teal_data_location for #name {
             #add_fields_teal_data
             fn add_methods<T: #teal_data_methods_location<Self>>(methods: &mut T) {
-                #variant_functions
-                #call_methods
+                #variant_functions;
+                #call_methods;
                 methods.add_method("GetTypeName",|_,this,()|{
                     Ok(match this {
                         #is_of_branches

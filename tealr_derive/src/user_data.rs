@@ -11,7 +11,8 @@ pub(crate) fn impl_type_representation_derive(ast: &Item) -> TokenStream {
             fn to_typename() -> #tealr_name::Type {
                 #tealr_name::Type::Single(#tealr_name::SingleType{
                     name: #tealr_name::Name(::std::borrow::Cow::Borrowed(stringify!(#name))),
-                    kind: #tealr_name::KindOfType::External
+                    kind: #tealr_name::KindOfType::External,
+                    generics: ::std::default::Default::default()
                 })
             }
         }

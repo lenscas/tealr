@@ -15,6 +15,8 @@ mod type_walker;
 use std::{borrow::Cow, collections::HashSet};
 
 pub use exported_function::ExportedFunction;
+use mlu::TealDataMethods;
+use mlua::UserDataRef;
 use serde::{Deserialize, Serialize};
 pub use teal_multivalue::{TealMultiValue, TealType};
 
@@ -44,7 +46,7 @@ pub fn get_tealr_version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
-#[derive(PartialEq, Eq, Hash, Clone, Debug, Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Hash, Clone, Debug, Serialize, Deserialize, Default)]
 #[cfg_attr(
     all(feature = "mlua", feature = "derive"),
     derive(crate::mlu::FromToLua, crate::ToTypename)
@@ -86,6 +88,8 @@ pub struct SingleType {
     pub name: Name,
     ///The kind of type that is being represented
     pub kind: KindOfType,
+    ///If a type has generics then they are stored here
+    pub generics: Vec<Type>,
 }
 #[derive(Clone, Debug, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[cfg_attr(
@@ -153,6 +157,10 @@ type NewTypeArray = Vec<Type>;
     all(feature = "mlua",feature = "derive"),
     tealr(tealr_name = crate)
 )]
+#[cfg_attr(
+    all(feature = "mlua",feature = "derive"),
+    tealr(extend_methods = add_methods_to_type)
+)]
 ///A type
 pub enum Type {
     ///The type is a function
@@ -184,6 +192,20 @@ pub enum Type {
             tealr(remote =  NewTypeArray))]
         Vec<Type>,
     ),
+    ///Indicates that the given type is a variadic. Meaning it can be be repeated any amount of times
+    Variadic(
+        #[cfg_attr(
+            all(feature = "mlua",feature = "derive"),
+            tealr(remote =  Type))]
+        Box<Type>,
+    ),
+}
+
+fn add_methods_to_type<T: TealDataMethods<Type>>(methods: &mut T) {
+    methods.add_meta_method(mlua::MetaMethod::Eq, |_, this, b: UserDataRef<Type>| {
+        let a: &Type = &b;
+        Ok(this == a)
+    });
 }
 
 impl From<Box<Type>> for Type {
@@ -194,16 +216,39 @@ impl From<Box<Type>> for Type {
 impl Type {
     ///Creates a new singular type
     pub fn new_single(name: impl AsRef<str>, kind: KindOfType) -> Self {
+        Self::new_single_with_generics(name, kind, vec![])
+    }
+    ///Same as `new_single` but with generics
+    pub fn new_single_with_generics(
+        name: impl AsRef<str>,
+        kind: KindOfType,
+        generics: Vec<Type>,
+    ) -> Self {
         Self::Single(SingleType {
             name: name.into(),
             kind,
+            generics,
         })
+    }
+
+    ///returns Some(X) if Self is `Single`. Otherwise None
+    pub fn single(&self) -> Option<&SingleType> {
+        if let Self::Single(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 }
 ///This trait turns a A into a type representation for Lua/Teal
 pub trait ToTypename {
-    ///Used to get the old representation.
-    ///Should basically never be used or implemented manually
+    /// Used to get the old representation.
+    /// Should basically never be used or implemented manually
+    ///
+    /// Note: While the result of this function can be used to get a pretty readable version of the type,
+    /// It will likely miss some information that is otherwise included.
+    /// Think for example of variadics, as those don't have a singular "true" way to be represented in teal.
+    /// This results in that information being lost when using this function to get a readable type name.
     #[deprecated]
     fn to_old_type_parts() -> Cow<'static, [NamePart]> {
         #[allow(deprecated)]
@@ -233,11 +278,29 @@ impl<T: ToTypename> TypeName for T {
 #[deprecated]
 pub fn new_type_to_old(a: Type, is_callback: bool) -> Cow<'static, [NamePart]> {
     match a {
-        Type::Single(a) => Cow::Owned(vec![NamePart::Type(TealType {
-            name: a.name.0,
-            type_kind: a.kind,
-            generics: None,
-        })]),
+        Type::Single(a) => {
+            let mut name_parts = vec![NamePart::Type(TealType {
+                name: a.name.0,
+                type_kind: a.kind,
+                generics: None,
+            })];
+            if !a.generics.is_empty() {
+                name_parts.push("<".into());
+                a.generics
+                    .iter()
+                    .map(|x| new_type_to_old(x.clone(), is_callback))
+                    .enumerate()
+                    .for_each(|(key, v)| {
+                        if key > 0 {
+                            name_parts.push(",".into());
+                        }
+                        name_parts.extend(v.iter().map(|x| x.to_owned()))
+                    });
+
+                name_parts.push(">".into());
+            }
+            Cow::Owned(name_parts)
+        }
         Type::Array(x) => {
             let mut parts = Vec::with_capacity(3);
             parts.push(NamePart::symbol("{"));
@@ -334,6 +397,7 @@ pub fn new_type_to_old(a: Type, is_callback: bool) -> Cow<'static, [NamePart]> {
 
             Cow::Owned(parts)
         }
+        Type::Variadic(x) => new_type_to_old(*x, is_callback),
     }
 }
 ///Gets the generics of any given type
@@ -346,7 +410,6 @@ pub fn get_generics(to_check: &Type) -> HashSet<&Name> {
             .flat_map(get_generics)
             .collect(),
         Type::Array(x) => get_generics(x.as_ref()),
-
         Type::Single(x) => {
             let mut set = HashSet::new();
             if x.kind == KindOfType::Generic {
@@ -360,5 +423,6 @@ pub fn get_generics(to_check: &Type) -> HashSet<&Name> {
             generics.extend(get_generics(value));
             generics
         }
+        Type::Variadic(x) => get_generics(x.as_ref()),
     }
 }
