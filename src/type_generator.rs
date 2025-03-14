@@ -163,7 +163,7 @@ impl TypeGenerator {
     ///returns the RecordGenerator if self is `TypeGenerator::Record(x)` otherwise returns None
     pub fn record(&self) -> Option<&RecordGenerator> {
         match self {
-            TypeGenerator::Record(record_generator) => Some(&record_generator),
+            TypeGenerator::Record(record_generator) => Some(record_generator),
             TypeGenerator::Enum(_) => None,
         }
     }

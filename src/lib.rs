@@ -15,7 +15,9 @@ mod type_walker;
 use std::{borrow::Cow, collections::HashSet};
 
 pub use exported_function::ExportedFunction;
+#[cfg(feature = "mlua")]
 use mlu::TealDataMethods;
+#[cfg(feature = "mlua")]
 use mlua::UserDataRef;
 use serde::{Deserialize, Serialize};
 pub use teal_multivalue::{TealMultiValue, TealType};
@@ -201,6 +203,7 @@ pub enum Type {
     ),
 }
 
+#[cfg(feature = "mlua")]
 fn add_methods_to_type<T: TealDataMethods<Type>>(methods: &mut T) {
     methods.add_meta_method(mlua::MetaMethod::Eq, |_, this, b: UserDataRef<Type>| {
         let a: &Type = &b;
