@@ -13,7 +13,6 @@ use super::MaybeSend;
 ///
 ///The only 2 differences are that [TealDataMethods](crate::mlu::TealDataMethods) has an extra type bound on `A` and `R`.
 ///These are to get the type names when generating the `.d.tl` file.
-
 pub trait TealDataMethods<T: ToTypename> {
     ///Exposes a method to lua
     fn add_method<S, A, R, M>(&mut self, name: S, method: M)

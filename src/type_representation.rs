@@ -8,6 +8,7 @@ macro_rules! impl_type_name_life_time {
                 Type::Single(SingleType {
                     name: $teal_type.into(),
                     kind: KindOfType::Builtin,
+                    generics: vec![],
                 })
             }
         }
@@ -21,6 +22,7 @@ macro_rules! impl_type_name {
                 Type::Single(SingleType {
                     name: $teal_type.into(),
                     kind: KindOfType::Builtin,
+                    generics: vec![],
                 })
             }
         }
@@ -256,7 +258,7 @@ use std::{
 use crate::{TealType, TypeGenerator};
 
 impl_type_name!("boolean" bool);
-impl_type_name!("string" String,std::ffi::CString,bstr::BString ,&str,&std::ffi::CStr,&bstr::BStr);
+impl_type_name!("string" String,std::ffi::CString,bstr::BString ,&str,&std::ffi::CStr,&bstr::BStr, std::path::PathBuf);
 impl_type_name!("number" f32,f64);
 impl_type_name!("integer" i8,u8,u16,i16,u32,i32,u64,i64,u128,i128,isize,usize);
 #[cfg(feature = "mlua")]

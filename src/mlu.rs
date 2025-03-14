@@ -9,6 +9,7 @@ mod typed_function;
 /// Module containing functionality to do with user data proxies
 pub mod user_data_proxy;
 pub(crate) mod user_data_wrapper;
+mod variadics;
 use std::borrow::Cow;
 
 pub use self::{
