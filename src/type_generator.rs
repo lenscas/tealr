@@ -169,6 +169,7 @@ impl TypeGenerator {
     }
 }
 
+#[cfg(feature = "mlua")]
 fn add_lua_funcs_to_type_gen<A: TealDataMethodsM<TypeGenerator>>(a: &mut A) {
     a.add_method("type_name", |_, x, ()| Ok(x.type_name().to_owned()));
     a.add_method("is_inlined", |_, x, ()| Ok(x.is_inlined()));
