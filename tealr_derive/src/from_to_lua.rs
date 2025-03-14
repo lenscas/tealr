@@ -3,9 +3,7 @@ use quote::ToTokens;
 use venial::{parse_item, Struct};
 
 pub(crate) fn get_tealr_name(attributes: &[venial::Attribute]) -> TokenStream {
-    find_tag_with_value("tealr_name", attributes)
-        .map(Into::into)
-        .unwrap_or_else(|| quote!(::tealr))
+    find_tag_with_value("tealr_name", attributes).unwrap_or_else(|| quote!(::tealr))
 }
 
 #[allow(dead_code)]
