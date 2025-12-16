@@ -209,6 +209,9 @@ fn add_methods_to_type<T: TealDataMethods<Type>>(methods: &mut T) {
         let a: &Type = &b;
         Ok(this == a)
     });
+    methods.add_meta_method(mlua::MetaMethod::ToString, |_, this, ()| {
+        Ok(format!("{:?}", this))
+    })
 }
 
 impl From<Box<Type>> for Type {
@@ -403,7 +406,7 @@ pub fn new_type_to_old(a: Type, is_callback: bool) -> Cow<'static, [NamePart]> {
         Type::Variadic(x) => new_type_to_old(*x, is_callback),
     }
 }
-///Gets the generics of any given type
+///Gets the names of generics of any given type
 pub fn get_generics(to_check: &Type) -> HashSet<&Name> {
     match to_check {
         Type::Function(FunctionRepresentation { params, returns }) => params
@@ -427,5 +430,31 @@ pub fn get_generics(to_check: &Type) -> HashSet<&Name> {
             generics
         }
         Type::Variadic(x) => get_generics(x.as_ref()),
+    }
+}
+///Gets the generics of any given type
+pub fn get_generic_types(to_check: &Type) -> HashSet<Type> {
+    match to_check {
+        Type::Function(FunctionRepresentation { params, returns }) => params
+            .iter()
+            .map(|v| &v.ty)
+            .chain(returns.iter())
+            .flat_map(get_generic_types)
+            .collect(),
+        Type::Array(x) => get_generic_types(x.as_ref()),
+        Type::Single(x) => {
+            let mut set = HashSet::new();
+            if x.kind == KindOfType::Generic {
+                set.insert(Type::Single(x.clone()));
+            }
+            set
+        }
+        Type::Or(x) | Type::Tuple(x) => x.iter().flat_map(get_generic_types).collect(),
+        Type::Map(MapRepresentation { key, value }) => {
+            let mut generics = get_generic_types(key);
+            generics.extend(get_generic_types(value));
+            generics
+        }
+        Type::Variadic(x) => get_generic_types(x.as_ref()),
     }
 }

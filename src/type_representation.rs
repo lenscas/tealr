@@ -43,6 +43,7 @@ macro_rules! impl_type_name {
     all(feature = "mlua", feature = "derive"),
     tealr(tealr_name = crate)
 )]
+#[derive(Default)]
 pub enum KindOfType {
     ///The type is build in to teal.
     ///
@@ -51,6 +52,7 @@ pub enum KindOfType {
     ///The type come from a library (including this one).
     ///
     ///In the future it might be possible that tealr generates the correct `require` statements in this case
+    #[default]
     External,
     ///The type represent a generic type parameter.
     ///
@@ -78,11 +80,6 @@ impl KindOfType {
     ///```
     pub fn is_external(&self) -> bool {
         self == &Self::External
-    }
-}
-impl Default for KindOfType {
-    fn default() -> Self {
-        Self::External
     }
 }
 #[macro_export]

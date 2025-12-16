@@ -4,7 +4,10 @@ use std::{
     string::FromUtf8Error,
 };
 
-use crate::{get_generics, type_generator::NameContainer, FunctionParam, Name, NamePart, Type};
+use crate::{
+    get_generic_types, get_generics, type_generator::NameContainer, FunctionParam, Name, NamePart,
+    Type,
+};
 #[allow(dead_code)]
 type X = Vec<NamePart>;
 
@@ -109,6 +112,15 @@ impl ExportedFunction {
             .map(|v| &v.ty)
             .chain(self.returns.iter())
             .flat_map(get_generics)
+            .collect()
+    }
+    ///Get all the generics that this function uses.
+    pub fn get_generic_types(&self) -> HashSet<Type> {
+        self.params
+            .iter()
+            .map(|v| &v.ty)
+            .chain(self.returns.iter())
+            .flat_map(get_generic_types)
             .collect()
     }
 }
