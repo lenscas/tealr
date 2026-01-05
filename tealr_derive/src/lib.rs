@@ -117,6 +117,7 @@ pub fn compile_inline_teal(input: TokenStream) -> TokenStream {
     feature = "embed_compiler_from_download"
 ))]
 #[proc_macro]
+#[deprecated = "The latest versions of the teal compiler do not work with this macro. Not sure if a replacement will be added."]
 pub fn embed_compiler(input: TokenStream) -> TokenStream {
     use syn::parse_macro_input;
     let input = parse_macro_input!(input as EmbedOptions);

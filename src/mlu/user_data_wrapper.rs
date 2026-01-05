@@ -8,7 +8,7 @@ use mlua::{
 use std::{collections::HashMap, marker::PhantomData};
 
 use super::{MaybeSend, TealData, TealDataFields, TealDataMethods};
-use crate::{type_generator::get_method_data, TealMultiValue, ToTypename, TypeName};
+use crate::{type_generator::get_method_data, type_to_string, TealMultiValue, ToTypename};
 
 ///Used to turn [UserDataMethods](mlua::UserDataMethods) into [TealDataMethods](crate::mlu::TealDataMethods).
 ///
@@ -106,10 +106,8 @@ where
         R: ToLuaMulti + TealMultiValue,
     {
         let type_def = get_method_data::<A, R, _>(to, false, self_type.then(|| T::to_typename()));
-        let generated = type_def
-            .generate(&Default::default())
-            .map(|v| "Signature: ".to_string() + &v)
-            .unwrap_or_default();
+        let generated = type_to_string(&type_def.into_type(), false);
+
         let docs = generated + "\n\ndocs:\n" + &self.next_docs.take().unwrap_or_default();
         let documentation = &mut self.documentation;
         documentation.insert(to.as_bytes().to_owned(), docs);
@@ -118,7 +116,7 @@ where
         let name = name.as_bytes().to_vec();
         let documentation = &mut self.documentation;
         let mut current_doc = documentation.remove(&name).unwrap_or_else(|| {
-            let mut str = crate::type_parts_to_str(F::get_type_parts()).into_owned();
+            let mut str = type_to_string(&F::to_typename(), false);
             str.push_str("\n\n docs:\n");
             str
         });

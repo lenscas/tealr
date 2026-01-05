@@ -1,20 +1,17 @@
 use tealr::{
     mlu::{TealData, TealDataMethods, TypedFunction, UserData},
-    type_parts_to_str, ToTypename,
+    type_to_string, ToTypename,
 };
 #[test]
 fn generate_correct_type() {
     assert_eq!(
-        type_parts_to_str(
-            #[allow(deprecated)]
-            TypedFunction::<String, String>::to_old_type_parts()
-        ),
+        type_to_string(&TypedFunction::<String, String>::to_typename(), false),
         "function(string):(string)"
     );
     assert_eq!(
-        type_parts_to_str(
-            #[allow(deprecated)]
-            TypedFunction::<TypedFunction::<(i8, String), (String, u8)>, f32>::to_old_type_parts()
+        type_to_string(
+            &TypedFunction::<TypedFunction::<(i8, String), (String, u8)>, f32>::to_typename(),
+            false
         ),
         "function(function(integer , string):(string , integer)):(number)"
     );

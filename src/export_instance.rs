@@ -1,6 +1,4 @@
-use std::borrow::Cow;
-
-use crate::{type_walker::GlobalInstance, KindOfType, ToTypename, TypeName};
+use crate::{type_walker::GlobalInstance, ToTypename};
 
 pub(crate) struct InstanceWalker {
     doc: String,
@@ -8,13 +6,13 @@ pub(crate) struct InstanceWalker {
 }
 #[cfg(feature = "mlua")]
 impl crate::mlu::InstanceCollector for InstanceWalker {
-    fn add_instance<P, T, F>(&mut self, global_name: P, _: F) -> Result<&mut Self, mlua::Error>
+    fn add_instance<P, T, F>(&mut self, name: P, _: F) -> Result<&mut Self, mlua::Error>
     where
-        P: Into<Cow<'static, str>>,
+        P: Into<String>,
         T: ToTypename,
         F: FnOnce(&mlua::Lua) -> Result<T, mlua::Error>,
     {
-        self.add_instance::<T>(global_name.into());
+        self.add_instance::<T>(name.into());
         Ok(self)
     }
     fn document_instance(&mut self, doc: &'static str) -> &mut Self {
@@ -31,15 +29,10 @@ impl InstanceWalker {
         }
     }
     #[allow(dead_code)]
-    fn add_instance<T: ToTypename>(&mut self, name: Cow<'static, str>) {
-        let teal_type = T::get_type_parts_as_global();
-        let z = T::get_type_kind();
-        let is_external = matches!(z, KindOfType::External);
+    fn add_instance<T: ToTypename>(&mut self, name: String) {
         let doc = std::mem::take(&mut self.doc);
         self.instances.push(GlobalInstance {
             name,
-            teal_type,
-            is_external,
             doc,
             ty: T::to_typename(),
         });

@@ -265,27 +265,28 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
     let record_generator_loc = config.record_generator_loc;
     let type_name_macro = config.typename_macro;
 
-    let (add_fields_user_data, add_fields_teal_data, add_fields_type_body) = config
-        .has_userdata_fields
-        .then(|| {
-            (
-                quote! {
-                    fn add_fields<F: #user_data_fields_location<Self>>(fields: &mut F) {
-                        let mut wrapper = #user_data_wrapper_location::from_user_data_fields(fields);
-                        <Self as #teal_data_location>::add_fields(&mut wrapper)
-                    }
-                },
-                quote! {
-                    fn add_fields<F: #teal_data_fields_location<Self>>(fields: &mut F) {
-                        #call_fields
-                    }
-                },
-                quote! {
-                    <Self as #teal_data_location>::add_fields(&mut gen);
-                },
-            )
-        })
-        .unwrap_or_else(|| (quote! {}, quote! {}, quote! {}));
+    let has_userdata_fields = config.has_userdata_fields;
+    let (add_fields_user_data, add_fields_teal_data, add_fields_type_body) = if has_userdata_fields
+    {
+        (
+            quote! {
+                fn add_fields<F: #user_data_fields_location<Self>>(fields: &mut F) {
+                    let mut wrapper = #user_data_wrapper_location::from_user_data_fields(fields);
+                    <Self as #teal_data_location>::add_fields(&mut wrapper)
+                }
+            },
+            quote! {
+                fn add_fields<F: #teal_data_fields_location<Self>>(fields: &mut F) {
+                    #call_fields
+                }
+            },
+            quote! {
+                <Self as #teal_data_location>::add_fields(&mut gen);
+            },
+        )
+    } else {
+        (quote! {}, quote! {}, quote! {})
+    };
     let (variant_functions, (creator_functions, is_of_branches)): (Vec<_>, (Vec<_>, TokenStream)) = enumeration
         .variants
         .iter()

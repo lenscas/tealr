@@ -2,6 +2,7 @@ use tealr::embed_compiler;
 
 #[test]
 fn legacy_syntax() -> mlua::Result<()> {
+    #[expect(deprecated)]
     let compiler = embed_compiler!("v0.13.1");
     let code = compiler("tests/test_embedded_compiler");
     let res: u8 = mlua::Lua::new()
@@ -13,6 +14,7 @@ fn legacy_syntax() -> mlua::Result<()> {
 }
 #[test]
 fn new_syntax_github() -> mlua::Result<()> {
+    #[expect(deprecated)]
     let compiler = embed_compiler!(GitHub(version = "v0.13.1"));
     let code = compiler("tests/test_embedded_compiler");
     let res: u8 = mlua::Lua::new()
@@ -25,6 +27,7 @@ fn new_syntax_github() -> mlua::Result<()> {
 
 #[test]
 fn new_version_luarocks() -> mlua::Result<()> {
+    #[expect(deprecated)]
     let compiler = embed_compiler!(Luarocks(version = "v0.13.1"));
     let code = compiler("tests/test_embedded_compiler");
     let res: u8 = mlua::Lua::new()
@@ -36,6 +39,7 @@ fn new_version_luarocks() -> mlua::Result<()> {
 }
 #[test]
 fn new_syntax_from_local_discover() -> mlua::Result<()> {
+    #[expect(deprecated)]
     let compiler = embed_compiler!(Local());
 
     let code = compiler("tests/test_embedded_compiler");

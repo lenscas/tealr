@@ -62,7 +62,7 @@ pub(crate) fn download_teal_from_github(version: String) -> String {
     download_teal(url, main_folder)
 }
 
-fn get_file_from_zip(zip: &mut ZipArchive<File>, name: String) -> ZipFile {
+fn get_file_from_zip(zip: &mut ZipArchive<File>, name: String) -> ZipFile<'_> {
     zip.by_name(&name)
         .unwrap_or_else(|v| panic!("Could not get `{}` out of zip file. Error:\n{}", name, v))
 }

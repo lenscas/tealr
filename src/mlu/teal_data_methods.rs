@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use mlua::{FromLuaMulti, IntoLua as ToLua, IntoLuaMulti as ToLuaMulti, Lua, MetaMethod, Result};
 
 use crate::{TealMultiValue, ToTypename};
@@ -102,7 +100,7 @@ pub trait InstanceCollector {
     ///adds an instance
     fn add_instance<P, T, F>(&mut self, global_name: P, instance: F) -> Result<&mut Self>
     where
-        P: Into<Cow<'static, str>>,
+        P: Into<String>,
         T: ToTypename + ToLua,
         F: FnOnce(&Lua) -> mlua::Result<T>;
     ///Adds documentation to the next global instance
@@ -119,7 +117,7 @@ pub fn set_global_env<T: ExportInstances>(env: T, lua: &Lua) -> Result<()> {
 impl InstanceCollector for (mlua::Table, &Lua) {
     fn add_instance<P, T, F>(&mut self, global_name: P, instance: F) -> Result<&mut Self>
     where
-        P: Into<Cow<'static, str>>,
+        P: Into<String>,
         T: ToTypename + ToLua,
         F: FnOnce(&Lua) -> Result<T>,
     {

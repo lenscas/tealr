@@ -93,6 +93,7 @@ fn pieces() -> Result<()> {
         //compile inline teal
         let _code = compile_inline_teal!("local x : number = 5 return x");
         //embed teal
+        #[expect(deprecated)]
         let compiler = embed_compiler!("v0.13.1");
 
         let code = compiler("example/basic_teal_file");

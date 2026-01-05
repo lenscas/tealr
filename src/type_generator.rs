@@ -1,9 +1,8 @@
 use std::{
     borrow::Cow,
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     fmt::{Debug, Display},
     ops::Deref,
-    string::FromUtf8Error,
 };
 
 #[cfg(feature = "mlua")]
@@ -18,9 +17,7 @@ use crate::mlu::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    exported_function::ExportedFunction, type_parts_to_str, NamePart, ToTypename, Type, TypeName,
-};
+use crate::{exported_function::ExportedFunction, type_to_string, ToTypename, Type};
 
 use crate::TealMultiValue;
 
@@ -104,6 +101,12 @@ impl PartialEq<&str> for NameContainer {
     }
 }
 
+impl From<String> for NameContainer {
+    fn from(s: String) -> Self {
+        s.into_bytes().into()
+    }
+}
+
 #[allow(dead_code)]
 pub(crate) fn get_method_data<A: TealMultiValue, R: TealMultiValue, S: ToString + AsRef<str>>(
     name: S,
@@ -140,12 +143,6 @@ pub enum TypeGenerator {
 }
 
 impl TypeGenerator {
-    pub(crate) fn generate(self) -> Result<String, FromUtf8Error> {
-        match self {
-            TypeGenerator::Record(x) => x.generate(),
-            TypeGenerator::Enum(x) => Ok(x.generate()),
-        }
-    }
     ///returns the name of the current type
     pub fn type_name(&self) -> &Type {
         match self {
@@ -175,8 +172,6 @@ fn add_lua_funcs_to_type_gen<A: TealDataMethodsM<TypeGenerator>>(a: &mut A) {
     a.add_method("is_inlined", |_, x, ()| Ok(x.is_inlined()));
 }
 
-#[allow(dead_code)]
-type V = Vec<NamePart>;
 ///contains all the information needed to create a teal enum.
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
@@ -192,11 +187,7 @@ pub struct EnumGenerator {
     ///the type of this enum
     pub ty: Type,
     ///the name of this enum
-    #[cfg_attr(
-        all(feature = "mlua", feature = "derive"),
-        tealr(remote = V)
-    )]
-    pub name: Cow<'static, [NamePart]>,
+    pub name: String,
     ///the variants that make up this enum.
     pub variants: Vec<NameContainer>,
     ///documentation for this enum
@@ -212,7 +203,7 @@ impl EnumGenerator {
     pub fn new<A: ToTypename>() -> Self {
         Self {
             ty: A::to_typename(),
-            name: A::get_type_parts(),
+            name: type_to_string(&A::to_typename(), false),
             variants: Default::default(),
             type_doc: Default::default(),
         }
@@ -223,18 +214,6 @@ impl EnumGenerator {
         self.type_doc.push('\n');
         self.type_doc.push('\n');
         self
-    }
-    pub(crate) fn generate(self) -> String {
-        let variants = self
-            .variants
-            .into_iter()
-            .map(|v| String::from_utf8_lossy(&v).to_string())
-            .map(|v| v.replace('\\', "\\\\").replace('"', "\\\""))
-            .map(|v| format!("\t\t\"{v}\""))
-            .collect::<Vec<_>>()
-            .join("\n");
-        let name = type_parts_to_str(self.name);
-        format!("\tenum {name}\n{variants}\n\tend")
     }
 }
 
@@ -253,37 +232,19 @@ pub struct Field {
     ///the name of the field
     pub name: NameContainer,
 
-    ///the type of the field, according to the old format
-    #[cfg_attr(
-        all(feature = "mlua", feature = "derive"),
-    tealr(remote = V)
-)]
-    pub teal_type: Cow<'static, [NamePart]>,
     /// the type of the field
     pub ty: Type,
 }
 
 impl From<(NameContainer, Type)> for Field {
     fn from((name, ty): (NameContainer, Type)) -> Self {
-        #[allow(deprecated)]
-        let teal_type = crate::new_type_to_old(ty.clone(), false);
-        Self {
-            name,
-            teal_type,
-            ty,
-        }
+        Self { name, ty }
     }
 }
 impl Field {
     ///creates a new field
     pub fn new<A: ToTypename>(name: impl Into<Cow<'static, str>>) -> Self {
         (NameContainer::from(name.into()), A::to_typename()).into()
-    }
-}
-
-impl From<Field> for (NameContainer, Cow<'static, [NamePart]>) {
-    fn from(x: Field) -> Self {
-        (x.name, x.teal_type)
     }
 }
 
@@ -305,13 +266,6 @@ pub struct RecordGenerator {
     pub is_user_data: bool,
     ///the type produced by typename
     pub ty: Type,
-    ///The name of the type in teal.
-    ///This uses the old system and thus should ideally not be used.
-    #[cfg_attr(
-        all(feature = "mlua", feature = "derive"),
-        tealr(remote = V)
-    )]
-    pub type_name: Cow<'static, [NamePart]>,
     ///The exposed fields and their types
     pub fields: Vec<Field>,
     ///The exposed static fields and their types
@@ -360,7 +314,6 @@ impl RecordGenerator {
         Self {
             should_be_inlined,
             is_user_data: false,
-            type_name: A::get_type_parts(),
             should_generate_help_method: true,
             documentation: Default::default(),
             ty: A::to_typename(),
@@ -389,175 +342,6 @@ impl RecordGenerator {
             .chain(self.meta_method_mut.iter())
             .chain(self.meta_function.iter())
             .chain(self.meta_function_mut.iter())
-    }
-
-    pub(crate) fn generate(self) -> Result<String, FromUtf8Error> {
-        //let head = format!("local record {}", self.type_name);
-        let type_name = type_parts_to_str(self.type_name);
-        let mut duplicates = HashSet::new();
-        let documentation = &self.documentation;
-        let fields: Vec<_> = self
-            .fields
-            .into_iter()
-            .chain(self.static_fields)
-            .filter(|field| duplicates.insert(field.name.0.clone()))
-            .map(|field| {
-                let name = field.name;
-                let lua_type = field.teal_type;
-                let doc = match documentation.get(&name) {
-                    Some(x) => x
-                        .lines()
-                        .map(|v| {
-                            let mut str = "--".to_string();
-                            str.push_str(v);
-                            str.push('\n');
-                            str
-                        })
-                        .collect::<String>(),
-                    None => String::from(""),
-                };
-                (name, lua_type, doc)
-            })
-            .map(|(name, lua_type, doc)| {
-                format!(
-                    "{doc}{} : {}",
-                    String::from_utf8_lossy(&name),
-                    type_parts_to_str(lua_type)
-                )
-            })
-            .collect();
-
-        let methods: Vec<_> = self
-            .methods
-            .into_iter()
-            .map(|v| v.generate(documentation)) //v.generate(Some(type_name.clone()), documentation))
-            .collect::<Result<_, _>>()?;
-
-        let methods_mut: Vec<_> = self
-            .mut_methods
-            .into_iter()
-            .map(|v| v.generate(documentation))
-            .collect::<Result<_, _>>()?;
-
-        let functions: Vec<_> = self
-            .functions
-            .into_iter()
-            .map(|f| f.generate(documentation))
-            .collect::<Result<_, _>>()?;
-
-        let functions_mut: Vec<_> = self
-            .mut_functions
-            .into_iter()
-            .map(|f| f.generate(documentation))
-            .collect::<Result<_, _>>()?;
-
-        let meta_methods: Vec<_> = self
-            .meta_method
-            .into_iter()
-            .map(|f| f.generate(documentation))
-            .collect::<Result<_, _>>()?;
-
-        let meta_methods_mut: Vec<_> = self
-            .meta_method_mut
-            .into_iter()
-            .map(|f| f.generate(documentation))
-            .collect::<Result<_, _>>()?;
-
-        let meta_function: Vec<_> = self
-            .meta_function
-            .into_iter()
-            .map(|f| f.generate(documentation))
-            .collect::<Result<_, _>>()?;
-        let meta_function_mut: Vec<_> = self
-            .meta_function_mut
-            .into_iter()
-            .map(|f| f.generate(documentation))
-            .collect::<Result<_, _>>()?;
-
-        let fields = Self::combine_function_names(fields, "Fields");
-        let methods = Self::combine_function_names(methods, "Pure methods");
-        let methods_mut = Self::combine_function_names(methods_mut, "Mutating methods");
-        let functions = Self::combine_function_names(functions, "Pure functions");
-        let functions_mut = Self::combine_function_names(functions_mut, "Mutating functions");
-        let meta_methods = Self::combine_function_names(meta_methods, "Meta methods");
-        let meta_methods_mut =
-            Self::combine_function_names(meta_methods_mut, "Mutating MetaMethods");
-
-        let meta_functions = Self::combine_function_names(meta_function, "Meta functions");
-        let meta_functions_mut =
-            Self::combine_function_names(meta_function_mut, "Mutating meta functions");
-
-        let userdata_string = if self.is_user_data { "userdata" } else { "" };
-        let (type_header, type_end) = if self.should_be_inlined {
-            (format!("-- {}\n", type_name), "")
-        } else {
-            (
-                format!(
-                    "record {}\n{}",
-                    type_name,
-                    userdata_string
-                        .lines()
-                        .map(|v| {
-                            let mut str = "\t".to_string();
-                            str.push_str(v);
-                            str.push('\n');
-                            str
-                        })
-                        .collect::<String>()
-                ),
-                "\tend",
-            )
-        };
-        let type_header = type_header
-            .lines()
-            .map(|v| {
-                let mut str = "\t".to_string();
-                str.push_str(v);
-                str.push('\n');
-                str
-            })
-            .collect::<String>();
-        let type_docs = self
-            .type_doc
-            .lines()
-            .map(|v| String::from("--") + v + "\n")
-            .collect::<String>();
-        Ok(format!(
-            "{}{}\n{}{}{}{}{}{}{}{}{}\n{}",
-            type_docs,
-            type_header,
-            fields,
-            methods,
-            methods_mut,
-            functions,
-            functions_mut,
-            meta_methods,
-            meta_methods_mut,
-            meta_functions,
-            meta_functions_mut,
-            type_end
-        ))
-    }
-    fn combine_function_names<T: AsRef<str>>(function_list: Vec<T>, top_doc: &str) -> String {
-        if function_list.is_empty() {
-            "".into()
-        } else {
-            let combined = function_list
-                .into_iter()
-                .map(|v| {
-                    v.as_ref()
-                        .lines()
-                        .map(|v| String::from("\t\t") + v)
-                        .map(|mut v| {
-                            v.push('\n');
-                            v
-                        })
-                        .collect::<String>()
-                })
-                .collect::<Vec<_>>()
-                .join("\n");
-            format!("\t\t-- {}\n{}\n", top_doc, combined)
-        }
     }
 }
 

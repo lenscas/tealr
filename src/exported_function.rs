@@ -1,15 +1,8 @@
-use std::{
-    borrow::Cow,
-    collections::{HashMap, HashSet},
-    string::FromUtf8Error,
-};
+use std::collections::HashSet;
 
 use crate::{
-    get_generic_types, get_generics, type_generator::NameContainer, FunctionParam, Name, NamePart,
-    Type,
+    get_generic_types, get_generics, type_generator::NameContainer, FunctionParam, Name, Type,
 };
-#[allow(dead_code)]
-type X = Vec<NamePart>;
 
 ///Contains the data needed to write down the type of a function
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -24,13 +17,6 @@ type X = Vec<NamePart>;
 pub struct ExportedFunction {
     ///Name of the function
     pub name: NameContainer,
-    ///The full layout of the function based on teal's syntax
-    #[deprecated]
-    #[cfg_attr(
-        all(feature = "derive", feature = "mlua"),
-        tealr(remote = X)
-    )]
-    pub signature: Cow<'static, [crate::NamePart]>,
     ///The parameters that this function requires
     pub params: Vec<FunctionParam>,
     ///The return type of the function
@@ -39,6 +25,13 @@ pub struct ExportedFunction {
     pub is_meta_method: bool,
 }
 impl ExportedFunction {
+    ///turns the exported function into just its type representation
+    pub fn into_type(&self) -> Type {
+        Type::Function(crate::FunctionRepresentation {
+            params: self.params.clone(),
+            returns: self.returns.clone(),
+        })
+    }
     ///Creates an ExportedFunction with the given name, Parameters and return value
     ///```no_run
     ///# use tealr::ExportedFunction;
@@ -49,7 +42,6 @@ impl ExportedFunction {
         is_meta_method: bool,
         extra_self: Option<Type>,
     ) -> Self {
-        use crate::FunctionRepresentation;
         let params = A::get_types_as_params();
         let params = if let Some(extra_self) = extra_self {
             let mut new_params = Vec::with_capacity(params.len() + 1);
@@ -62,49 +54,15 @@ impl ExportedFunction {
         } else {
             params
         };
-        let type_to_generate = Type::Function(FunctionRepresentation {
-            params: params.clone(),
-            returns: R::get_types(),
-        });
-        #[allow(deprecated)]
-        let signature = crate::new_type_to_old(type_to_generate, false);
-        #[allow(deprecated)]
+
         Self {
             name: name.as_ref().as_bytes().to_vec().into(),
-            signature,
             is_meta_method,
             params,
             returns: R::get_types(),
         }
     }
-    pub(crate) fn generate(
-        self,
-        documentation: &HashMap<NameContainer, String>,
-    ) -> std::result::Result<String, FromUtf8Error> {
-        let documentation = match documentation.get(&self.name) {
-            None => "".to_string(),
-            Some(x) => x
-                .lines()
-                .map(|v| {
-                    let mut str = "--".to_string();
-                    str.push_str(v);
-                    str.push('\n');
-                    str
-                })
-                .collect(),
-        };
-        let metamethod = if self.is_meta_method {
-            "metamethod "
-        } else {
-            ""
-        };
-        let name = String::from_utf8(self.name.0)?;
-        let signature = crate::type_parts_to_str(
-            #[allow(deprecated)]
-            self.signature,
-        );
-        Ok(format!("{documentation}{metamethod}{name}: {signature}",))
-    }
+
     ///Get all the generics that this function uses.
     pub fn get_generics(&self) -> HashSet<&Name> {
         self.params

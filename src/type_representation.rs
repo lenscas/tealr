@@ -193,58 +193,6 @@ impl From<NamePart> for Cow<'static, str> {
         }
     }
 }
-///Used to turn an entire type (`Cow<'static, [NamePart]>`) into a string representing this type
-pub fn type_parts_to_str(x: Cow<'static, [NamePart]>) -> Cow<'static, str> {
-    if x.len() == 1 {
-        let el = match x {
-            Cow::Borrowed(x) => x.to_vec(),
-            Cow::Owned(x) => x,
-        }
-        .pop()
-        .unwrap();
-        match el {
-            NamePart::Symbol(x) => x,
-            NamePart::Type(x) => x.name,
-        }
-    } else if x.is_empty() {
-        Cow::Borrowed("")
-    } else {
-        Cow::Owned(
-            x.iter()
-                .map(|v| v.as_ref_str())
-                .cloned()
-                .collect::<String>(),
-        )
-    }
-}
-
-///A trait to collect the required type information like the name of the type.
-pub trait TypeName {
-    ///returns the type name as how it should show up in the generated `.d.tl` file
-    fn get_type_parts() -> Cow<'static, [NamePart]>;
-    /// Generates the typename when used to describe a global value.
-    ///
-    /// Sometimes (for example in the case of lambda's with types marked as generic)
-    /// you want an altered representation of the type if it is used as a global instance or is part of something else.
-    ///
-    /// You almost never want this though so you should probably think twice before altering the implementation.
-    fn get_type_parts_as_global() -> Cow<'static, [NamePart]> {
-        Self::get_type_parts()
-    }
-    ///This method tells the generator if this type is builtin to teal/lua, if it comes from somewhere else or if it stands in as a generic
-    ///
-    ///In almost all cases you want to return `KindOfType::External`
-    ///
-    ///KindOfType::Generic` is only needed if the type itself is meant as a generic type placeholder.
-    ///
-    //KindOfType::Builtin should almost NEVER be returned
-    fn get_type_kind() -> KindOfType {
-        KindOfType::External
-    }
-    ///Creates/updates a list of every child type this type has
-    ///This is used to properly label methods/functions as being generic.
-    fn collect_children(_: &mut Vec<TealType>) {}
-}
 
 use std::{
     borrow::Cow,

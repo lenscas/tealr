@@ -1,8 +1,4 @@
-use std::{borrow::Cow, string::FromUtf8Error};
-
-use crate::{type_parts_to_str, NamePart, ToTypename, Type, TypeBody, TypeGenerator};
-#[allow(dead_code)]
-type V = Vec<NamePart>;
+use crate::{ToTypename, Type, TypeBody, TypeGenerator};
 
 #[derive(Clone, serde::Serialize, serde::Deserialize, Debug)]
 ///Used to document what global instances get made by the module
@@ -15,20 +11,10 @@ type V = Vec<NamePart>;
     tealr(tealr_name = crate)
 )]
 pub struct GlobalInstance {
-    ///name of the global
-    #[cfg_attr(
-        all(feature = "mlua", feature = "derive"),
-        tealr(remote =  String))]
-    pub name: Cow<'static, str>,
-    ///the type according to the old format
-    #[cfg_attr(
-        all(feature = "mlua", feature = "derive"),
-        tealr(remote =  V))]
-    pub teal_type: Cow<'static, [NamePart]>,
+    ///the name of the instance
+    pub name: String,
     ///the type
     pub ty: Type,
-    ///if the type is external
-    pub is_external: bool,
     ///documentation for this global
     pub doc: String,
 }
@@ -125,85 +111,6 @@ impl TypeWalker {
         let x = <A as TypeBody>::get_type_body();
         self.given_types.push(x);
         self
-    }
-    ///generates the `.d.tl` file. It outputs the string, its up to you to store it.
-    #[deprecated(
-        since = "0.9.0",
-        note = "Generation of .d.tl files has been moved to tealr_doc_gen. Use TypeWaller::to_json() instead to get json parsable by tealr_doc_gen."
-    )]
-    pub fn generate(
-        self,
-        outer_name: &str,
-        is_global: bool,
-    ) -> std::result::Result<String, FromUtf8Error> {
-        let v: Vec<_> = self
-            .given_types
-            .into_iter()
-            .map(|v| v.generate())
-            .collect::<std::result::Result<_, _>>()?;
-        let v = v.join("\n");
-        let scope = if is_global { "global" } else { "local" };
-        let global_instances = self
-            .global_instances_off
-            .into_iter()
-            .map(|global| {
-                let GlobalInstance {
-                    name,
-                    teal_type,
-                    is_external,
-                    doc,
-                    ty: _,
-                } = global;
-                let doc = doc
-                    .lines()
-                    .map(|v| {
-                        let mut add = String::from("--");
-                        add.push_str(v);
-                        add.push_str("\n\n");
-                        add
-                    })
-                    .collect::<String>();
-                let teal_type = type_parts_to_str(teal_type);
-                let teal_type = if is_external {
-                    format!("{outer_name}.{teal_type}")
-                } else {
-                    teal_type.to_string()
-                };
-                format!("{doc}global {name}: {teal_type}")
-            })
-            .collect::<Vec<_>>()
-            .join("\n");
-        let global_instances = if !global_instances.is_empty() {
-            let mut x = String::from("\n");
-            x.push_str(&global_instances);
-            x
-        } else {
-            global_instances
-        };
-        Ok(format!(
-            "{} record {name}\n{record}\nend{global_instances}\nreturn {name}",
-            scope,
-            name = outer_name,
-            record = v
-        ))
-    }
-    ///Same as calling [Typewalker::generate(outer_name,true)](crate::TypeWalker::generate).
-    #[deprecated(
-        since = "0.9.0",
-        note = "Generation of .d.tl files has been moved to tealr_doc_gen. Use TypeWaller::to_json() instead to get json parsable by tealr_doc_gen."
-    )]
-    pub fn generate_global(self, outer_name: &str) -> std::result::Result<String, FromUtf8Error> {
-        #[allow(deprecated)]
-        self.generate(outer_name, true)
-    }
-    ///Same as calling [Typewalker::generate(outer_name,false)](crate::TypeWalker::generate).
-    #[deprecated(
-        since = "0.9.0",
-        note = "Generation of .d.tl files has been moved to tealr_doc_gen. Use TypeWaller::to_json() instead to get json parsable by tealr_doc_gen."
-    )]
-    pub fn generate_local(self, outer_name: &str) -> std::result::Result<String, FromUtf8Error> {
-        #[allow(deprecated)]
-        self.generate(outer_name, false)
     }
     /// Generates the json needed by [tealr_doc_gen](https://crates.io/crates/tealr_doc_gen) to generate the documentation.
     ///

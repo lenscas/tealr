@@ -118,10 +118,6 @@ impl<T: ToTypename> ToTypename for UserDataRef<T> {
     fn to_function_param() -> Vec<crate::FunctionParam> {
         T::to_function_param()
     }
-    fn to_old_type_parts() -> Cow<'static, [crate::NamePart]> {
-        #[allow(deprecated)]
-        T::to_old_type_parts()
-    }
 }
 
 impl<T: ToTypename> ToTypename for UserDataRefMut<T> {
@@ -130,9 +126,5 @@ impl<T: ToTypename> ToTypename for UserDataRefMut<T> {
     }
     fn to_function_param() -> Vec<crate::FunctionParam> {
         T::to_function_param()
-    }
-    fn to_old_type_parts() -> Cow<'static, [crate::NamePart]> {
-        #[allow(deprecated)]
-        T::to_old_type_parts()
     }
 }
