@@ -29,7 +29,7 @@ pub use teal_multivalue::{TealMultiValue, TealType};
 pub use tealr_derive::ToTypename;
 
 pub use type_generator::{EnumGenerator, Field, NameContainer, RecordGenerator, TypeGenerator};
-pub use type_representation::{type_parts_to_str, KindOfType, NamePart, TypeBody, TypeName};
+pub use type_representation::{KindOfType, NamePart, TypeBody};
 pub use type_walker::{ExtraPage, GlobalInstance, TypeWalker};
 
 #[cfg(feature = "compile")]
@@ -209,6 +209,9 @@ fn add_methods_to_type<T: TealDataMethods<Type>>(methods: &mut T) {
         let a: &Type = &b;
         Ok(this == a)
     });
+    methods.add_meta_method(mlua::MetaMethod::ToString, |_, this, ()| {
+        Ok(format!("{:?}", this))
+    })
 }
 
 impl From<Box<Type>> for Type {
@@ -245,18 +248,6 @@ impl Type {
 }
 ///This trait turns a A into a type representation for Lua/Teal
 pub trait ToTypename {
-    /// Used to get the old representation.
-    /// Should basically never be used or implemented manually
-    ///
-    /// Note: While the result of this function can be used to get a pretty readable version of the type,
-    /// It will likely miss some information that is otherwise included.
-    /// Think for example of variadics, as those don't have a singular "true" way to be represented in teal.
-    /// This results in that information being lost when using this function to get a readable type name.
-    #[deprecated]
-    fn to_old_type_parts() -> Cow<'static, [NamePart]> {
-        #[allow(deprecated)]
-        new_type_to_old(Self::to_typename(), false)
-    }
     ///generates the type representation
     fn to_typename() -> Type;
     ///generates the type representation when used as a parameter
@@ -271,139 +262,202 @@ pub trait ToTypename {
         }]
     }
 }
-impl<T: ToTypename> TypeName for T {
-    fn get_type_parts() -> Cow<'static, [NamePart]> {
-        #[allow(deprecated)]
-        Self::to_old_type_parts()
-    }
+///Turns a Type into a readable string based on Teal's syntax
+pub fn type_to_string(a: &Type, is_callback: bool) -> String {
+    type_to_teal_parts(a, is_callback)
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join("")
 }
-///Turns a type in the new representation into the old representation
-#[deprecated]
-pub fn new_type_to_old(a: Type, is_callback: bool) -> Cow<'static, [NamePart]> {
-    match a {
-        Type::Single(a) => {
-            let mut name_parts = vec![NamePart::Type(TealType {
-                name: a.name.0,
-                type_kind: a.kind,
-                generics: None,
-            })];
-            if !a.generics.is_empty() {
-                name_parts.push("<".into());
-                a.generics
-                    .iter()
-                    .map(|x| new_type_to_old(x.clone(), is_callback))
-                    .enumerate()
-                    .for_each(|(key, v)| {
-                        if key > 0 {
-                            name_parts.push(",".into());
-                        }
-                        name_parts.extend(v.iter().map(|x| x.to_owned()))
-                    });
 
-                name_parts.push(">".into());
-            }
-            Cow::Owned(name_parts)
-        }
-        Type::Array(x) => {
-            let mut parts = Vec::with_capacity(3);
-            parts.push(NamePart::symbol("{"));
-            parts.extend(new_type_to_old(*x, true).iter().cloned());
-            parts.push(NamePart::symbol("}"));
-            parts.into()
-        }
-        Type::Map(MapRepresentation { key, value }) => {
-            let mut parts = Vec::with_capacity(5);
-            parts.push(NamePart::symbol("{"));
-            parts.extend(new_type_to_old(*key, true).iter().cloned());
-            parts.push(NamePart::symbol(" : "));
-            parts.extend(new_type_to_old(*value, true).iter().cloned());
-            parts.push(NamePart::symbol("}"));
-            parts.into()
-        }
-        Type::Or(x) => {
-            if x.is_empty() {
-                eprintln!("An NewType::Or found with empty contents. Skipping");
-                return Vec::new().into();
-            }
-            let mut parts = Vec::with_capacity(x.len());
-            parts.push(NamePart::symbol("("));
+///Turns a Type into a representation that is closer to how it should be displayed while keeping type information intact
+pub fn type_to_teal_parts(a: &Type, is_callback: bool) -> Cow<'static, [NamePart]> {
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum AsPartOf {
+        Param,
+        Return,
+        Other,
+    }
+    fn type_to_teal_parts_helper(
+        a: &Type,
+        is_callback: bool,
+        as_part_of: AsPartOf,
+    ) -> Cow<'static, [NamePart]> {
+        match a {
+            Type::Single(a) => {
+                let mut name_parts = vec![NamePart::Type(TealType {
+                    name: a.name.0.clone(),
+                    type_kind: a.kind.clone(),
+                    generics: None,
+                })];
+                if !a.generics.is_empty() {
+                    name_parts.push("<".into());
+                    a.generics
+                        .iter()
+                        .map(|x| type_to_teal_parts_helper(x, is_callback, AsPartOf::Other))
+                        .enumerate()
+                        .for_each(|(key, v)| {
+                            if key > 0 {
+                                name_parts.push(",".into());
+                            }
+                            name_parts.extend(v.iter().map(|x| x.to_owned()))
+                        });
 
-            for part in x {
-                parts.extend(new_type_to_old(part, true).iter().cloned());
-                parts.push(NamePart::symbol(" | "))
+                    name_parts.push(">".into());
+                }
+                Cow::Owned(name_parts)
             }
-            parts.pop();
-            parts.push(NamePart::symbol(")"));
-            parts.into()
-        }
-        Type::Tuple(x) => {
-            if x.is_empty() {
-                eprintln!("An NewType::Tuple found with empty contents. Skipping");
-                return Vec::new().into();
+            Type::Array(x) => {
+                let mut parts = Vec::with_capacity(3);
+                parts.push(NamePart::symbol("{"));
+                parts.extend(
+                    type_to_teal_parts_helper(x, true, AsPartOf::Other)
+                        .iter()
+                        .cloned(),
+                );
+                parts.push(NamePart::symbol("}"));
+                parts.into()
             }
-            let mut parts = Vec::with_capacity(x.len());
-            parts.push(NamePart::symbol("("));
-            for part in x {
-                parts.extend(new_type_to_old(part, true).iter().cloned());
-                parts.push(NamePart::symbol(" , "))
+            Type::Map(MapRepresentation { key, value }) => {
+                let mut parts = Vec::with_capacity(5);
+                parts.push(NamePart::symbol("{"));
+                parts.extend(
+                    type_to_teal_parts_helper(key, true, AsPartOf::Other)
+                        .iter()
+                        .cloned(),
+                );
+                parts.push(NamePart::symbol(" : "));
+                parts.extend(
+                    type_to_teal_parts_helper(value, true, AsPartOf::Other)
+                        .iter()
+                        .cloned(),
+                );
+                parts.push(NamePart::symbol("}"));
+                parts.into()
             }
-            parts.pop();
-            parts.push(NamePart::symbol(")"));
-            parts.into()
-        }
-        Type::Function(FunctionRepresentation { params, returns }) => {
-            let mut parts = Vec::with_capacity(params.len() + returns.len());
-            parts.push(NamePart::symbol("function"));
-            let generics: HashSet<_> = params
-                .iter()
-                .map(|v| &v.ty)
-                .chain(returns.iter())
-                .flat_map(get_generics)
-                .collect();
-            let generic_amount = generics.len();
-            if (!is_callback) && generic_amount > 0 {
-                parts.push(NamePart::Symbol("<".into()));
-                for generic in generics {
-                    parts.push(NamePart::Type(TealType {
-                        name: generic.0.clone(),
-                        type_kind: KindOfType::Generic,
-                        generics: None,
-                    }));
-                    parts.push(NamePart::symbol(","));
+            Type::Or(x) => {
+                if x.is_empty() {
+                    eprintln!("An NewType::Or found with empty contents. Skipping");
+                    return Vec::new().into();
+                }
+                let mut parts = Vec::with_capacity(x.len());
+                parts.push(NamePart::symbol("("));
+
+                for part in x {
+                    parts.extend(
+                        type_to_teal_parts_helper(part, true, as_part_of)
+                            .iter()
+                            .cloned(),
+                    );
+                    parts.push(NamePart::symbol(" | "))
                 }
                 parts.pop();
-                parts.push(NamePart::symbol(">"));
+                parts.push(NamePart::symbol(")"));
+                parts.into()
             }
-            parts.push(NamePart::symbol("("));
-            let has_params = !params.is_empty();
-            for param in params {
-                if let Some(name) = param.param_name {
-                    parts.push(NamePart::Symbol(name.0.clone()));
-                    parts.push(NamePart::symbol(":"));
+            Type::Tuple(x) => {
+                if x.is_empty() {
+                    eprintln!("An NewType::Tuple found with empty contents. Skipping");
+                    return Vec::new().into();
                 }
-                parts.extend(new_type_to_old(param.ty, true).iter().cloned());
-                parts.push(NamePart::symbol(" , "));
-            }
-            if has_params {
-                parts.pop();
-            }
-            parts.push(NamePart::symbol(")"));
-            if !returns.is_empty() {
-                parts.push(NamePart::symbol(":("));
-                for ret in returns {
-                    parts.extend(new_type_to_old(ret, true).iter().cloned());
+                let mut parts = Vec::with_capacity(x.len());
+                parts.push(NamePart::symbol("("));
+                for part in x {
+                    parts.extend(
+                        type_to_teal_parts_helper(part, true, as_part_of)
+                            .iter()
+                            .cloned(),
+                    );
                     parts.push(NamePart::symbol(" , "))
                 }
                 parts.pop();
                 parts.push(NamePart::symbol(")"));
+                parts.into()
             }
+            Type::Function(FunctionRepresentation { params, returns }) => {
+                let mut parts = Vec::with_capacity(params.len() + returns.len());
+                parts.push(NamePart::symbol("function"));
+                let generics: HashSet<_> = params
+                    .iter()
+                    .map(|v| &v.ty)
+                    .chain(returns.iter())
+                    .flat_map(get_generics)
+                    .collect();
+                let generic_amount = generics.len();
+                if (!is_callback) && generic_amount > 0 {
+                    parts.push(NamePart::Symbol("<".into()));
+                    for generic in generics {
+                        parts.push(NamePart::Type(TealType {
+                            name: generic.0.clone(),
+                            type_kind: KindOfType::Generic,
+                            generics: None,
+                        }));
+                        parts.push(NamePart::symbol(","));
+                    }
+                    parts.pop();
+                    parts.push(NamePart::symbol(">"));
+                }
+                parts.push(NamePart::symbol("("));
+                let has_params = !params.is_empty();
+                for param in params {
+                    let name = if matches!(&param.ty, Type::Variadic(_)) {
+                        &Some("...".into())
+                    } else {
+                        &param.param_name
+                    };
+                    if let Some(name) = name {
+                        parts.push(NamePart::Symbol(name.0.clone()));
+                        parts.push(NamePart::symbol(":"));
+                    }
+                    parts.extend(
+                        type_to_teal_parts_helper(&param.ty, true, AsPartOf::Param)
+                            .iter()
+                            .cloned(),
+                    );
+                    parts.push(NamePart::symbol(" , "));
+                }
+                if has_params {
+                    parts.pop();
+                }
+                parts.push(NamePart::symbol(")"));
+                if !returns.is_empty() {
+                    parts.push(NamePart::symbol(":("));
+                    for ret in returns {
+                        parts.extend(
+                            type_to_teal_parts_helper(ret, true, AsPartOf::Return)
+                                .iter()
+                                .cloned(),
+                        );
+                        if matches!(&ret, Type::Variadic(_)) {
+                            parts.push(NamePart::symbol("..."));
+                        }
+                        parts.push(NamePart::symbol(" , "))
+                    }
+                    parts.pop();
+                    parts.push(NamePart::symbol(")"));
+                }
 
-            Cow::Owned(parts)
+                Cow::Owned(parts)
+            }
+            Type::Variadic(x) => {
+                if as_part_of != AsPartOf::Param && as_part_of != AsPartOf::Return {
+                    eprintln!(
+                        "An NewType::Variadic found that is not a param or return. This should _not_ happen");
+                }
+                let mut full_result = Vec::new();
+                let res = type_to_teal_parts_helper(x, is_callback, as_part_of);
+                full_result.extend(res.iter());
+                if as_part_of == AsPartOf::Return {
+                    full_result.push(&NamePart::symbol("..."));
+                }
+                res
+            }
         }
-        Type::Variadic(x) => new_type_to_old(*x, is_callback),
     }
+    type_to_teal_parts_helper(a, is_callback, AsPartOf::Other)
 }
-///Gets the generics of any given type
+///Gets the names of generics of any given type
 pub fn get_generics(to_check: &Type) -> HashSet<&Name> {
     match to_check {
         Type::Function(FunctionRepresentation { params, returns }) => params
@@ -427,5 +481,31 @@ pub fn get_generics(to_check: &Type) -> HashSet<&Name> {
             generics
         }
         Type::Variadic(x) => get_generics(x.as_ref()),
+    }
+}
+///Gets the generics of any given type
+pub fn get_generic_types(to_check: &Type) -> HashSet<Type> {
+    match to_check {
+        Type::Function(FunctionRepresentation { params, returns }) => params
+            .iter()
+            .map(|v| &v.ty)
+            .chain(returns.iter())
+            .flat_map(get_generic_types)
+            .collect(),
+        Type::Array(x) => get_generic_types(x.as_ref()),
+        Type::Single(x) => {
+            let mut set = HashSet::new();
+            if x.kind == KindOfType::Generic {
+                set.insert(Type::Single(x.clone()));
+            }
+            set
+        }
+        Type::Or(x) | Type::Tuple(x) => x.iter().flat_map(get_generic_types).collect(),
+        Type::Map(MapRepresentation { key, value }) => {
+            let mut generics = get_generic_types(key);
+            generics.extend(get_generic_types(value));
+            generics
+        }
+        Type::Variadic(x) => get_generic_types(x.as_ref()),
     }
 }

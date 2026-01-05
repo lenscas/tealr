@@ -2,7 +2,9 @@ use std::marker::PhantomData;
 
 use mlua::{AnyUserData, Error, IntoLua, Lua, UserData};
 
-use crate::{EnumGenerator, RecordGenerator, ToTypename, Type, TypeBody, TypeName};
+use crate::{
+    type_to_string, type_to_teal_parts, EnumGenerator, RecordGenerator, ToTypename, Type, TypeBody,
+};
 
 /// A userdata which can be used as a static proxy
 pub trait StaticUserdata: UserData + 'static {}
@@ -53,7 +55,7 @@ impl<T: StaticUserdata + TypeBody + ToTypename> TypeBody for UserDataProxy<T> {
     fn get_type_body() -> crate::TypeGenerator {
         let generator = T::get_type_body();
         // extract only "functions"
-        let type_name = Self::get_type_parts();
+        let type_name = type_to_teal_parts(&T::to_typename(), false);
         let type_name_string = type_name[..type_name.len() - 1]
             .iter()
             .map(|v| v.to_string())
@@ -63,7 +65,6 @@ impl<T: StaticUserdata + TypeBody + ToTypename> TypeBody for UserDataProxy<T> {
             crate::TypeGenerator::Record(record_generator) => {
                 crate::TypeGenerator::Record(Box::new(RecordGenerator {
                     // we overwrite anything which is not static
-                    type_name,
                     type_doc: format!("Collection of static methods for [`{}`].", type_name_string),
                     fields: Default::default(),
                     methods: Default::default(),
@@ -75,7 +76,7 @@ impl<T: StaticUserdata + TypeBody + ToTypename> TypeBody for UserDataProxy<T> {
             }
             crate::TypeGenerator::Enum(enum_generator) => {
                 crate::TypeGenerator::Enum(EnumGenerator {
-                    name: Self::get_type_parts(),
+                    name: type_to_string(&T::to_typename(), false),
                     ..enum_generator
                 })
             }
