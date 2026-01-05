@@ -60,5 +60,6 @@ fn make_inline_type() {
     if let serde_json::Value::String(x) = &mut x {
         *x = tealr::get_tealr_version().to_string();
     }
+
     assert_eq!(new_value, old_value);
 }
