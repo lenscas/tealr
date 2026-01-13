@@ -68,7 +68,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .to_json()
         .expect("oh no :(");
 
-    let new_value: serde_json::Value = serde_json::from_str(&file_contents).unwrap();
+    let generated: serde_json::Value = serde_json::from_str(&file_contents).unwrap();
     let mut old_value: serde_json::Value =
         serde_json::from_str(include_str!("to_from_derived.json")).unwrap();
 
@@ -79,7 +79,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         *x = tealr::get_tealr_version().to_string();
     }
 
-    assert_eq!(new_value, old_value);
+    assert_eq!(generated, old_value);
 
     let mut to_pass = Example {
         field1: String::from("nice"),

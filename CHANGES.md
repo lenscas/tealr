@@ -3,6 +3,7 @@
 All notable changes to this project are documented in this file.
 
 ## Overview
+
 - [`0.9.0-alpha2`](#090-alpha2)
 - [`0.9.0-alpha1`](#090-alpha1)
 - [`0.8.0`](#080)
@@ -20,7 +21,12 @@ All notable changes to this project are documented in this file.
 
 ## upcoming
 
+- Macro expressions <https://teal-language.org/book/macroexp.html>
+- Tagged types
+- feature: "self_to_lua". Dedicated feature to make the various types exportable to lua. Used by tealr_doc_gen
+
 ## 0.9.0-alpha2
+
 - Add support for doc comments to the FromToLua macro
 - **BREAKING** Allow chaining of `.document()` calls
 - **BREAKING** Reduce need to manually wrap documentation in Cow
@@ -30,17 +36,19 @@ All notable changes to this project are documented in this file.
 - Fix signature of `rlua::Function` and `mlua::Function` to use correct teal syntax
 
 ## 0.9.0-alpha1
+
 - **BREAKING** changed location of the derive macros that are specific to either rlua or mlua
 - **BREAKING** updated mlua and rlua
 - **BREAKING** replaced tuple to store fields with Field type
 - **BREAKING** Also have support for C style enums
 - **BREAKING** remove useless 'static constraint for typewalker.
-- **BREAKING** Fix typo in __sub metamethod
+- **BREAKING** Fix typo in \_\_sub metamethod
 - Make type information available to lua if feature `derive` is set
 - Add support for mlua static userdata fields/functions
 - Add way to document available globals
 
 ## 0.8.0
+
 - Improved readme
 - Add ability to document the api
 - Make types serializable with serde
@@ -48,6 +56,7 @@ All notable changes to this project are documented in this file.
 - **BREAKING** used different way to store type info
 
 ## 0.7.0
+
 - Add generic methods/functions
 - **BREAKING** `TypeName::is_external` got replaced by `TypeName::get_type_kind`
 - `TypeName::collect_children` got added with a default implementation. It is HIGHLY encouraged to implement this if your type is generic.
@@ -56,9 +65,12 @@ All notable changes to this project are documented in this file.
 - `TypeWalker::process_type_inline` got added. This acts similar to `Typewalker::process_type` but doesn't put the type in its own child record. Useful when making a module with `mlua`
 
 ## 0.6.0
+
 - reexport mlua/rlua
 - add reexport of the features that rlua/mlua expose
+
 ## 0.6.0-preview1
+
 - Add basic support for Mlua
 - Make derive macros bit more hygienic (last time I missed some)
 - **BREAKING** rename `UserData` derive macro to `RluaUserData`. This is to have good support for Mlua
@@ -67,14 +79,19 @@ All notable changes to this project are documented in this file.
 - Add `MluaUserData` and `MluaTealDerive` derive macro's.
 - Add `mlu` module which contains the structs and traits needed for mlua support.
 - Add `mlua` and `rlua` feature flags
+
 ## 0.5.1
+
 - Fix embed_compiler(Local()) not finding teal if it was installed using --local
+
 ## 0.5.0
+
 - Add support for `metaMethods`
 - **BREAKING** Update minimum supported tl version to `0.13.1`
 - Add support for `integer` type
 
 ## 0.4.0
+
 - **BREAKING** mark the generated record types as UserData, this is automatically done when using the derives, limiting the generated types to teal 0.10.0 and higher
 
 - **BREAKING** add an abstraction layer between generating types and TealData. This is to support rlua::ToLua and rlua::FromLua
@@ -82,23 +99,30 @@ All notable changes to this project are documented in this file.
 - **BREAKING** When generating types make a distinction if it is a lua value to rust, or rust to lua. This is to support rlua::ToLua and rlua::FromLua
 
 - **BREAKING** Rename `TypeRepresentation` to `TypeName` to better reflect what it about.
+
 ## 0.3.0
+
 - Macro to compile inline teal code at the same time as your rust code
 - Macro to embed the teal compiler into your application. Allowing you to execute external teal files as normal lua files.
 - wrapper for rlua::Function, so you can better define the types of functions you return/need as a parameter.
+
 ## 0.2.0
+
 - **BREAKING** Allow the scope of the container type to be either `local` or `global`
 - Add some more types that tealr recognizes.
 - **BREAKING** split `TealData` up into `TealData` and `TypeRepresentation`
 - **BREAKING** change return type of TypeRepresentation::get_type_name to `Cow<'static, str>` (was `String`)
 
 ## 0.1.1
+
 - Fix problems with documentation
 - Add derive macro to implement `rlua::UserData`
 
 ## 0.1.0
+
 - Implement generation of `.d.tl` files
 - Improve amount of types that implement `TealrData`
 
 ## 0.0.1
+
 - Fist release!

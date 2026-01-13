@@ -93,6 +93,14 @@ pub trait TealDataMethods<T: ToTypename> {
     fn document_type(&mut self, documentation: &str) -> &mut Self;
     ///generates a `.help()` function on lua's/teals side, which can be used at run time to view the documentation.
     fn generate_help(&mut self);
+    ///Adds functions to this type that help the type be "tagged"
+    ///In Teal, this also correctly sets the "where" macro,
+    ///allowing teal to differentiate it from other types with `is`
+    ///
+    ///The added functions are
+    /// - `is(typename: string):boolean` - given the name of a type, returns true if it is the correct name
+    /// - `tag():string` - returns the `typename` of this type
+    fn add_tag(&mut self) -> &mut Self;
 }
 
 ///collects every instance that a type has

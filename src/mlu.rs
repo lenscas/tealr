@@ -4,6 +4,7 @@ mod named_parameters;
 mod picker_macro;
 pub(crate) mod teal_data;
 mod teal_data_fields;
+pub(crate) mod teal_data_macros;
 pub(crate) mod teal_data_methods;
 mod typed_function;
 /// Module containing functionality to do with user data proxies
