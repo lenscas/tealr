@@ -36,11 +36,11 @@ macro_rules! impl_type_name {
 ///Keeps track of any special treatment a type needs to get
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     tealr(tealr_name = crate)
 )]
 #[derive(Default)]
@@ -123,11 +123,11 @@ macro_rules! new_type {
 }
 #[derive(Debug, Clone, PartialEq, Hash, Eq, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     tealr(tealr_name = crate)
 )]
 ///The parts that a name consists of
@@ -136,7 +136,7 @@ pub enum NamePart {
     ///An example could be the `function(` part inside `function(integer):string`
     Symbol(
         #[cfg_attr(
-            all(feature = "mlua", feature = "derive"),
+            feature = "self_to_lua",
         tealr(remote =  String))]
         Cow<'static, str>,
     ),

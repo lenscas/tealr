@@ -7,6 +7,7 @@ pub mod mlu;
 
 mod export_instance;
 mod exported_function;
+mod macro_expressions;
 mod teal_multivalue;
 mod type_generator;
 mod type_representation;
@@ -15,19 +16,20 @@ mod type_walker;
 use std::{borrow::Cow, collections::HashSet};
 
 pub use exported_function::ExportedFunction;
-#[cfg(feature = "mlua")]
+#[cfg(feature = "self_to_lua")]
 use mlu::TealDataMethods;
-#[cfg(feature = "mlua")]
+#[cfg(feature = "self_to_lua")]
 use mlua::UserDataRef;
 use serde::{Deserialize, Serialize};
 pub use teal_multivalue::{TealMultiValue, TealType};
 
-///Implements [ToTypename](crate::ToTypename).
+///Implements [ToTypename].
 ///
 ///`TypeName::get_type_name` will return the name of the rust type.
 #[cfg(feature = "derive")]
 pub use tealr_derive::ToTypename;
 
+pub use macro_expressions::MacroExpr;
 pub use type_generator::{EnumGenerator, Field, NameContainer, RecordGenerator, TypeGenerator};
 pub use type_representation::{KindOfType, NamePart, TypeBody};
 pub use type_walker::{ExtraPage, GlobalInstance, TypeWalker};
@@ -41,6 +43,9 @@ pub use tealr_derive::compile_inline_teal;
 ))]
 pub use tealr_derive::embed_compiler;
 
+#[cfg(feature = "self_to_lua")]
+use crate::mlu::teal_data_macros::TealDataMacros;
+
 /// Gets the current version of tealr.
 ///
 /// Useful when consuming the .json files to check if it is a supported version
@@ -50,17 +55,17 @@ pub fn get_tealr_version() -> &'static str {
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug, Serialize, Deserialize, Default)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "mlua",feature = "derive"),
+    feature = "self_to_lua",
     tealr(tealr_name = crate)
 )]
 ///The name of a type
 pub struct Name(
     #[cfg_attr(
-    all(feature = "mlua",feature = "derive"),
+    feature = "self_to_lua",
     tealr(remote =  String))]
     pub Cow<'static, str>,
 );
@@ -77,13 +82,14 @@ impl<T: AsRef<str>> From<T> for Name {
 }
 #[derive(Clone, Debug, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "mlua",feature = "derive"),
+    feature = "self_to_lua",
     tealr(tealr_name = crate)
 )]
+#[cfg_attr(feature = "self_to_lua", tealr(tag = "tealType"))]
 ///A singular type
 pub struct SingleType {
     ///The name of the type
@@ -93,13 +99,14 @@ pub struct SingleType {
     ///If a type has generics then they are stored here
     pub generics: Vec<Type>,
 }
+
 #[derive(Clone, Debug, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "mlua",feature = "derive"),
+    feature = "self_to_lua",
     tealr(tealr_name = crate)
 )]
 ///A parameter for a function
@@ -111,11 +118,11 @@ pub struct FunctionParam {
 }
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "mlua",feature = "derive"),
+    feature = "self_to_lua",
     tealr(tealr_name = crate)
 )]
 ///The representation of a function type
@@ -127,22 +134,22 @@ pub struct FunctionRepresentation {
 }
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "mlua",feature = "derive"),
+    feature = "self_to_lua",
     tealr(tealr_name = crate)
 )]
 ///The representation of a Map<K,T> type
 pub struct MapRepresentation {
     #[cfg_attr(
-        all(feature = "mlua",feature = "derive"),
+        feature = "self_to_lua",
         tealr(remote =  Type))]
     ///The type of the key
     pub key: Box<Type>,
     #[cfg_attr(
-        all(feature = "mlua",feature = "derive"),
+        feature = "self_to_lua",
         tealr(remote =  Type))]
     ///The type of the value
     pub value: Box<Type>,
@@ -152,16 +159,17 @@ type NewTypeArray = Vec<Type>;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
-#[cfg_attr(
-    all(feature = "mlua",feature = "derive"),
+#[cfg_attr(feature = "self_to_lua",
     tealr(tealr_name = crate)
 )]
-#[cfg_attr(
-    all(feature = "mlua",feature = "derive"),
-    tealr(extend_methods = add_methods_to_type)
+#[cfg_attr(feature = "self_to_lua",
+tealr(extend_methods = add_methods_to_type)
+)]
+#[cfg_attr(feature = "self_to_lua",
+tealr(extend_macros = add_macros_to_type)
 )]
 ///A type
 pub enum Type {
@@ -174,14 +182,14 @@ pub enum Type {
     ///The type is a union (A | B)
     Or(
         #[cfg_attr(
-            all(feature = "mlua",feature = "derive"),
+            feature = "self_to_lua",
             tealr(remote =  NewTypeArray))]
         Vec<Type>,
     ),
     ///The type is an array
     Array(
         #[cfg_attr(
-            all(feature = "mlua",feature = "derive"),
+            feature = "self_to_lua",
             tealr(remote =  Type))]
         Box<Type>,
     ),
@@ -190,20 +198,20 @@ pub enum Type {
     ///As it can _easily_ break things
     Tuple(
         #[cfg_attr(
-            all(feature = "mlua",feature = "derive"),
+            feature = "self_to_lua",
             tealr(remote =  NewTypeArray))]
         Vec<Type>,
     ),
     ///Indicates that the given type is a variadic. Meaning it can be be repeated any amount of times
     Variadic(
         #[cfg_attr(
-            all(feature = "mlua",feature = "derive"),
+            feature = "self_to_lua",
             tealr(remote =  Type))]
         Box<Type>,
     ),
 }
 
-#[cfg(feature = "mlua")]
+#[cfg(feature = "self_to_lua")]
 fn add_methods_to_type<T: TealDataMethods<Type>>(methods: &mut T) {
     methods.add_meta_method(mlua::MetaMethod::Eq, |_, this, b: UserDataRef<Type>| {
         let a: &Type = &b;
@@ -212,6 +220,17 @@ fn add_methods_to_type<T: TealDataMethods<Type>>(methods: &mut T) {
     methods.add_meta_method(mlua::MetaMethod::ToString, |_, this, ()| {
         Ok(format!("{:?}", this))
     })
+}
+
+#[cfg(feature = "self_to_lua")]
+fn add_macros_to_type<T: TealDataMacros<Type>>(macros: &mut T) {
+    type Foo = crate::mlu::TypedFunction<FunctionRepresentation, crate::mlu::generics::R>;
+    let x = Field::new::<Foo>("func");
+    macros.add_macro::<crate::mlu::generics::R>(
+        "on_function",
+        vec![Field::new::<Type>("self"), x],
+        "return self:isFunction() and func(self.FunctionOrNil())",
+    );
 }
 
 impl From<Box<Type>> for Type {
@@ -509,3 +528,5 @@ pub fn get_generic_types(to_check: &Type) -> HashSet<Type> {
         Type::Variadic(x) => get_generic_types(x.as_ref()),
     }
 }
+
+//debug macro

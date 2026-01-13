@@ -13,11 +13,15 @@ use crate::mlu::{
         IntoLuaMulti as ToLuaMultiM, Lua, MetaMethod as MetaMethodM, Result as ResultM,
         UserData as UserDataM,
     },
+    teal_data_macros::TealDataMacros,
     MaybeSend, TealData as TealDataM, TealDataFields, TealDataMethods as TealDataMethodsM,
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{exported_function::ExportedFunction, type_to_string, ToTypename, Type};
+use crate::{
+    exported_function::ExportedFunction, macro_expressions::MacroExpr, type_to_string, ToTypename,
+    Type,
+};
 
 use crate::TealMultiValue;
 
@@ -118,23 +122,22 @@ pub(crate) fn get_method_data<A: TealMultiValue, R: TealMultiValue, S: ToString 
 ///Container of all the information needed to create the `.d.tl` file for your type.
 #[derive(serde::Serialize, serde::Deserialize, Clone)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     tealr(tealr_name = crate)
 )]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     tealr(extend_methods = add_lua_funcs_to_type_gen)
 )]
-
 pub enum TypeGenerator {
     ///the type should be represented as a struct
     Record(
         #[cfg_attr(
-        all(feature = "mlua", feature = "derive"),
+        feature = "self_to_lua",
         tealr(remote =  RecordGenerator))]
         Box<RecordGenerator>,
     ),
@@ -166,7 +169,7 @@ impl TypeGenerator {
     }
 }
 
-#[cfg(feature = "mlua")]
+#[cfg(feature = "self_to_lua")]
 fn add_lua_funcs_to_type_gen<A: TealDataMethodsM<TypeGenerator>>(a: &mut A) {
     a.add_method("type_name", |_, x, ()| Ok(x.type_name().to_owned()));
     a.add_method("is_inlined", |_, x, ()| Ok(x.is_inlined()));
@@ -175,14 +178,13 @@ fn add_lua_funcs_to_type_gen<A: TealDataMethodsM<TypeGenerator>>(a: &mut A) {
 ///contains all the information needed to create a teal enum.
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     tealr(tealr_name = crate)
 )]
-
 pub struct EnumGenerator {
     ///the type of this enum
     pub ty: Type,
@@ -219,14 +221,13 @@ impl EnumGenerator {
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     tealr(tealr_name = crate)
 )]
-
 ///Represents a field, containing both the name and its type
 pub struct Field {
     ///the name of the field
@@ -251,14 +252,14 @@ impl Field {
 ///contains all the information needed to create a record
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     tealr(tealr_name = crate)
 )]
-
+#[cfg_attr(feature = "self_to_lua", tealr(tag = "tealType"))]
 pub struct RecordGenerator {
     ///Represents if the type should be inlined or not.
     pub should_be_inlined: bool,
@@ -294,6 +295,14 @@ pub struct RecordGenerator {
     pub next_docs: Option<String>,
     ///if this type needs to get a `.help()` function
     pub should_generate_help_method: bool,
+    ///Represents the "where" part of a record in teal. Allowing the use of `is` to differentiate between types
+    ///<https://teal-language.org/book/macroexp.html>
+    ///
+    ///If Some(x) then x _must_ be a lua expression generating a boolean
+    ///Use None if no tag exists.
+    pub tag: Option<String>,
+    ///defines a [macro expression](https://teal-language.org/book/macroexp.html) on the record.
+    pub macro_expressions: Vec<MacroExpr>,
 }
 
 impl From<RecordGenerator> for TypeGenerator {
@@ -329,6 +338,8 @@ impl RecordGenerator {
             meta_function_mut: Default::default(),
             type_doc: Default::default(),
             next_docs: Default::default(),
+            tag: None,
+            macro_expressions: Default::default(),
         }
     }
     /// creates an iterator that goes over the various method and function fields
@@ -527,6 +538,16 @@ where
                 "help", false, None,
             ))
     }
+    fn add_tag(&mut self) -> &mut Self {
+        let name = T::to_typename();
+        let name = type_to_string(&name, false);
+        self.tag = Some(format!(
+            "typeof(self.is) == \"function\" and self.is(\"{name}\""
+        ));
+        self.add_function::<&'static str, String, bool>("is");
+        self.add_function::<&'static str, (), String>("tag");
+        self
+    }
 }
 
 #[cfg(feature = "mlua")]
@@ -584,6 +605,49 @@ where
         self.copy_docs(name.as_bytes());
         self.static_fields
             .push((NameContainer::from(name), R::to_typename()).into());
+    }
+}
+#[cfg(feature = "mlua")]
+impl<T: ToTypename> TealDataMacros<T> for RecordGenerator {
+    fn add_macro<R: ToTypename>(
+        &mut self,
+        name: impl Into<Cow<'static, str>>,
+        args: Vec<Field>,
+        expr: impl Into<String>,
+    ) -> &mut Self {
+        let name = name.into();
+        self.copy_docs(name.as_bytes());
+        self.macro_expressions.push(MacroExpr::new(
+            name,
+            args,
+            R::to_typename(),
+            expr.into(),
+            false,
+        ));
+        self
+    }
+
+    fn add_meta_method_macro<R: ToTypename>(
+        &mut self,
+        name: impl Into<Cow<'static, str>>,
+        args: Vec<Field>,
+        expr: impl Into<String>,
+    ) -> &mut Self {
+        let name = name.into();
+        self.copy_docs(name.as_bytes());
+        self.macro_expressions.push(MacroExpr::new(
+            name,
+            args,
+            R::to_typename(),
+            expr.into(),
+            true,
+        ));
+        self
+    }
+
+    fn document(&mut self, documentation: &str) -> &mut Self {
+        self.document(documentation);
+        self
     }
 }
 

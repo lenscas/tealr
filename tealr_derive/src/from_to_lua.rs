@@ -5,6 +5,9 @@ use venial::{parse_item, Struct};
 pub(crate) fn get_tealr_name(attributes: &[venial::Attribute]) -> TokenStream {
     find_tag_with_value("tealr_name", attributes).unwrap_or_else(|| quote!(::tealr))
 }
+pub(crate) fn get_tag(attributes: &[venial::Attribute]) -> Option<TokenStream> {
+    find_tag_with_value("tag", attributes)
+}
 
 #[allow(dead_code)]
 #[cfg(feature = "debug_macros")]
@@ -103,6 +106,10 @@ struct BasicConfig {
     teal_data_methods_location: TokenStream,
     invalid_enum_variant_error: TokenStream,
     typename_macro: TokenStream,
+    tag: Option<TokenStream>,
+    type_to_string: TokenStream,
+    error_struct: TokenStream,
+    tealr_name: TokenStream,
 }
 
 fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
@@ -120,7 +127,18 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
     let record_generator_loc = config.record_generator_loc;
     let name = &structure.name;
     let to_lua_name = config.to_lua_name;
-
+    let tag_name = config.tag;
+    let type_to_string = config.type_to_string;
+    let typename_macro = config.typename_macro;
+    let error_struct = config.error_struct;
+    let tealr_name = config.tealr_name;
+    let extend_macro_exprs = find_tag_with_value("extend_macros", &structure.attributes)
+        .map(|v| {
+            quote! {
+                #v(&mut gen);
+            }
+        })
+        .unwrap_or_else(|| quote! {});
     let (to_add, (to_remove, type_body)): (TokenStream, (TokenStream, TokenStream)) =
         match structure.fields {
             venial::Fields::Unit => {
@@ -213,10 +231,78 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
     let document_type = find_doc_tags(&structure.attributes)
         .map(|v| quote! {gen.document_type(#v);})
         .collect::<TokenStream>();
+    let (set_tag_field, read_tag_field, where_expr, tag_body) = match tag_name {
+        None => (quote! {}, quote! {}, quote! {}, quote! {}),
+        Some(tag_name) => {
+            let tag_field = quote! {
+                table.set(#tag_name, #type_to_string(& <Self as #typename_macro>::to_typename(), false))?;
+            };
+            let read_tag_field = quote! {
+                {
+                    let found_tag = as_table.get::<String>(#tag_name)?;
+                    let needed_tag = #type_to_string(& <Self as #typename_macro>::to_typename(), false);
+                    if found_tag != needed_tag {
+                        let message = format!(
+                            "Expected {} to be {}, found {}.\nThis type is tagged and thus the tags should match.",
+                            #tag_name,
+                            needed_tag,
+                            found_tag
+                        );
+                        return std::result::Result::Err(#error_struct::FromLuaConversionError {
+                            from: "string",
+                            to: needed_tag,
+                            message: std::option::Option::Some(
+                                <std::string::String as std::convert::From::<_>>::from(
+                                    message
+                                )
+                            )
+                        });
+                    }
+                };
+            };
+            let where_expr = quote! {
+                {
+                    let mut whereExpr = ::std::string::String::new();
+                    whereExpr.push_str("self.");
+                    whereExpr.push_str(#tag_name);
+                    whereExpr.push_str(" == ");
+                    let type_name = #type_to_string(& <Self as #typename_macro>::to_typename(), false);
+                    whereExpr.push('"');
+                    whereExpr.push_str(&type_name);
+                    whereExpr.push('"');
+                    gen.tag = Some(whereExpr);
+                };
+            };
+            let type_body = quote! {
+                {
+                    let mut contents = ::std::string::String::new();
+                    contents.push_str("\"");
+                    contents.push_str(&type_to_string(& <Self as #typename_macro>::to_typename(), false));
+                    contents.push_str("\"");
+                    gen.document("The tag of the type, allows you to see what type the value is at runtime.");
+                    gen
+                        .fields
+                        .push(
+                            ::std::convert::From::from(
+                                (::std::borrow::Cow::Borrowed(#tag_name).into(),
+                                    #tealr_name::Type::new_single(
+                                        contents,
+                                        #tealr_name::KindOfType::Builtin
+                                    )
+                                )
+                            )
+                        );
+                    gen.copy_docs(#tag_name.as_bytes());
+                };
+            };
+            (tag_field, read_tag_field, where_expr, type_body)
+        }
+    };
     quote! {
         impl #to_loc for #name {
             fn #to_lua_name(self, #lua_location) -> #result_location_to {
                 let mut table = #create_table()?;
+                #set_tag_field
                 #to_add
                 lua.pack(table)
             }
@@ -227,6 +313,7 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
                     #lua_value::Table(x) => x,
                     x => Err(#error_message)?
                 };
+                #read_tag_field
                 Ok(Self {
                     #to_remove
                 })
@@ -236,7 +323,10 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
             fn get_type_body()-> #type_generator_loc {
                 let mut gen = #record_generator_loc::new::<Self>(false);
                 #document_type
+                #where_expr
+                #tag_body
                 #type_body
+                #extend_macro_exprs
                 <#type_generator_loc as ::std::convert::From<_>>::from(gen)
             }
         }
@@ -252,6 +342,14 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
         .unwrap_or_else(|| quote! {});
     let call_methods = find_tag_with_value("extend_methods", &enumeration.attributes)
         .map(|v| quote! {#v(methods)});
+
+    let extend_macro_exprs = find_tag_with_value("extend_macros", &enumeration.attributes)
+        .map(|v| {
+            quote! {
+                #v(&mut gen);
+            }
+        })
+        .unwrap_or_else(|| quote! {});
     let name = enumeration.name;
     let user_data_location = config.user_data_location;
     let user_data_fields_location = config.user_data_fields_location;
@@ -434,6 +532,7 @@ fn implement_for_enum(enumeration: venial::Enum, config: BasicConfig) -> TokenSt
                 gen.is_user_data = true;
                 #document_type
                 #add_fields_type_body;
+                #extend_macro_exprs
                 <Self as #teal_data_location>::add_methods(&mut gen);
                 <#type_generator_loc as ::std::convert::From<_>>::from(gen)
             }
@@ -593,7 +692,8 @@ fn implement_for_c_enum(enumeration: venial::Enum, config: BasicConfig) -> Token
 
 pub(crate) fn mlua_from_to_lua(input: TokenStream) -> TokenStream {
     let parsed = parse_item(input).unwrap();
-    let tealr_name = get_tealr_name(parsed.attributes());
+    let attributes = parsed.attributes();
+    let tealr_name = get_tealr_name(attributes);
     let config = BasicConfig {
         to_location: quote! {#tealr_name::mlu::mlua::IntoLua},
         to_lua_name: quote!(into_lua),
@@ -610,6 +710,7 @@ pub(crate) fn mlua_from_to_lua(input: TokenStream) -> TokenStream {
                 message:None
             }
         },
+        error_struct: quote! {#tealr_name::mlu::mlua::Error},
         type_name_path: quote! {#tealr_name::ToTypename},
         type_body_loc: quote! {#tealr_name::TypeBody},
         type_generator_loc: quote! {#tealr_name::TypeGenerator},
@@ -629,6 +730,9 @@ pub(crate) fn mlua_from_to_lua(input: TokenStream) -> TokenStream {
             message:None
         } },
         typename_macro: quote! {#tealr_name::ToTypename},
+        tag: get_tag(attributes),
+        type_to_string: quote!(#tealr_name::type_to_string),
+        tealr_name,
     };
 
     match parsed {

@@ -293,6 +293,14 @@ where
             lua.create_string(doc)
         })
     }
+    fn add_tag(&mut self) -> &mut Self {
+        let name = T::to_typename();
+        let name = type_to_string(&name, false);
+        let name2 = name.clone();
+        self.add_function("is", move |_, ty: String| Ok(ty == name));
+        self.add_function("tag", move |_, ()| Ok(name2.clone()));
+        self
+    }
 }
 
 impl<Container, T: ToTypename + TealData> TealDataFields<T> for UserDataWrapper<'_, Container, T>

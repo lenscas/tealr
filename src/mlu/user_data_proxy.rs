@@ -44,8 +44,9 @@ impl<T: StaticUserdata> UserDataProxy<T> {
 impl<T: StaticUserdata + ToTypename> ToTypename for UserDataProxy<T> {
     fn to_typename() -> crate::Type {
         let mut x = T::to_typename();
+
         if let Type::Single(x) = &mut x {
-            x.name = format!("Class{}", x.name).into();
+            x.name = format!("{}Class", x.name).into();
         }
         x
     }

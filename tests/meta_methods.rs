@@ -28,7 +28,7 @@ fn test() {
         .to_json()
         .expect("oh no :(");
 
-    let new_value: serde_json::Value = serde_json::from_str(&file_contents).unwrap();
+    let generated: serde_json::Value = serde_json::from_str(&file_contents).unwrap();
     let mut old_value: serde_json::Value =
         serde_json::from_str(include_str!("meta_methods.json")).unwrap();
     let mut x = old_value
@@ -38,5 +38,5 @@ fn test() {
         *x = tealr::get_tealr_version().to_string();
     }
 
-    assert_eq!(new_value, old_value);
+    assert_eq!(generated, old_value);
 }

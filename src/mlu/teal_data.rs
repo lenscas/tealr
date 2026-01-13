@@ -1,4 +1,4 @@
-use crate::ToTypename;
+use crate::{mlu::teal_data_macros::TealDataMacros, ToTypename};
 
 use super::{TealDataFields, TealDataMethods};
 
@@ -16,4 +16,6 @@ pub trait TealData: Sized + ToTypename {
     ///only difference is that it takes a [TealDataFields](crate::mlu::TealDataFields),
     ///which is the teal version of [UserDataFields](mlua::UserDataFields)
     fn add_fields<F: TealDataFields<Self>>(_fields: &mut F) {}
+    ///Allows you to attach [macro expressions](https://teal-language.org/book/macroexp.html) to the type
+    fn add_macro_expressions<M: TealDataMacros<Self>>(_macros: &mut M) {}
 }
