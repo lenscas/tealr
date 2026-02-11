@@ -14,12 +14,15 @@ pub trait Extendable: Sized {
     fn from_part(from: &impl BackMerger, lua: &mlua::Lua) -> mlua::Result<Self>;
 }
 
+/// Used by the Extendable trait, represents the lua value that will be extended
 pub trait Extend {
+    /// adds a value to the lua value
     fn add(
         &mut self,
         name: impl mlua::IntoLua,
         value: impl mlua::IntoLua,
     ) -> mlua::Result<&mut Self>;
+    ///checks if a field with the given name already exists
     fn has_field(&self, name: impl mlua::IntoLua) -> mlua::Result<bool>;
 }
 impl Extend for mlua::Table {
@@ -37,10 +40,15 @@ impl Extend for mlua::Table {
     }
 }
 
+///Used by the Extendable trait. Represents the value that will be read from to recreate the value in rust
 pub trait BackMerger {
+    ///check if the given field has a value
     fn has_field(&self, name: impl mlua::IntoLua) -> mlua::Result<bool>;
+    ///gets the value of the given field
     fn get<T: mlua::FromLua>(&self, name: impl mlua::IntoLua) -> mlua::Result<T>;
+    ///returns an iterator over all the existing fields
     fn get_existing_fields(&self) -> impl Iterator<Item = mlua::Result<mlua::Value>>;
+    ///turns this value back into a raw lua value
     fn to_value(&self) -> mlua::Value;
 }
 impl BackMerger for Table {
