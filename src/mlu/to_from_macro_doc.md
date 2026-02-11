@@ -6,17 +6,26 @@ The macro will also add documentation to the [TypeBody](crate::TypeBody) impleme
 # Structs
 
 Structs implement the [FromLua](mlua::FromLua) and [ToLua](mlua::IntoLua) directly.
-These trait implementations convert the struct directly to and from a table. This table contains every filed INCLUDING private fields.
+These trait implementations convert the struct directly to and from a table. This table contains every field INCLUDING private fields.
+
+In addition, it also implements [crate::mlu::Extendable]
 
 ## Attributes
 
 ### Type level attributes:
 
-- `tealr_doc`: used as `#[tealr_doc = "your documentation"]
+- `tealr_doc`: used as `#[tealr_doc = "your documentation"]`
 
   Allows you to add documentation to the given type
 
 - `lua_doc`: Alias for `tealr_doc`
+
+- `tagged`: used as `#[tealr(tag = "field_name")]
+
+  Adds the name of the type as a string to the lua value at the given field name.
+  This makes it possible to check at runtime if a value is a given type.
+
+  When using teal it makes it possible to use the type with `is`. This in turn makes it possible to use as part of a union. Without this tag, a union can only contain up to 1 userdata and up to 1 table total.
 
 ### Field level attributes
 
@@ -31,6 +40,12 @@ These trait implementations convert the struct directly to and from a table. Thi
 
 - `lua_doc`: Alias for `tealr_doc`
 
+- `extending`: used as `#[tealr(extending)]`
+
+  Rather than converting the field to its own lua value, fields annotated with this attribute get inlined into the value of the current struct. The current struct will also get annotated as extending the type of this field.
+
+  For this to work, the type of the field has to implement [crate::mlu::Extendable]
+
 # Warning:
 
 Using this macro on structs WILL make any private fields freely accessible to lua.
@@ -38,22 +53,23 @@ Using this macro on structs WILL make any private fields freely accessible to lu
 ## Example
 
 ```rust
- use tealr::{ToTypename,mlu::{FromToLua,mlua::Lua}};
- #[derive(FromToLua,Clone,ToTypename)]
- struct Example {
-    test_field: String
- }
- impl From<String> for Example {
-    fn from(t : String) -> Self {
-        Example{test_field:t}
-    }
- }
- impl From<Example> for String {
-    fn from(t: Example) -> Self {
-        t.test_field
-    }
- }
- #[derive(FromToLua,Clone,ToTypename)]
+
+use tealr::{ToTypename,mlu::{FromToLua,mlua::Lua}};
+#[derive(FromToLua,Clone,ToTypename)]
+struct Example {
+  test_field: String
+}
+impl From<String> for Example {
+  fn from(t : String) -> Self {
+      Example{test_field:t}
+  }
+}
+impl From<Example> for String {
+  fn from(t: Example) -> Self {
+      t.test_field
+  }
+}
+#[derive(FromToLua,Clone,ToTypename)]
 struct Example2 {
     #[tealr(remote = Example)]
     field1: String
@@ -67,8 +83,41 @@ let code = "
     instance.field1.test_field = \"new_value\"
     return instance
 ";
-let res: Example2 = lua.load(code).set_name("MluaToFromLuaStruct").eval().unwrap();
+let res: Example2 = lua
+  .load(code)
+  .set_name("MluaToFromLuaStruct")
+  .eval()
+  .unwrap();
+
 assert_eq!(res.field1,"new_value");
+
+#[derive(FromToLua, Clone, ToTypename)]
+struct Extendable {
+  a: String
+}
+
+#[derive(FromToLua, Clone, ToTypename)]
+struct Example3 {
+  #[tealr(extending)]
+  extended: Extendable
+}
+
+let example3 = Example3 {
+  extended: Extendable {
+    a:"example".to_string()
+  }
+};
+globals.set("example3", example3).unwrap();
+let code = "
+  assert(example3.a == \"example\")
+  example3.a = \"new_value\"
+  return example3
+";
+let res: Example3 = lua
+  .load(code)
+  .set_name("extendable_example")
+  .eval()
+  .unwrap();
 
 ```
 

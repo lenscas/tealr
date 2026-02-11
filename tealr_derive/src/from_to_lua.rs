@@ -1,6 +1,6 @@
 use proc_macro2::{Literal, Span, TokenStream};
 use quote::ToTokens;
-use venial::{parse_item, Struct};
+use venial::{parse_item, Struct, TypeExpr};
 
 pub(crate) fn get_tealr_name(attributes: &[venial::Attribute]) -> TokenStream {
     find_tag_with_value("tealr_name", attributes).unwrap_or_else(|| quote!(::tealr))
@@ -35,9 +35,30 @@ fn debug_macro(ts: TokenStream) -> TokenStream {
     ts
 }
 
+fn find_tag<'a>(to_find: &str, tags: &'a [venial::Attribute]) -> Option<&'a venial::Attribute> {
+    println!("Foo?");
+    tags.iter()
+        .filter(|v: &&venial::Attribute| {
+            v.path.iter().cloned().collect::<TokenStream>().to_string() == "tealr"
+        })
+        .find(|v| match &v.value {
+            venial::AttributeValue::Empty => false,
+            venial::AttributeValue::Group(_, y) | venial::AttributeValue::Equals(_, y) => y
+                .first()
+                .map(|v| {
+                    let y = v.to_string();
+                    println!("{}", y);
+                    y == to_find
+                })
+                .unwrap_or(false),
+        })
+}
+
 fn find_tag_with_value(to_find: &str, tags: &[venial::Attribute]) -> Option<TokenStream> {
     tags.iter()
-        .filter(|v| v.path.iter().cloned().collect::<TokenStream>().to_string() == "tealr")
+        .filter(|v: &&venial::Attribute| {
+            v.path.iter().cloned().collect::<TokenStream>().to_string() == "tealr"
+        })
         .filter_map(|v| match &v.value {
             venial::AttributeValue::Empty => None,
             venial::AttributeValue::Group(_, y) => {
@@ -112,6 +133,62 @@ struct BasicConfig {
     tealr_name: TokenStream,
 }
 
+fn generate_fields_to_lua(
+    tealr_name: &TokenStream,
+    type_name_path: &TokenStream,
+    ty: &TypeExpr,
+    name_rust: &TokenStream,
+    name_lua: &TokenStream,
+    attributes: &[venial::Attribute],
+) -> (TokenStream, (TokenStream, TokenStream)) {
+    println!("{}", name_lua);
+    let (set_value, get_value, type_name) = find_tag_with_value("remote", attributes)
+        .map(|v| {
+            (
+                quote! {<#v as ::std::convert::From<#ty>>::from(self.#name_rust)},
+                quote! {get::<#v>(#name_lua)?.into()},
+                v.to_token_stream(),
+            )
+        })
+        .unwrap_or_else(|| {
+            (
+                quote! {self.#name_rust},
+                quote! {get(#name_lua)?},
+                quote! {#ty},
+            )
+        });
+    let (set_value,from_lua, set_type_body) = find_tag("extending", attributes).map(|_| {
+        (quote! {
+            #tealr_name::mlu::Extendable::extend(self.#name_rust, table, lua)?;
+        },
+        quote!{#tealr_name::mlu::Extendable::from_part(as_table, &lua)?},
+        quote! {
+            gen.implements.push(<#type_name as #type_name_path>::to_typename());
+        })
+    }).unwrap_or_else(|| {
+        let docs = find_doc_tags(attributes)
+            .map(|v| quote! {
+                gen.document(#v);
+                }
+            ).collect::<TokenStream>();
+        (
+            quote! {table.add(#name_lua,#set_value)?;},
+            quote! {as_table.#get_value},
+            quote! {
+                #docs
+                gen
+                    .fields
+                    .push(
+                        ::std::convert::From::from((::std::borrow::Cow::Borrowed(#name_lua).into(),
+                        <(#type_name) as #type_name_path>::to_typename()))
+                    );
+            },
+        )
+    });
+
+    (set_value, (quote! {#name_rust: #from_lua,}, set_type_body))
+}
+
 fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
     let to_loc = config.to_location;
     let from_loc = config.from_location;
@@ -151,36 +228,13 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
                 .map(|(key, x)| {
                     let ty = &x.0.ty;
                     let name = format!("param{key}");
-                    let key_as_str = Literal::usize_unsuffixed(key);
-                    let (set_value, get_value, type_name) =
-                        find_tag_with_value("remote", &x.0.attributes)
-                            .map(|v| {
-                                (
-                                    quote! {<#v as ::std::convert::From<#ty>>::from(self.#key_as_str)},
-                                    quote! {get::<#v>(#key)?.into()},
-                                    v.to_token_stream(),
-                                )
-                            })
-                            .unwrap_or_else(|| {
-                                (quote! {self.#key_as_str}, quote! {get(#key)?}, quote! {#ty})
-                            });
-                    let docs = find_doc_tags(&x.0.attributes).map(|v| quote! {
-                        gen.document(#v);
-                    }).collect::<TokenStream>();
-                    (
-                        quote! {table.set(#key,#set_value)?;},
-                        (
-                            quote! {#key_as_str: as_table.#get_value,},
-                            quote! {
-                                #docs
-                                gen
-                                    .fields
-                                    .push(
-                                        ::std::convert::From::from((::std::borrow::Cow::Borrowed(#name).into(),
-                                        <(#type_name) as #type_name_path>::to_typename()))
-                                    );
-                            },
-                        ),
+                    generate_fields_to_lua(
+                        &tealr_name,
+                        &type_name_path,
+                        ty,
+                        &Literal::usize_unsuffixed(key).into_token_stream(),
+                        &Literal::string(&name).to_token_stream(),
+                        &x.0.attributes,
                     )
                 })
                 .unzip(),
@@ -188,42 +242,15 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
                 .fields
                 .iter()
                 .map(|(field, _)| {
-                    let name = &field.name;
+                    let name = field.name.to_token_stream();
                     let ty = &field.ty;
-                    let (set_value, get_value, type_name) =
-                        find_tag_with_value("remote", &field.attributes)
-                            .map(|v| {
-                                (
-                                    quote! {<#v as ::std::convert::From<#ty>>::from(self.#name)},
-                                    quote! {get::<#v>(stringify!(#name))?.into()},
-                                    v.to_token_stream(),
-                                )
-                            })
-                            .unwrap_or_else(|| {
-                                (
-                                    quote! {self.#name},
-                                    quote! {get(stringify!(#name))?},
-                                    quote! {#ty},
-                                )
-                            });
-                    let docs = find_doc_tags(&field.attributes).map(|v| quote! {
-                        gen.document(#v);
-                    }).collect::<TokenStream>();
-                    (
-                        quote! { table.set(stringify!(#name),#set_value)?;},
-                        (
-                            quote! {#name: as_table.#get_value,},
-                            quote! {
-                                #docs
-                                gen
-                                    .fields
-                                    .push(
-                                        ::std::convert::From::from((::std::borrow::Cow::Borrowed(stringify!(#name)).into(),
-                                        <(#type_name) as #type_name_path>::to_typename()))
-                                    );
-                                gen.copy_docs(stringify!(#name).as_bytes());
-                            },
-                        ),
+                    generate_fields_to_lua(
+                        &tealr_name,
+                        &type_name_path,
+                        ty,
+                        &name,
+                        &Literal::string(&name.to_string()).to_token_stream(),
+                        &field.attributes,
                     )
                 })
                 .unzip(),
@@ -299,11 +326,22 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
         }
     };
     quote! {
+        impl #tealr_name::mlu::Extendable for #name {
+            fn extend(self, table: &mut impl #tealr_name::mlu::Extend, lua: &#tealr_name::mlu::mlua::Lua) -> #tealr_name::mlu::mlua::Result<()> {
+                #to_add
+                Ok(())
+            }
+            fn from_part(as_table: &impl #tealr_name::mlu::BackMerger, lua: &#tealr_name::mlu::mlua::Lua) -> #tealr_name::mlu::mlua::Result<Self> {
+                Ok(Self {
+                    #to_remove
+                })
+            }
+        }
         impl #to_loc for #name {
             fn #to_lua_name(self, #lua_location) -> #result_location_to {
                 let mut table = #create_table()?;
                 #set_tag_field
-                #to_add
+                <Self as #tealr_name::mlu::Extendable>::extend(self, &mut table, &lua)?;
                 lua.pack(table)
             }
         }
@@ -314,9 +352,7 @@ fn implement_for_struct(structure: Struct, config: BasicConfig) -> TokenStream {
                     x => Err(#error_message)?
                 };
                 #read_tag_field
-                Ok(Self {
-                    #to_remove
-                })
+                <Self as #tealr_name::mlu::Extendable>::from_part(&as_table, &lua)
             }
         }
         impl #type_body_loc for #name {

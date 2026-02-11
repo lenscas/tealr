@@ -303,6 +303,10 @@ pub struct RecordGenerator {
     pub tag: Option<String>,
     ///defines a [macro expression](https://teal-language.org/book/macroexp.html) on the record.
     pub macro_expressions: Vec<MacroExpr>,
+    /// Represents the types that this type implements
+    ///
+    /// In teal, this becomes `interface ThisType is ImplementingType`
+    pub implements: Vec<Type>,
 }
 
 impl From<RecordGenerator> for TypeGenerator {
@@ -340,6 +344,7 @@ impl RecordGenerator {
             next_docs: Default::default(),
             tag: None,
             macro_expressions: Default::default(),
+            implements: Default::default(),
         }
     }
     /// creates an iterator that goes over the various method and function fields

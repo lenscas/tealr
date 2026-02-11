@@ -94,7 +94,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     globals.set("creator", TestCreatorOfDOOM::new())?;
     let code = "
     local v = assert(test.field1:GetAmazingOrNil())
-    assert(v[0] == \"nice\")
+    assert(v.param0 == \"nice\")
     assert(test.nice == 2)
     test.field1 = creator.NewLessSo()
     return test

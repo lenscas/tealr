@@ -528,5 +528,3 @@ pub fn get_generic_types(to_check: &Type) -> HashSet<Type> {
         Type::Variadic(x) => get_generic_types(x.as_ref()),
     }
 }
-
-//debug macro
