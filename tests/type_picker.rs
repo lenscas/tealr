@@ -42,7 +42,6 @@ fn test_limited() {
         *x = tealr::get_tealr_version().to_string();
     }
 
-    std::fs::write("tests/type_picker.json", generated.to_string()).unwrap();
     assert_eq!(generated, old_value);
     let lua = Lua::new();
     let globals = lua.globals();
