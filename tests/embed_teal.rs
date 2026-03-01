@@ -1,10 +1,13 @@
 use tealr::embed_compiler;
 
+// This test cannot be used with Luau because it has removed the `package` global variable
+#[cfg(not(feature = "mlua_luau"))]
 #[test]
 fn legacy_syntax() -> mlua::Result<()> {
     #[expect(deprecated)]
     let compiler = embed_compiler!("v0.13.1");
     let code = compiler("tests/test_embedded_compiler");
+    println!("Code: {}", code);
     let res: u8 = mlua::Lua::new()
         .load(&code)
         .set_name("embedded_compiler_legacy")
@@ -12,6 +15,9 @@ fn legacy_syntax() -> mlua::Result<()> {
     assert_eq!(res, 5);
     Ok(())
 }
+
+// This test cannot be used with Luau because it has removed the `package` global variable
+#[cfg(not(feature = "mlua_luau"))]
 #[test]
 fn new_syntax_github() -> mlua::Result<()> {
     #[expect(deprecated)]
@@ -25,6 +31,8 @@ fn new_syntax_github() -> mlua::Result<()> {
     Ok(())
 }
 
+// This test cannot be used with Luau because it has removed the `package` global variable
+#[cfg(not(feature = "mlua_luau"))]
 #[test]
 fn new_version_luarocks() -> mlua::Result<()> {
     #[expect(deprecated)]
@@ -37,6 +45,9 @@ fn new_version_luarocks() -> mlua::Result<()> {
     assert_eq!(res, 5);
     Ok(())
 }
+
+// This test cannot be used with Luau because it has removed the `package` global variable
+#[cfg(not(feature = "mlua_luau"))]
 #[test]
 fn new_syntax_from_local_discover() -> mlua::Result<()> {
     #[expect(deprecated)]

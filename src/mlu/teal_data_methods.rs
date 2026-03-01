@@ -15,21 +15,21 @@ pub trait TealDataMethods<T: ToTypename> {
     ///Exposes a method to lua
     fn add_method<S, A, R, M>(&mut self, name: S, method: M)
     where
-        S: ToString + AsRef<str>,
+        S: AsRef<str> + Into<String>,
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         M: 'static + MaybeSend + Fn(&Lua, &T, A) -> Result<R>;
     ///Exposes a method to lua that has a mutable reference to Self
     fn add_method_mut<S, A, R, M>(&mut self, name: S, method: M)
     where
-        S: ToString + AsRef<str>,
+        S: AsRef<str> + Into<String>,
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         M: 'static + MaybeSend + FnMut(&Lua, &mut T, A) -> Result<R>;
 
     #[cfg(feature = "mlua_async")]
     ///exposes an async method to lua
-    fn add_async_method<S: ToString + AsRef<str>, A, R, M, MR>(&mut self, name: S, method: M)
+    fn add_async_method<S: Into<String> + AsRef<str>, A, R, M, MR>(&mut self, name: S, method: M)
     where
         T: 'static,
         M: Fn(Lua, mlua::UserDataRef<T>, A) -> MR + MaybeSend + 'static,
@@ -40,7 +40,7 @@ pub trait TealDataMethods<T: ToTypename> {
     ///Exposes a function to lua (its a method that does not take Self)
     fn add_function<S, A, R, F>(&mut self, name: S, function: F)
     where
-        S: ToString + AsRef<str>,
+        S: Into<String> + AsRef<str>,
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         F: 'static + MaybeSend + Fn(&Lua, A) -> Result<R>;
@@ -48,7 +48,7 @@ pub trait TealDataMethods<T: ToTypename> {
     ///Exposes a mutable function to lua
     fn add_function_mut<S, A, R, F>(&mut self, name: S, function: F)
     where
-        S: ToString + AsRef<str>,
+        S: Into<String> + AsRef<str>,
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         F: 'static + MaybeSend + FnMut(&Lua, A) -> Result<R>;
@@ -57,7 +57,7 @@ pub trait TealDataMethods<T: ToTypename> {
     ///exposes an async function to lua
     fn add_async_function<S, A, R, F, FR>(&mut self, name: S, function: F)
     where
-        S: AsRef<str> + ToString,
+        S: AsRef<str> + Into<String>,
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         F: Fn(Lua, A) -> FR + mlua::MaybeSend + 'static,

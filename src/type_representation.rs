@@ -210,7 +210,7 @@ impl_type_name!("integer" i8,u8,u16,i16,u32,i32,u64,i64,u128,i128,isize,usize);
 impl_type_name_life_time!("thread" mlua::Thread);
 
 #[cfg(feature = "mlua_async")]
-impl<A, R> ToTypename for mlua::AsyncThread<A, R> {
+impl<R> ToTypename for mlua::AsyncThread<R> {
     fn to_typename() -> Type {
         Type::new_single("thread", KindOfType::Builtin)
     }
