@@ -44,7 +44,6 @@ impl<T: StaticUserdata> UserDataProxy<T> {
 impl<T: StaticUserdata + ToTypename> ToTypename for UserDataProxy<T> {
     fn to_typename() -> crate::Type {
         let mut x = T::to_typename();
-
         if let Type::Single(x) = &mut x {
             x.name = format!("{}Class", x.name).into();
         }
@@ -72,12 +71,15 @@ impl<T: StaticUserdata + TypeBody + ToTypename> TypeBody for UserDataProxy<T> {
                     mut_methods: Default::default(),
                     meta_method: Default::default(),
                     meta_method_mut: Default::default(),
+                    macro_expressions: Default::default(),
+                    ty: Self::to_typename(),
                     ..record_generator.as_ref().clone()
                 }))
             }
             crate::TypeGenerator::Enum(enum_generator) => {
                 crate::TypeGenerator::Enum(EnumGenerator {
-                    name: type_to_string(&T::to_typename(), false),
+                    name: type_to_string(&Self::to_typename(), false),
+                    ty: Self::to_typename(),
                     ..enum_generator
                 })
             }
