@@ -35,39 +35,35 @@ fn debug_macro(ts: TokenStream) -> TokenStream {
     ts
 }
 
-fn find_tag<'a>(to_find: &str, tags: &'a [venial::Attribute]) -> Option<&'a venial::Attribute> {
-    println!("Foo?");
+fn filter_tags<'a, 'b>(
+    to_find: &'b str,
+    tags: &'a [venial::Attribute],
+) -> impl Iterator<Item = &'a venial::Attribute> + use<'a, 'b> {
     tags.iter()
         .filter(|v: &&venial::Attribute| {
             v.path.iter().cloned().collect::<TokenStream>().to_string() == "tealr"
         })
-        .find(|v| match &v.value {
+        .filter(move |v| match &v.value {
             venial::AttributeValue::Empty => false,
             venial::AttributeValue::Group(_, y) | venial::AttributeValue::Equals(_, y) => y
                 .first()
                 .map(|v| {
                     let y = v.to_string();
-                    println!("{}", y);
                     y == to_find
                 })
                 .unwrap_or(false),
         })
 }
 
+fn find_tag<'a>(to_find: &str, tags: &'a [venial::Attribute]) -> Option<&'a venial::Attribute> {
+    filter_tags(to_find, tags).next()
+}
+
 fn find_tag_with_value(to_find: &str, tags: &[venial::Attribute]) -> Option<TokenStream> {
-    tags.iter()
-        .filter(|v: &&venial::Attribute| {
-            v.path.iter().cloned().collect::<TokenStream>().to_string() == "tealr"
-        })
+    filter_tags(to_find, tags)
         .filter_map(|v| match &v.value {
             venial::AttributeValue::Empty => None,
-            venial::AttributeValue::Group(_, y) => {
-                if y.first().map(|v| v.to_string() == to_find).unwrap_or(false) {
-                    y.get(2).map(|v| v.clone().into_token_stream())
-                } else {
-                    None
-                }
-            }
+            venial::AttributeValue::Group(_, y) => y.get(2).map(|v| v.into_token_stream()),
             venial::AttributeValue::Equals(_, _) => None,
         })
         .next()
@@ -141,7 +137,6 @@ fn generate_fields_to_lua(
     name_lua: &TokenStream,
     attributes: &[venial::Attribute],
 ) -> (TokenStream, (TokenStream, TokenStream)) {
-    println!("{}", name_lua);
     let (set_value, get_value, type_name) = find_tag_with_value("remote", attributes)
         .map(|v| {
             (
