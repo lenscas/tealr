@@ -1,9 +1,11 @@
+mod extendable;
 ///this module holds some pre made types that can be used to create generics.
 pub mod generics;
 mod named_parameters;
 mod picker_macro;
 pub(crate) mod teal_data;
 mod teal_data_fields;
+pub(crate) mod teal_data_macros;
 pub(crate) mod teal_data_methods;
 mod typed_function;
 /// Module containing functionality to do with user data proxies
@@ -13,6 +15,7 @@ mod variadics;
 use std::borrow::Cow;
 
 pub use self::{
+    extendable::{BackMerger, Extend, Extendable, Extender},
     picker_macro::FromLuaExact,
     teal_data::TealData,
     teal_data_methods::{set_global_env, ExportInstances, InstanceCollector, TealDataMethods},

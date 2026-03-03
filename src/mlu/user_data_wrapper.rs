@@ -142,7 +142,7 @@ where
     #[inline(always)]
     fn add_method<S, A, R, M>(&mut self, name: S, method: M)
     where
-        S: ToString + AsRef<str>,
+        S: AsRef<str> + Into<String>,
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         M: 'static + MaybeSend + Fn(&Lua, &T, A) -> Result<R>,
@@ -153,7 +153,7 @@ where
     #[inline(always)]
     fn add_method_mut<S, A, R, M>(&mut self, name: S, method: M)
     where
-        S: ToString + AsRef<str>,
+        S: AsRef<str> + Into<String>,
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         M: 'static + MaybeSend + FnMut(&Lua, &mut T, A) -> Result<R>,
@@ -163,7 +163,7 @@ where
     }
     #[cfg(feature = "mlua_async")]
     #[inline(always)]
-    fn add_async_method<S: ToString + AsRef<str>, A, R, M, MR>(&mut self, name: S, method: M)
+    fn add_async_method<S: Into<String> + AsRef<str>, A, R, M, MR>(&mut self, name: S, method: M)
     where
         T: 'static,
         M: Fn(Lua, UserDataRef<T>, A) -> MR + MaybeSend + 'static,
@@ -177,7 +177,7 @@ where
     #[inline(always)]
     fn add_function<S, A, R, F>(&mut self, name: S, function: F)
     where
-        S: ToString + AsRef<str>,
+        S: Into<String> + AsRef<str>,
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         F: 'static + MaybeSend + Fn(&Lua, A) -> Result<R>,
@@ -188,7 +188,7 @@ where
     #[inline(always)]
     fn add_function_mut<S, A, R, F>(&mut self, name: S, function: F)
     where
-        S: ToString + AsRef<str>,
+        S: Into<String> + AsRef<str>,
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         F: 'static + MaybeSend + FnMut(&Lua, A) -> Result<R>,
@@ -200,7 +200,7 @@ where
     #[inline(always)]
     fn add_async_function<S, A, R, F, FR>(&mut self, name: S, function: F)
     where
-        S: AsRef<str> + ToString,
+        S: AsRef<str> + Into<String>,
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         F: Fn(Lua, A) -> FR + mlua::MaybeSend + 'static,
@@ -293,6 +293,14 @@ where
             lua.create_string(doc)
         })
     }
+    fn add_tag(&mut self) -> &mut Self {
+        let name = T::to_typename();
+        let name = type_to_string(&name, false);
+        let name2 = name.clone();
+        self.add_function("is", move |_, ty: String| Ok(ty == name));
+        self.add_function("tag", move |_, ()| Ok(name2.clone()));
+        self
+    }
 }
 
 impl<Container, T: ToTypename + TealData> TealDataFields<T> for UserDataWrapper<'_, Container, T>
@@ -306,7 +314,7 @@ where
 
     fn add_field_method_get<S, R, M>(&mut self, name: S, method: M)
     where
-        S: AsRef<str> + ToString,
+        S: AsRef<str> + Into<String>,
         R: mlua::IntoLua + ToTypename,
         M: 'static + MaybeSend + Fn(&Lua, &T) -> mlua::Result<R>,
     {
@@ -316,7 +324,7 @@ where
 
     fn add_field_method_set<S, A, M>(&mut self, name: S, method: M)
     where
-        S: AsRef<str> + ToString,
+        S: AsRef<str> + Into<String>,
         A: mlua::FromLua + ToTypename,
         M: 'static + MaybeSend + FnMut(&Lua, &mut T, A) -> mlua::Result<()>,
     {
@@ -326,7 +334,7 @@ where
 
     fn add_field_function_get<S, R, F>(&mut self, name: S, function: F)
     where
-        S: AsRef<str> + ToString,
+        S: AsRef<str> + Into<String>,
         R: mlua::IntoLua + ToTypename,
         F: 'static + MaybeSend + Fn(&Lua, mlua::AnyUserData) -> mlua::Result<R>,
     {
@@ -336,7 +344,7 @@ where
 
     fn add_field_function_set<S, A, F>(&mut self, name: S, function: F)
     where
-        S: AsRef<str> + ToString,
+        S: AsRef<str> + Into<String>,
         A: mlua::FromLua + ToTypename,
         F: 'static + MaybeSend + FnMut(&Lua, mlua::AnyUserData, A) -> mlua::Result<()>,
     {

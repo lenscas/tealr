@@ -1,9 +1,9 @@
+use std::io::Seek;
 use std::{
     fs::File,
     io::{Read, Write},
     path::Path,
 };
-
 use ureq::get;
 use zip::{read::ZipFile, ZipArchive};
 
@@ -11,15 +11,17 @@ use super::load_from_disk::get_local_teal;
 
 pub(crate) fn download_teal(url: String, main_folder: String) -> String {
     let res = match get(&url).call() {
-        Ok(x) => x,
-        Err(ureq::Error::Status(state, res)) => {
-            eprintln!("Did not get a success status. Got: {}", state);
-            eprintln!("Message: {:?}", res);
-            res
+        Ok(x) => {
+            if x.status() != 200 {
+                eprintln!("Did not get a success status. Got: {}", x.status());
+                eprintln!("Message: {:?}", x);
+                panic!("Failed downloading teal compiler");
+            }
+            x
         }
         Err(x) => panic!("Failed downloading teal compiler. Error:{}", x),
     };
-    let mut reader = res.into_reader();
+    let mut reader = res.into_body().into_reader();
     let mut buffer = Vec::with_capacity(100000);
     reader
         .read_to_end(&mut buffer)
@@ -62,7 +64,7 @@ pub(crate) fn download_teal_from_github(version: String) -> String {
     download_teal(url, main_folder)
 }
 
-fn get_file_from_zip(zip: &mut ZipArchive<File>, name: String) -> ZipFile<'_> {
+fn get_file_from_zip<R: Read + Seek>(zip: &mut ZipArchive<R>, name: String) -> ZipFile<'_, R> {
     zip.by_name(&name)
         .unwrap_or_else(|v| panic!("Could not get `{}` out of zip file. Error:\n{}", name, v))
 }

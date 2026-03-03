@@ -15,21 +15,21 @@ pub trait TealDataMethods<T: ToTypename> {
     ///Exposes a method to lua
     fn add_method<S, A, R, M>(&mut self, name: S, method: M)
     where
-        S: ToString + AsRef<str>,
+        S: AsRef<str> + Into<String>,
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         M: 'static + MaybeSend + Fn(&Lua, &T, A) -> Result<R>;
     ///Exposes a method to lua that has a mutable reference to Self
     fn add_method_mut<S, A, R, M>(&mut self, name: S, method: M)
     where
-        S: ToString + AsRef<str>,
+        S: AsRef<str> + Into<String>,
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         M: 'static + MaybeSend + FnMut(&Lua, &mut T, A) -> Result<R>;
 
     #[cfg(feature = "mlua_async")]
     ///exposes an async method to lua
-    fn add_async_method<S: ToString + AsRef<str>, A, R, M, MR>(&mut self, name: S, method: M)
+    fn add_async_method<S: Into<String> + AsRef<str>, A, R, M, MR>(&mut self, name: S, method: M)
     where
         T: 'static,
         M: Fn(Lua, mlua::UserDataRef<T>, A) -> MR + MaybeSend + 'static,
@@ -40,7 +40,7 @@ pub trait TealDataMethods<T: ToTypename> {
     ///Exposes a function to lua (its a method that does not take Self)
     fn add_function<S, A, R, F>(&mut self, name: S, function: F)
     where
-        S: ToString + AsRef<str>,
+        S: Into<String> + AsRef<str>,
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         F: 'static + MaybeSend + Fn(&Lua, A) -> Result<R>;
@@ -48,7 +48,7 @@ pub trait TealDataMethods<T: ToTypename> {
     ///Exposes a mutable function to lua
     fn add_function_mut<S, A, R, F>(&mut self, name: S, function: F)
     where
-        S: ToString + AsRef<str>,
+        S: Into<String> + AsRef<str>,
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         F: 'static + MaybeSend + FnMut(&Lua, A) -> Result<R>;
@@ -57,7 +57,7 @@ pub trait TealDataMethods<T: ToTypename> {
     ///exposes an async function to lua
     fn add_async_function<S, A, R, F, FR>(&mut self, name: S, function: F)
     where
-        S: AsRef<str> + ToString,
+        S: AsRef<str> + Into<String>,
         A: FromLuaMulti + TealMultiValue,
         R: ToLuaMulti + TealMultiValue,
         F: Fn(Lua, A) -> FR + mlua::MaybeSend + 'static,
@@ -93,6 +93,14 @@ pub trait TealDataMethods<T: ToTypename> {
     fn document_type(&mut self, documentation: &str) -> &mut Self;
     ///generates a `.help()` function on lua's/teals side, which can be used at run time to view the documentation.
     fn generate_help(&mut self);
+    ///Adds functions to this type that help the type be "tagged"
+    ///In Teal, this also correctly sets the "where" macro,
+    ///allowing teal to differentiate it from other types with `is`
+    ///
+    ///The added functions are
+    /// - `is(typename: string):boolean` - given the name of a type, returns true if it is the correct name
+    /// - `tag():string` - returns the `typename` of this type
+    fn add_tag(&mut self) -> &mut Self;
 }
 
 ///collects every instance that a type has

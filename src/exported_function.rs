@@ -7,11 +7,11 @@ use crate::{
 ///Contains the data needed to write down the type of a function
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
-    all(feature = "derive", feature = "mlua"),
+    feature = "self_to_lua",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "derive", feature = "mlua"),
+    feature = "self_to_lua",
     tealr(tealr_name = crate)
 )]
 pub struct ExportedFunction {

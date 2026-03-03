@@ -17,25 +17,25 @@ pub trait TealDataFields<T: TealData> {
     /// the teal version of [UserDataFields](mlua::UserDataFields::add_field_method_get)
     fn add_field_method_get<S, R, M>(&mut self, name: S, method: M)
     where
-        S: AsRef<str> + ToString,
+        S: AsRef<str> + Into<String>,
         R: IntoLua + ToTypename,
         M: 'static + MaybeSend + Fn(&Lua, &T) -> mlua::Result<R>;
     /// the teal version of [UserDataFields](mlua::UserDataFields::add_field_method_set)
     fn add_field_method_set<S, A, M>(&mut self, name: S, method: M)
     where
-        S: AsRef<str> + ToString,
+        S: AsRef<str> + Into<String>,
         A: FromLua + ToTypename,
         M: 'static + MaybeSend + FnMut(&Lua, &mut T, A) -> mlua::Result<()>;
     /// the teal version of [UserDataFields](mlua::UserDataFields::add_field_function_get)
     fn add_field_function_get<S, R, F>(&mut self, name: S, function: F)
     where
-        S: ToString + AsRef<str>,
+        S: Into<String> + AsRef<str>,
         R: IntoLua + ToTypename,
         F: 'static + MaybeSend + Fn(&Lua, AnyUserData) -> mlua::Result<R>;
     /// the teal version of [UserDataFields](mlua::UserDataFields::add_field_function_set)
     fn add_field_function_set<S, A, F>(&mut self, name: S, function: F)
     where
-        S: ToString + AsRef<str>,
+        S: Into<String> + AsRef<str>,
         A: FromLua + ToTypename,
         F: 'static + MaybeSend + FnMut(&Lua, AnyUserData, A) -> mlua::Result<()>;
     /// the teal version of [UserDataFields](mlua::UserDataFields::add_meta_field_with)

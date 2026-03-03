@@ -3,11 +3,11 @@ use crate::{ToTypename, Type, TypeBody, TypeGenerator};
 #[derive(Clone, serde::Serialize, serde::Deserialize, Debug)]
 ///Used to document what global instances get made by the module
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     tealr(tealr_name = crate)
 )]
 pub struct GlobalInstance {
@@ -22,11 +22,11 @@ pub struct GlobalInstance {
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 ///Used to document what global instances get made by the module
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     tealr(tealr_name = crate)
 )]
 pub struct ExtraPage {
@@ -39,11 +39,11 @@ pub struct ExtraPage {
 ///This generates the .d.tl files
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "mlua", feature = "derive"),
+    feature = "self_to_lua",
     tealr(tealr_name = crate)
 )]
 pub struct TypeWalker {

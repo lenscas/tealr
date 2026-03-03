@@ -5,17 +5,17 @@ use crate::{type_representation::KindOfType, ToTypename, Type};
 ///Represents a type
 #[derive(Debug, PartialEq, Eq, Clone, Hash, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
-    all(feature = "derive", feature = "mlua"),
+    feature = "self_to_lua",
     derive(crate::mlu::FromToLua, crate::ToTypename)
 )]
 #[cfg_attr(
-    all(feature = "mlua",feature = "derive"),
+    feature = "self_to_lua",
     tealr(tealr_name = crate)
 )]
 pub struct TealType {
     ///Name of the type
     #[cfg_attr(
-        all(feature = "mlua", feature = "derive"),
+        feature = "self_to_lua",
         tealr(remote =  String))]
     pub name: Cow<'static, str>,
     ///If the type is build in, a generic or from a library

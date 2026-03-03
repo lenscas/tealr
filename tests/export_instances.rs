@@ -64,6 +64,7 @@ fn test_limited() {
     if let serde_json::Value::String(x) = &mut x {
         *x = tealr::get_tealr_version().to_string();
     }
+
     assert_eq!(generated, original);
 
     let lua = mlua::Lua::new();
