@@ -34,6 +34,9 @@ pub trait FromLuaExact: Sized {
 /// Because of this, it is _very_ important that the Lua -> Rust conversion does as little "type massaging" as possible.
 /// As a result, the macro only works with types that implement [FromLuaExact] as implementing this
 /// for a type should mean the conversion rather fails than to try and make it work
+///
+/// If you want custom `UserData` to fail a conversion and have your union try the next match, its [FromLuaExact] method
+/// must return an error matching `Err(mlua::Error::FromLuaConversionError{from:_,to:_,message:_})`
 #[macro_export]
 macro_rules! create_union_mlua {
     ($visibility:vis $(Derives($($derives:ident), +))? enum $type_name:ident = $($sub_types:ident) | +) => {
