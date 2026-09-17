@@ -196,7 +196,7 @@ impl From<NamePart> for Cow<'static, str> {
 
 use std::{
     borrow::Cow,
-    collections::{BTreeMap, HashMap},
+    collections::{BTreeMap, BTreeSet, HashMap},
     fmt::Display,
 };
 
@@ -280,6 +280,13 @@ impl<K: ToTypename, V: ToTypename> ToTypename for BTreeMap<K, V> {
         })
     }
 }
+
+impl<K: ToTypename> ToTypename for BTreeSet<K> {
+    fn to_typename() -> Type {
+        Type::Array(K::to_typename().into())
+    }
+}
+
 ///Creates the body of the type, so the functions and fields it exposes.
 pub trait TypeBody {
     ///Fills in the TypeGenerator so a .d.tl file can be constructed.
