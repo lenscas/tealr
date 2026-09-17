@@ -196,7 +196,7 @@ impl From<NamePart> for Cow<'static, str> {
 
 use std::{
     borrow::Cow,
-    collections::{BTreeMap, HashMap, BTreeSet},
+    collections::{BTreeMap, BTreeSet, HashMap},
     fmt::Display,
 };
 
