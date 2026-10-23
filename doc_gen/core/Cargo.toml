@@ -1,0 +1,33 @@
+[package]
+name = "tealr_doc_gen_core"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+default = ["lua_addon", "definitions", "html", "warnings"]
+# Enable this if the templates are written in lua
+lua_support = ["tealr/mlua", "tealr/self_to_lua"]
+# Enable this to generate the warnings
+warnings = []
+# Enable this to generate the lua addon
+lua_addon = ["zip"]
+# Enable this to generate the definition files
+definitions = []
+# Enable this to generate the html files
+html = ["sanitize-filename", "minify-html"]
+
+
+[dependencies]
+tealr = { version = "0.11.0", path = "../../" }
+sanitize-filename = { version = "0.6.0", optional = true }
+minify-html = { version = "0.18.1", optional = true }
+zip = { version = "8.5.1", optional = true }
+serde_json = "1.0.149"
+serde = { version = "1.0.228", features = ["derive"] }
+
+[package.metadata.docs.rs]
+# To doc all features
+all-features = true
+# You would see why we do this later
+# As a side note, docs.rs build doc with nightly cargo 
+rustdoc-args = ["--cfg", "docsrs"]

@@ -1,7 +1,8 @@
 use std::collections::HashSet;
 
 use crate::{
-    get_generic_types, get_generics, type_generator::NameContainer, FunctionParam, Name, Type,
+    FunctionParam, FunctionRepresentation, Name, Type, get_generic_types, get_generics,
+    type_generator::NameContainer,
 };
 
 ///Contains the data needed to write down the type of a function
@@ -15,22 +16,55 @@ use crate::{
     tealr(tealr_name = crate)
 )]
 pub struct ExportedFunction {
-    ///Name of the function
+    /// Name of the function
     pub name: NameContainer,
-    ///The parameters that this function requires
+    /// The parameters that this function requires
     pub params: Vec<FunctionParam>,
-    ///The return type of the function
+    /// The return type of the function
     pub returns: Vec<Type>,
-    ///If this function is a meta_method
+    /// If this function is a meta_method
     pub is_meta_method: bool,
+    /// If the main signature of the function should remain hidden from the documentation/definition files.
+    ///
+    /// If true, the last overload will be used instead
+    ///
+    /// When true without overloads, the function will not show up in either documentation or definition files.
+    pub is_hidden: bool,
+    /// Possible overloads for the given function
+    pub overloads: Vec<FunctionRepresentation>,
 }
 impl ExportedFunction {
-    ///turns the exported function into just its type representation
+    /// Turns the exported function into just its type representation
+    ///
+    /// If the function is marked as hidden but has no overloads then the signature of the function will be used regardless
     pub fn into_type(&self) -> Type {
-        Type::Function(crate::FunctionRepresentation {
-            params: self.params.clone(),
-            returns: self.returns.clone(),
+        self.get_all_as_types().next().unwrap_or_else(|| {
+            Type::Function(crate::FunctionRepresentation {
+                params: self.params.clone(),
+                returns: self.returns.clone(),
+            })
         })
+    }
+    /// Returns an iterator that has each signature (including overloads) of the function as a type
+    pub fn get_all_as_types(&self) -> impl Iterator<Item = Type> {
+        self.get_all_as_function_repr().map(Type::Function)
+    }
+    /// Returns an iterator that has each signature (including overloads) of the function as a [FunctionRepresentation]
+    pub fn get_all_as_function_repr(&self) -> impl Iterator<Item = FunctionRepresentation> {
+        (!self.is_hidden)
+            .then(|| crate::FunctionRepresentation {
+                params: self.params.clone(),
+                returns: self.returns.clone(),
+            })
+            .into_iter()
+            .chain(
+                self.overloads
+                    .iter()
+                    .map(|v| crate::FunctionRepresentation {
+                        params: v.params.clone(),
+                        returns: v.returns.clone(),
+                    }),
+            )
     }
     ///Creates an ExportedFunction with the given name, Parameters and return value
     ///```no_run
@@ -60,6 +94,8 @@ impl ExportedFunction {
             is_meta_method,
             params,
             returns: R::get_types(),
+            overloads: Vec::new(),
+            is_hidden: false,
         }
     }
 

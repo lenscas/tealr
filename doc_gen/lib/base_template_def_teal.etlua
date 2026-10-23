@@ -1,0 +1,168 @@
+<%
+function render(str)
+%><%-str-%><%
+end
+function render_nl(str)
+%>
+<%-str%>
+<%
+end
+
+local renderer = get_type_renderer(render)
+local toString = get_type_renderer(function(a) return a end)
+local extended_renderer = function(extend_with) return get_type_renderer(render, nil, extend_with) end
+
+function render_function(func, generics)
+    renderer["function"](func, {generics = generics})
+end
+function render_type(ty, generics)
+    type_to_string(ty,renderer, {generics = generics})
+end
+
+local macroRenderer = getMacroRenderer(render, render_function,render_type)
+function renderTealTypeOf(ty_name, with, maybe_extend_with)
+    render(with)
+    render(" ")
+    local renderer_to_use = renderer
+    if maybe_extend_with then
+        renderer_to_use = extended_renderer(maybe_extend_with)
+    end
+    type_to_string(ty_name, renderer_to_use, {})
+end
+
+function render_macroexpr(macro, generics)
+    if macro.is_meta_method then
+        render("metamethod ")
+    end
+    render(macro.name)
+    render(": ")
+    macroRenderer(macro, generics)
+end
+
+function render_member(member, generics)
+    
+    if member.params then
+        local renders = {}
+        if not member.is_hidden then
+            renders = {member}
+        end
+        for _,v in ipairs(member.overloads) do
+            table.insert(renders, v)
+        end
+        for _,v in ipairs(renders) do
+            render("        ")
+            if member.is_meta_method then
+                render("metamethod ")
+            end
+            render(member.name)
+            render(":")
+            renderer["function"](member, {generics = map(generics, function(a) return a end)})
+            render_nl("")
+        end
+    else
+        local ty = member.ty
+        local res = type_to_string(ty, toString, {generics = map(generics, function(a) return a end)})
+        if startsWith(res, "\"") and endsWith(res, "\"") then
+            local withoutQuotes = string.sub(res, 2, #res-1)
+            local typeName = withoutQuotes.."Tag"
+            render("enum ")
+            render_nl(typeName)
+            render_nl(res)
+            render_nl("end")
+            res = typeName
+        end
+        render("        ")
+        render(member.name)
+        render(":")
+        render(res)
+        render_nl("")
+    end
+end
+
+function render_macros(macros,doc, existing_generics)
+    for _,macro in ipairs(macros) do
+        local docs = doc[macro.name]
+        if docs then
+            render_nl("    --"..string.gsub(docs, "\n", "\n        --"))
+        end
+        render_macroexpr(macro, map(existing_generics, function(a) return a end))
+    end
+end
+
+function render_members(members,doc, existing_generics)
+    for _,member in ipairs(members) do
+        local docs = doc[member.name]
+        if docs then
+            render_nl("    --"..string.gsub(docs, "\n", "\n        --"))
+        end
+        render_member(member, existing_generics)
+    end
+end
+
+%>
+
+<%- global_or_local %> record <%- name %>
+    <% 
+        for _, teal_type in ipairs(module.given_types) do 
+            
+            local enum = teal_type:GetEnumOrNil()
+            if enum then
+                renderTealTypeOf(enum.ty,"enum ")
+                render_nl("")
+                for _, variant in ipairs(enum.variants) do
+                    render("        \"")
+                    render(variant.."\"")
+                    render_nl""
+                end
+    %>
+    end
+    <%
+            end
+            local record = teal_type:GetRecordOrNil()
+            if record then
+                local generics =  get_missing_generics({record.ty},{})
+                if not record.should_be_inlined then
+    %>
+
+    <% 
+        renderTealTypeOf(record.ty,"interface ")
+    %>
+        <%=(record.is_user_data and "is userdata") or ""%>
+    <%
+                    for _,v in ipairs(record.implements) do
+                        render("    is ")
+                        type_to_string(v, renderer, {generics = map(generics, function(a) return a end)})
+                        render_nl("")
+                    end
+                    if record.tag ~= nil then
+                        render("where " .. record.tag)
+                    end
+                end
+                local ty = record.ty:GetSingleOrNil()
+                render_nl("--"..string.gsub(record.type_doc, "\n", "\n        --"))
+                render_members(record.fields,record.documentation, generics)
+                render_members(record.static_fields,record.documentation, generics)
+                render_members(record.methods,record.documentation, generics)
+                render_macros(record.macro_expressions, record.documentation, generics)
+                if not record.should_be_inlined then 
+    %>
+    end
+    <%
+                end
+
+            end
+        end
+    %>
+end
+<%
+
+for _, global_instance in ipairs(module.global_instances_off) do
+    if (not global_instance.doc) or global_instance.doc == "" then  
+        render("--"..string.gsub(global_instance.doc, "\n", "\n        --"))
+    end
+    render_nl("--")
+    renderTealTypeOf(global_instance.ty, "global " .. global_instance.name .. " : ", name)
+end
+%>
+
+return <%- name %>

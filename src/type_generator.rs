@@ -7,20 +7,19 @@ use std::{
 
 #[cfg(feature = "mlua")]
 use crate::mlu::{
-    get_meta_name as get_meta_name_mlua,
+    MaybeSend, TealData as TealDataM, TealDataFields, TealDataMethods as TealDataMethodsM,
     mlua::{
         FromLua as FromLuaM, FromLuaMulti as FromLuaMultiM, IntoLua as ToLuaM,
         IntoLuaMulti as ToLuaMultiM, Lua, MetaMethod as MetaMethodM, Result as ResultM,
         UserData as UserDataM,
     },
     teal_data_macros::TealDataMacros,
-    MaybeSend, TealData as TealDataM, TealDataFields, TealDataMethods as TealDataMethodsM,
 };
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    exported_function::ExportedFunction, macro_expressions::MacroExpr, type_to_string, ToTypename,
-    Type,
+    FunctionRepresentation, ToTypename, Type, exported_function::ExportedFunction,
+    macro_expressions::MacroExp, type_to_string,
 };
 
 use crate::TealMultiValue;
@@ -232,7 +231,6 @@ impl EnumGenerator {
 pub struct Field {
     ///the name of the field
     pub name: NameContainer,
-
     /// the type of the field
     pub ty: Type,
 }
@@ -273,20 +271,6 @@ pub struct RecordGenerator {
     pub static_fields: Vec<Field>,
     ///exported methods
     pub methods: Vec<ExportedFunction>,
-    ///exported methods that mutate something
-    pub mut_methods: Vec<ExportedFunction>,
-    ///exported functions
-    pub functions: Vec<ExportedFunction>,
-    ///exported functions that mutate something
-    pub mut_functions: Vec<ExportedFunction>,
-    ///exported meta_methods
-    pub meta_method: Vec<ExportedFunction>,
-    ///exported meta_methods that mutate something
-    pub meta_method_mut: Vec<ExportedFunction>,
-    ///exported meta functions
-    pub meta_function: Vec<ExportedFunction>,
-    ///exported meta functions that mutate something
-    pub meta_function_mut: Vec<ExportedFunction>,
     ///registered documentation
     pub documentation: HashMap<NameContainer, String>,
     ///documentation for this type itself
@@ -302,11 +286,15 @@ pub struct RecordGenerator {
     ///Use None if no tag exists.
     pub tag: Option<String>,
     ///defines a [macro expression](https://teal-language.org/book/macroexp.html) on the record.
-    pub macro_expressions: Vec<MacroExpr>,
+    pub macro_expressions: Vec<MacroExp>,
     /// Represents the types that this type implements
     ///
     /// In teal, this becomes `interface ThisType is ImplementingType`
     pub implements: Vec<Type>,
+    /// The overloads for the next method
+    pub next_overloads: Vec<FunctionRepresentation>,
+    /// If the main implementation of the next method should be hidden or not.
+    pub next_is_hidden: bool,
 }
 
 impl From<RecordGenerator> for TypeGenerator {
@@ -333,31 +321,20 @@ impl RecordGenerator {
             fields: Default::default(),
             static_fields: Default::default(),
             methods: Default::default(),
-            mut_methods: Default::default(),
-            functions: Default::default(),
-            mut_functions: Default::default(),
-            meta_method: Default::default(),
-            meta_method_mut: Default::default(),
-            meta_function: Default::default(),
-            meta_function_mut: Default::default(),
             type_doc: Default::default(),
             next_docs: Default::default(),
             tag: None,
             macro_expressions: Default::default(),
             implements: Default::default(),
+            next_is_hidden: false,
+            next_overloads: Default::default(),
         }
     }
     /// creates an iterator that goes over the various method and function fields
     pub fn all_functions(&self) -> impl Iterator<Item = &ExportedFunction> {
         self.methods
             .iter()
-            .chain(self.mut_methods.iter())
-            .chain(self.functions.iter())
-            .chain(self.mut_functions.iter())
-            .chain(self.meta_method.iter())
-            .chain(self.meta_method_mut.iter())
-            .chain(self.meta_function.iter())
-            .chain(self.meta_function_mut.iter())
+            .filter(|v| !(v.is_hidden && v.overloads.is_empty()))
     }
 }
 
@@ -402,7 +379,7 @@ impl RecordGenerator {
 #[cfg(feature = "mlua")]
 impl<T> TealDataMethodsM<T> for RecordGenerator
 where
-    T: 'static + TealDataM + UserDataM + ToTypename,
+    T: TealDataM + UserDataM + ToTypename,
 {
     fn add_method<S, A, R, M>(&mut self, name: S, _: M)
     where
@@ -411,7 +388,7 @@ where
         R: ToLuaMultiM + TealMultiValue,
         M: 'static + MaybeSend + Fn(&Lua, &T, A) -> ResultM<R>,
     {
-        self.add_method::<S, A, R, T>(name);
+        self.register_function::<S, A, R>(name, false, Some(T::to_typename()));
     }
 
     fn add_method_mut<S, A, R, M>(&mut self, name: S, _: M)
@@ -421,7 +398,7 @@ where
         R: ToLuaMultiM + TealMultiValue,
         M: 'static + MaybeSend + FnMut(&Lua, &mut T, A) -> ResultM<R>,
     {
-        self.add_method_mut::<S, A, R, T>(name);
+        self.register_function::<S, A, R>(name, false, Some(T::to_typename()));
     }
 
     #[cfg(feature = "mlua_async")]
@@ -433,12 +410,7 @@ where
         MR: std::future::Future<Output = ResultM<R>> + MaybeSend + 'static,
         R: ToLuaMultiM + TealMultiValue,
     {
-        self.copy_docs(name.as_ref().as_bytes());
-        self.methods.push(get_method_data::<A, R, _>(
-            name,
-            false,
-            Some(T::to_typename()),
-        ))
+        self.register_function::<S, A, R>(name, false, Some(T::to_typename()));
     }
 
     fn add_function<S, A, R, F>(&mut self, name: S, _: F)
@@ -448,7 +420,7 @@ where
         R: ToLuaMultiM + TealMultiValue,
         F: 'static + MaybeSend + Fn(&Lua, A) -> ResultM<R>,
     {
-        self.add_function::<S, A, R>(name);
+        self.register_function::<S, A, R>(name, false, None);
     }
 
     fn add_function_mut<S, A, R, F>(&mut self, name: S, _: F)
@@ -458,7 +430,7 @@ where
         R: ToLuaMultiM + TealMultiValue,
         F: 'static + MaybeSend + FnMut(&Lua, A) -> ResultM<R>,
     {
-        self.add_function_mut::<S, A, R>(name);
+        self.register_function::<S, A, R>(name, false, None);
     }
 
     #[cfg(feature = "mlua_async")]
@@ -470,9 +442,7 @@ where
         F: Fn(Lua, A) -> FR + MaybeSend + 'static,
         FR: std::future::Future<Output = ResultM<R>>,
     {
-        self.copy_docs(name.as_ref().as_bytes());
-        self.functions
-            .push(get_method_data::<A, R, _>(name, false, None))
+        self.register_function::<S, A, R>(name, false, None);
     }
 
     fn add_meta_method<A, R, M>(&mut self, name: MetaMethodM, _: M)
@@ -481,12 +451,7 @@ where
         R: ToLuaMultiM + TealMultiValue,
         M: 'static + MaybeSend + Fn(&Lua, &T, A) -> ResultM<R>,
     {
-        self.copy_docs(name.name().as_bytes());
-        self.meta_method.push(get_method_data::<A, R, _>(
-            &get_meta_name_mlua(name),
-            true,
-            Some(T::to_typename()),
-        ))
+        self.register_function::<_, A, R>(name, true, Some(T::to_typename()));
     }
 
     fn add_meta_method_mut<A, R, M>(&mut self, name: MetaMethodM, _: M)
@@ -495,12 +460,7 @@ where
         R: ToLuaMultiM + TealMultiValue,
         M: 'static + MaybeSend + FnMut(&Lua, &mut T, A) -> ResultM<R>,
     {
-        self.copy_docs(name.name().as_bytes());
-        self.meta_method_mut.push(get_method_data::<A, R, _>(
-            &get_meta_name_mlua(name),
-            true,
-            Some(T::to_typename()),
-        ))
+        self.register_function::<_, A, R>(name, true, Some(T::to_typename()));
     }
     fn add_meta_function<A, R, F>(&mut self, name: MetaMethodM, _: F)
     where
@@ -508,12 +468,7 @@ where
         R: ToLuaMultiM + TealMultiValue,
         F: 'static + MaybeSend + Fn(&Lua, A) -> ResultM<R>,
     {
-        self.copy_docs(name.name().as_bytes());
-        self.meta_function.push(get_method_data::<A, R, _>(
-            get_meta_name_mlua(name).as_ref(),
-            true,
-            None,
-        ))
+        self.register_function::<_, A, R>(name, true, None);
     }
 
     fn add_meta_function_mut<A, R, F>(&mut self, name: MetaMethodM, _: F)
@@ -522,12 +477,7 @@ where
         R: ToLuaMultiM + TealMultiValue,
         F: 'static + MaybeSend + FnMut(&Lua, A) -> ResultM<R>,
     {
-        self.copy_docs(name.name().as_bytes());
-        self.meta_function_mut.push(get_method_data::<A, R, _>(
-            &get_meta_name_mlua(name),
-            true,
-            None,
-        ))
+        self.register_function::<_, A, R>(name, true, None);
     }
 
     fn document(&mut self, documentation: &str) -> &mut Self {
@@ -538,10 +488,12 @@ where
         self.document_type(documentation)
     }
     fn generate_help(&mut self) {
-        self.functions
-            .push(get_method_data::<Option<String>, String, _>(
-                "help", false, None,
-            ))
+        <Self as TealDataMethodsM<T>>::add_overload::<(), String>(self)
+            .register_function::<_, String, String>("help", false, None);
+        // self.functions
+        //     .push(get_method_data::<Option<String>, String, _>(
+        //         "help", false, None,
+        //     ))
     }
     fn add_tag(&mut self) -> &mut Self {
         let name = T::to_typename();
@@ -553,12 +505,23 @@ where
         self.add_function::<&'static str, (), String>("tag");
         self
     }
+    fn add_overload<Arguments: TealMultiValue, Returns: TealMultiValue>(&mut self) -> &mut Self {
+        self.next_overloads.push(FunctionRepresentation {
+            params: Arguments::get_types_as_params(),
+            returns: Returns::get_types(),
+        });
+        self
+    }
+    fn hide_main(&mut self) -> &mut Self {
+        self.next_is_hidden = true;
+        self
+    }
 }
 
 #[cfg(feature = "mlua")]
 impl<T> TealDataFields<T> for RecordGenerator
 where
-    T: 'static + TealDataM + UserDataM + ToTypename,
+    T: TealDataM + UserDataM + ToTypename,
 {
     fn document(&mut self, documentation: &str) {
         self.document(documentation)
@@ -622,7 +585,7 @@ impl<T: ToTypename> TealDataMacros<T> for RecordGenerator {
     ) -> &mut Self {
         let name = name.into();
         self.copy_docs(name.as_bytes());
-        self.macro_expressions.push(MacroExpr::new(
+        self.macro_expressions.push(MacroExp::new(
             name,
             args,
             R::to_typename(),
@@ -640,7 +603,7 @@ impl<T: ToTypename> TealDataMacros<T> for RecordGenerator {
     ) -> &mut Self {
         let name = name.into();
         self.copy_docs(name.as_bytes());
-        self.macro_expressions.push(MacroExpr::new(
+        self.macro_expressions.push(MacroExp::new(
             name,
             args,
             R::to_typename(),
@@ -658,6 +621,19 @@ impl<T: ToTypename> TealDataMacros<T> for RecordGenerator {
 
 #[cfg(feature = "mlua")]
 impl RecordGenerator {
+    fn register_function<S: Into<String> + AsRef<str>, A: TealMultiValue, R: TealMultiValue>(
+        &mut self,
+        name: S,
+        is_meta_method: bool,
+        extra_self: Option<Type>,
+    ) {
+        self.copy_docs(name.as_ref().as_bytes());
+        let mut method_data = get_method_data::<A, R, _>(name, is_meta_method, extra_self);
+        method_data.overloads = std::mem::take(&mut self.next_overloads);
+        method_data.is_hidden = self.next_is_hidden;
+        self.next_is_hidden = false;
+        self.methods.push(method_data)
+    }
     ///documents that this type has a field of the given type and name when exposed to lua
     pub fn add_field<S, R>(&mut self, name: S)
     where
@@ -678,46 +654,13 @@ impl RecordGenerator {
         &mut self,
         name: S,
     ) {
-        self.copy_docs(name.as_ref().as_bytes());
-        self.methods.push(get_method_data::<A, R, _>(
-            name,
-            false,
-            Some(T::to_typename()),
-        ))
-    }
-    /// documents that this type has a method of the given type and name when exposed to lua
-    pub fn add_method_mut<
-        S: Into<String> + AsRef<str>,
-        A: TealMultiValue,
-        R: TealMultiValue,
-        T: ToTypename,
-    >(
-        &mut self,
-        name: S,
-    ) {
-        self.copy_docs(name.as_ref().as_bytes());
-        self.mut_methods.push(get_method_data::<A, R, _>(
-            name,
-            false,
-            Some(T::to_typename()),
-        ))
+        self.register_function::<S, A, R>(name, false, Some(T::to_typename()));
     }
     /// documents that this type has a function of the given type and name when exposed to lua
     pub fn add_function<S: Into<String> + AsRef<str>, A: TealMultiValue, R: TealMultiValue>(
         &mut self,
         name: S,
     ) {
-        self.copy_docs(name.as_ref().as_bytes());
-        self.functions
-            .push(get_method_data::<A, R, _>(name, false, None))
-    }
-    /// documents that this type has a function of the given type and name when exposed to lua
-    pub fn add_function_mut<S: Into<String> + AsRef<str>, A: TealMultiValue, R: TealMultiValue>(
-        &mut self,
-        name: S,
-    ) {
-        self.copy_docs(name.as_ref().as_bytes());
-        self.mut_functions
-            .push(get_method_data::<A, R, _>(name, false, None))
+        self.register_function::<S, A, R>(name, false, None);
     }
 }

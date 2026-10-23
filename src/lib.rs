@@ -29,7 +29,7 @@ pub use teal_multivalue::{TealMultiValue, TealType};
 #[cfg(feature = "derive")]
 pub use tealr_derive::ToTypename;
 
-pub use macro_expressions::MacroExpr;
+pub use macro_expressions::MacroExp;
 pub use type_generator::{EnumGenerator, Field, NameContainer, RecordGenerator, TypeGenerator};
 pub use type_representation::{KindOfType, NamePart, TypeBody};
 pub use type_walker::{ExtraPage, GlobalInstance, TypeWalker};
@@ -132,6 +132,18 @@ pub struct FunctionRepresentation {
     ///the return types
     pub returns: Vec<Type>,
 }
+
+impl FunctionRepresentation {
+    /// Get all the generics that this function has
+    pub fn get_generics(&self) -> impl Iterator<Item = &Name> {
+        self.params
+            .iter()
+            .map(|v| &v.ty)
+            .chain(self.returns.iter())
+            .flat_map(get_generics)
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[cfg_attr(
     feature = "self_to_lua",
@@ -462,7 +474,8 @@ pub fn type_to_teal_parts(a: &Type, is_callback: bool) -> Cow<'static, [NamePart
             Type::Variadic(x) => {
                 if as_part_of != AsPartOf::Param && as_part_of != AsPartOf::Return {
                     eprintln!(
-                        "An NewType::Variadic found that is not a param or return. This should _not_ happen");
+                        "An NewType::Variadic found that is not a param or return. This should _not_ happen"
+                    );
                 }
                 let mut full_result = Vec::new();
                 let res = type_to_teal_parts_helper(x, is_callback, as_part_of);

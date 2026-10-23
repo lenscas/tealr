@@ -2,7 +2,7 @@
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 name: Create Release
 
@@ -24,9 +24,16 @@ jobs:
       - name: Backoff a bit before releasing tealr
         uses: jakejarvis/wait-action@master
         with:
-          time: '20s'
+          time: "20s"
       - name: Release the main crate
         run: cargo publish
+      - name: Release tealr_doc_gen_core
+        run: cd doc_gen/core && cargo publish
+      - name: Release tealr_doc_gen_lib
+        run: cd doc_gen/lib && cargo publish
+      - name: Release tealr_doc_gen
+        run: cd doc_gen/bin && cargo publish
+
       #Now, release to github as well.
       - name: Create Release on github
         id: create_release

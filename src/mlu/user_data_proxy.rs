@@ -54,8 +54,9 @@ impl<T: StaticUserdata + ToTypename> ToTypename for UserDataProxy<T> {
 impl<T: StaticUserdata + TypeBody + ToTypename> TypeBody for UserDataProxy<T> {
     fn get_type_body() -> crate::TypeGenerator {
         let generator = T::get_type_body();
+        let ty = T::to_typename();
         // extract only "functions"
-        let type_name = type_to_teal_parts(&T::to_typename(), false);
+        let type_name = type_to_teal_parts(&ty, false);
         let type_name_string = type_name[..type_name.len() - 1]
             .iter()
             .map(|v| v.to_string())
@@ -63,14 +64,17 @@ impl<T: StaticUserdata + TypeBody + ToTypename> TypeBody for UserDataProxy<T> {
             .join("");
         match generator {
             crate::TypeGenerator::Record(record_generator) => {
+                let methods = record_generator
+                    .methods
+                    .iter()
+                    .filter(|v| v.params.first().map(|x| x.ty != ty).unwrap_or(true))
+                    .cloned()
+                    .collect();
                 crate::TypeGenerator::Record(Box::new(RecordGenerator {
                     // we overwrite anything which is not static
                     type_doc: format!("Collection of static methods for [`{}`].", type_name_string),
                     fields: Default::default(),
-                    methods: Default::default(),
-                    mut_methods: Default::default(),
-                    meta_method: Default::default(),
-                    meta_method_mut: Default::default(),
+                    methods,
                     macro_expressions: Default::default(),
                     ty: Self::to_typename(),
                     ..record_generator.as_ref().clone()

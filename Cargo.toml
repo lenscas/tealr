@@ -2,7 +2,7 @@
 authors = ["Lenscas <lenscas@gmail.com>"]
 categories = ["development-tools::ffi"]
 description = "A crate to enhance the APIs provided by the mlua crates"
-edition = "2021"
+edition = "2024"
 keywords = ["teal", "lua", "type", "generation", "type-generation"]
 license = "MIT OR Apache-2.0"
 name = "tealr"
@@ -11,7 +11,7 @@ repository = "https://github.com/lenscas/tealr/"
 version = "0.11.0"
 
 [workspace]
-members = ["tealr_derive"]
+members = ["tealr_derive", "doc_gen/core", "doc_gen/lib", "doc_gen/bin"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
@@ -82,6 +82,10 @@ required-features = ["mlua"]
 name = "mlua_readme_pieces"
 path = "tests/readme_pieces.rs"
 required-features = ["mlua"]
+[[test]]
+name = "mlua_help_function"
+path = "tests/help_function.rs"
+required-features = ["mlua", "derive"]
 
 [[test]]
 name = "mlua_meta_methods"

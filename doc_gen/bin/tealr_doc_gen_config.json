@@ -1,0 +1,21 @@
+{
+  "doc_template": "Builtin",
+  "page_root": "",
+  "store_in": "pages",
+  "name": "my_api",
+  "type_def_files": {
+    "runner": "Builtin",
+    "templates": {
+      "teal": {
+        "extension": ".d.tl",
+        "template": "Teal"
+      }
+    }
+  },
+  "lua_addon": {
+    "words": [],
+    "files": [],
+    "settings": {}
+  },
+  "is_global": true
+}
