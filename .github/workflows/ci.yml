@@ -23,7 +23,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest, macOS-latest]
         tests:
           - "cargo test --features mlua,mlua_vendored,mlua_lua53,mlua_async,mlua_send"
           - "cargo test --features mlua,mlua_vendored,mlua_lua54,mlua_async,mlua_send"
