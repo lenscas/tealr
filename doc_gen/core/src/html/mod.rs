@@ -230,6 +230,7 @@ pub fn generate_html<E>(
     Ok(reset_emitted_warnings())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn write_type<E>(
     write_path: &Path,
     type_def: &TypeGenerator,

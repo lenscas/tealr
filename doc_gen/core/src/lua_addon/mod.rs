@@ -106,7 +106,7 @@ pub fn create_lua_addon(
     x.add_directory("library", SimpleFileOptions::default())
         .context("Could not create library folder")?;
     x.start_file(
-        format!("library/{}.lua", &config.name),
+        format!("library/{}.lua", config.name),
         SimpleFileOptions::default(),
     )
     .context("Could not create library.lua file")?;
@@ -425,7 +425,7 @@ fn type_to_name(ty: &Type, base: &str, part_off: TypeIsPartOf) -> String {
         }
         Type::Array(x) => {
             let x = type_to_name(x, base, TypeIsPartOf::None);
-            format! {"({})[]",x}
+            format!("({})[]", x)
         }
         Type::Map(MapRepresentation { key, value }) => {
             let key = type_to_name(key, base, TypeIsPartOf::None);

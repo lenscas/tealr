@@ -1,10 +1,10 @@
 use tealr::{
-    compile_inline_teal, create_generic_mlua, create_union_mlua, embed_compiler,
+    ToTypename, TypeWalker, compile_inline_teal, create_generic_mlua, create_union_mlua,
+    embed_compiler,
     mlu::{
-        mlua::{FromLua, Lua, Result},
         TealData, TealDataMethods, TypedFunction, UserData,
+        mlua::{FromLua, Lua, Result},
     },
-    ToTypename, TypeWalker,
 };
 
 #[test]
@@ -48,6 +48,7 @@ impl tealr::mlu::TealData for ExampleMlua {
 create_union_mlua!(enum YourToTypename = i32 | String);
 
 create_generic_mlua!(X);
+#[allow(dead_code)]
 #[derive(Clone, UserData, ToTypename)]
 struct Example {
     example: u32,
