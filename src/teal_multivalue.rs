@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{type_representation::KindOfType, ToTypename, Type};
+use crate::{ToTypename, Type, type_representation::KindOfType};
 
 ///Represents a type
 #[derive(Debug, PartialEq, Eq, Clone, Hash, serde::Serialize, serde::Deserialize)]

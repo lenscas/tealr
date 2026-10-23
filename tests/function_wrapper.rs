@@ -1,6 +1,7 @@
 use tealr::{
+    ToTypename,
     mlu::{TealData, TealDataMethods, TypedFunction, UserData},
-    type_to_string, ToTypename,
+    type_to_string,
 };
 #[test]
 fn generate_correct_type() {

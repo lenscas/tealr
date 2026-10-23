@@ -1,6 +1,6 @@
 use tealr::{
-    mlu::{mlua::Lua, FromToLua},
     ToTypename, TypeWalker,
+    mlu::{FromToLua, mlua::Lua},
 };
 
 #[derive(FromToLua, ToTypename, PartialEq, Debug, Clone)]

@@ -1,7 +1,7 @@
 use mlua::MetaMethod;
 use tealr::{
-    mlu::{TealData, TealDataMethods, UserData},
     ToTypename, TypeWalker,
+    mlu::{TealData, TealDataMethods, UserData},
 };
 
 #[derive(Clone, UserData, ToTypename)]

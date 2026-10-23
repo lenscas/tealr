@@ -145,7 +145,6 @@ pub fn generate_help_for_type(
                             }
                             to_show.push_str(&type_to_string(&i, false));
                         });
-                        
                         if let Some(x) = record_generator.documentation.get(v.0) {
                             to_show.push('\n');
                             to_show.push_str(x);

@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use mlua::{AnyUserData, Error, IntoLua, Lua, UserData};
 
 use crate::{
-    type_to_string, type_to_teal_parts, EnumGenerator, RecordGenerator, ToTypename, Type, TypeBody,
+    EnumGenerator, RecordGenerator, ToTypename, Type, TypeBody, type_to_string, type_to_teal_parts,
 };
 
 /// A userdata which can be used as a static proxy

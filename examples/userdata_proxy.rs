@@ -1,10 +1,10 @@
 use mlua::FromLua;
 use tealr::{
-    mlu::{
-        mlua::{Lua, Result},
-        TealData, TealDataMethods, UserData, UserDataProxy,
-    },
     ToTypename, TypeWalker,
+    mlu::{
+        TealData, TealDataMethods, UserData, UserDataProxy,
+        mlua::{Lua, Result},
+    },
 };
 //this example shows how to expose a `proxy` type to enable calling static global functions from anywhere.
 

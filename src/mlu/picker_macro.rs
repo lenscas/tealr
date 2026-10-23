@@ -173,11 +173,8 @@ impl<T: FromLuaExact> FromLuaExact for Vec<T> {
     }
 }
 
-impl<
-        K: Eq + std::hash::Hash + FromLuaExact,
-        V: FromLuaExact,
-        S: std::hash::BuildHasher + Default,
-    > FromLuaExact for HashMap<K, V, S>
+impl<K: Eq + std::hash::Hash + FromLuaExact, V: FromLuaExact, S: std::hash::BuildHasher + Default>
+    FromLuaExact for HashMap<K, V, S>
 {
     fn from_lua_exact(value: Value, lua: &Lua) -> mlua::Result<Self> {
         if let Value::Table(table) = value {
