@@ -1,4 +1,3 @@
-use bstr::{ByteSlice, ByteVec};
 #[cfg(feature = "mlua_async")]
 use mlua::UserDataRef;
 use mlua::{
@@ -8,7 +7,9 @@ use mlua::{
 use std::{collections::HashMap, marker::PhantomData};
 
 use super::{MaybeSend, TealData, TealDataFields, TealDataMethods};
-use crate::{type_generator::get_method_data, type_to_string, TealMultiValue, ToTypename};
+use crate::{
+    TealMultiValue, ToTypename, TypeBody, type_generator::get_method_data, type_to_string,
+};
 
 ///Used to turn [UserDataMethods](mlua::UserDataMethods) into [TealDataMethods](crate::mlu::TealDataMethods).
 ///
@@ -34,7 +35,7 @@ where
     ///```
     ///# use std::borrow::Cow;
     ///# use mlua::{Lua, Result, UserData, UserDataMethods};
-    ///# use tealr::{Type, mlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker, ToTypename,NamePart,TealType, KindOfType};
+    ///# use tealr::{Type, mlu::{TealData, TealDataMethods, UserDataWrapper}, TypeWalker, ToTypename, NamePart, TealType, KindOfType, TypeBody};
     /// struct Example {}
     /// impl TealData for Example {}
     /// impl ToTypename for Example {
@@ -47,8 +48,16 @@ where
     ///         let mut x = UserDataWrapper::from_user_data_methods(methods);
     ///         <Self as TealData>::add_methods(&mut x);
     ///     }
-    ///}
-    ///
+    /// }
+    /// impl TypeBody for Example {
+    ///     fn get_type_body() -> tealr::TypeGenerator {
+    ///         let mut generator = tealr::RecordGenerator::new::<Self>(false);
+    ///         generator.is_user_data = true;
+    ///         <Self as TealData>::add_fields(&mut generator);
+    ///         <Self as TealData>::add_methods(&mut generator);
+    ///         generator.into()
+    ///     }
+    /// }
     ///```
     pub fn from_user_data_methods(cont: &'a mut Container) -> Self {
         Self {
@@ -134,9 +143,9 @@ where
     }
 }
 
-impl<Container, T: ToTypename> TealDataMethods<T> for UserDataWrapper<'_, Container, T>
+impl<Container, T> TealDataMethods<T> for UserDataWrapper<'_, Container, T>
 where
-    T: UserData,
+    T: UserData + ToTypename + TypeBody,
     Container: UserDataMethods<T>,
 {
     #[inline(always)]
@@ -263,34 +272,9 @@ where
     }
 
     fn generate_help(&mut self) {
-        let help = self.documentation.clone();
-        let type_doc = self.type_doc.clone();
-        self.add_function("help", move |lua, key: Option<mlua::String>| {
-            let doc = match key {
-                Some(x) => help
-                    .get(x.as_bytes().as_bytes())
-                    .map(|v| v.as_bytes())
-                    .map(ToOwned::to_owned)
-                    .unwrap_or_else(|| {
-                        b"The given key is not found. Use `.help()` to list available pages."
-                            .to_vec()
-                    }),
-                None => {
-                    let mut x = help
-                        .keys()
-                        .map(ToOwned::to_owned)
-                        .flat_map(|mut v| {
-                            v.push_char('\n');
-                            v
-                        })
-                        .collect::<Vec<_>>();
-                    let mut y = (type_doc.clone() + "\n" + "Available pages:\n").into_bytes();
-                    y.append(&mut x);
-                    y
-                }
-            };
-
-            lua.create_string(doc)
+        let type_res = <T as TypeBody>::get_type_body();
+        self.add_function("help", move |lua, key: Option<String>| {
+            crate::mlu::generate_help_for_type(lua, type_res.clone())?.call(key)
         })
     }
     fn add_tag(&mut self) -> &mut Self {
@@ -299,6 +283,16 @@ where
         let name2 = name.clone();
         self.add_function("is", move |_, ty: String| Ok(ty == name));
         self.add_function("tag", move |_, ()| Ok(name2.clone()));
+        self
+    }
+    fn add_overload<Arguments: TealMultiValue, Returns: TealMultiValue>(&mut self) -> &mut Self {
+        // overloading is purely a type system thing
+        // as such, during runtime there is no need to do anything
+        self
+    }
+    fn hide_main(&mut self) -> &mut Self {
+        // hiding methods is purely a type system thing
+        // as such, during runtime there is no need to do anything
         self
     }
 }

@@ -1,7 +1,7 @@
 use mlua::MetaMethod;
 use tealr::{
-    mlu::{TealData, TealDataMethods, UserData},
     ToTypename, TypeWalker,
+    mlu::{TealData, TealDataMethods, UserData},
 };
 
 #[derive(Clone, UserData, ToTypename)]
@@ -21,7 +21,7 @@ impl TealData for Example {
     }
 }
 #[test]
-fn test() {
+fn meta_method() {
     //create .d.tl file and compare against expected
     let file_contents = TypeWalker::new()
         .process_type::<Example>()

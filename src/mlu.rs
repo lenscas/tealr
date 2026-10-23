@@ -12,75 +12,27 @@ mod typed_function;
 pub mod user_data_proxy;
 pub(crate) mod user_data_wrapper;
 mod variadics;
-use std::borrow::Cow;
+use std::ops::ControlFlow;
 
 pub use self::{
     extendable::{BackMerger, Extend, Extendable, Extender},
     picker_macro::FromLuaExact,
     teal_data::TealData,
-    teal_data_methods::{set_global_env, ExportInstances, InstanceCollector, TealDataMethods},
+    teal_data_methods::{ExportInstances, InstanceCollector, TealDataMethods, set_global_env},
     typed_function::TypedFunction,
     user_data_proxy::UserDataProxy,
     user_data_wrapper::UserDataWrapper,
 };
+use crate::{ToTypename, Type, TypeGenerator, TypeWalker, type_to_string};
 pub use crate::{
     create_generic_mlua as create_generic, create_union_mlua as create_union,
     mlua_create_named_parameters as create_named_parameters,
 };
-use crate::{ToTypename, Type};
+
+use itertools::Itertools;
 pub use mlua;
 use mlua::{UserDataRef, UserDataRefMut};
 pub use teal_data_fields::TealDataFields;
-
-pub(crate) fn get_meta_name(name: mlua::MetaMethod) -> Cow<'static, str> {
-    use mlua::MetaMethod;
-    match name {
-        MetaMethod::Add => Cow::Borrowed("__add"),
-        MetaMethod::Sub => Cow::Borrowed("__sub"),
-        MetaMethod::Mul => Cow::Borrowed("__mul"),
-        MetaMethod::Div => Cow::Borrowed("__div"),
-        MetaMethod::Mod => Cow::Borrowed("__mod"),
-        MetaMethod::Pow => Cow::Borrowed("__pow"),
-        MetaMethod::Unm => Cow::Borrowed("__unm"),
-        #[cfg(any(feature = "mlua_lua54", feature = "mlua_lua53"))]
-        MetaMethod::IDiv => Cow::Borrowed("__idiv"),
-        #[cfg(any(feature = "mlua_lua54", feature = "mlua_lua53"))]
-        MetaMethod::BAnd => Cow::Borrowed("__band"),
-        #[cfg(any(feature = "mlua_lua54", feature = "mlua_lua53"))]
-        MetaMethod::BOr => Cow::Borrowed("__bor"),
-        #[cfg(any(feature = "mlua_lua54", feature = "mlua_lua53"))]
-        MetaMethod::BXor => Cow::Borrowed("__bxor"),
-        #[cfg(any(feature = "mlua_lua54", feature = "mlua_lua53"))]
-        MetaMethod::BNot => Cow::Borrowed("__bnot"),
-        #[cfg(any(feature = "mlua_lua54", feature = "mlua_lua53"))]
-        MetaMethod::Shl => Cow::Borrowed("__shl"),
-        #[cfg(any(feature = "mlua_lua54", feature = "mlua_lua53"))]
-        MetaMethod::Shr => Cow::Borrowed("__shr"),
-        MetaMethod::Concat => Cow::Borrowed("__concat"),
-        MetaMethod::Len => Cow::Borrowed("__len"),
-        MetaMethod::Eq => Cow::Borrowed("__eq"),
-        MetaMethod::Lt => Cow::Borrowed("__lt"),
-        MetaMethod::Le => Cow::Borrowed("__le"),
-        MetaMethod::Index => Cow::Borrowed("__index"),
-        MetaMethod::NewIndex => Cow::Borrowed("__newindex"),
-        MetaMethod::Call => Cow::Borrowed("__call"),
-        MetaMethod::ToString => Cow::Borrowed("__tostring"),
-        #[cfg(any(
-            feature = "mlua_lua54",
-            feature = "mlua_lua53",
-            feature = "mlua_lua52",
-            feature = "mlua_luajit52"
-        ))]
-        MetaMethod::Pairs => Cow::Borrowed("__pairs"),
-        #[cfg(any(feature = "mlua_lua52", feature = "mlua_luajit52"))]
-        MetaMethod::IPairs => Cow::Borrowed("__ipairs"),
-        #[cfg(feature = "mlua_lua54")]
-        MetaMethod::Close => Cow::Borrowed("__close"),
-        #[cfg(feature = "mlua_luau")]
-        MetaMethod::Iter => Cow::Borrowed("__iter"),
-        _ => Cow::Borrowed("unknown"),
-    }
-}
 
 #[cfg(feature = "mlua_send")]
 ///used by the `mlua_send` feature
@@ -130,4 +82,149 @@ impl<T: ToTypename> ToTypename for UserDataRefMut<T> {
     fn to_function_param() -> Vec<crate::FunctionParam> {
         T::to_function_param()
     }
+}
+
+create_named_parameters!(HelpParams with
+    ty: Option<String>,
+    method: Option<String>,
+);
+///Generates a help function for a specific type.
+pub fn generate_help_for_type(
+    lua: &mlua::Lua,
+    ty: TypeGenerator,
+) -> mlua::Result<TypedFunction<Option<String>, mlua::String>> {
+    TypedFunction::from_rust(
+        move |lua, method: Option<String>| {
+            let res = match (method, &ty) {
+                (None, crate::TypeGenerator::Record(record_generator)) => {
+                    let mut to_show = record_generator.type_doc.to_string();
+                    to_show.push_str("Methods:\n");
+                    record_generator.all_functions().for_each(|v| {
+                        to_show.push_str(&v.name.to_string());
+                        to_show.push_str(" : ");
+                        to_show.push_str(&type_to_string(&v.into_type(), false));
+                        to_show.push('\n');
+                    });
+                    to_show.push_str("Fields:\n");
+                    record_generator.fields.iter().for_each(|v| {
+                        to_show.push_str(&v.name.to_string());
+                        to_show.push_str(" : ");
+                        to_show.push_str(&type_to_string(&v.ty, false));
+                    });
+                    to_show
+                }
+                (None | Some(_), crate::TypeGenerator::Enum(enum_generator)) => {
+                    let mut to_show = enum_generator.type_doc.to_string();
+                    to_show.push_str("Variants:\n");
+                    enum_generator.variants.iter().for_each(|v| {
+                        to_show.push_str(&v.to_string());
+                        to_show.push('\n');
+                    });
+                    to_show
+                }
+                (Some(method), crate::TypeGenerator::Record(record_generator)) => record_generator
+                    .all_functions()
+                    .map(|v| (&v.name, v.get_all_as_types().collect_vec()))
+                    .chain(
+                        record_generator
+                            .fields
+                            .iter()
+                            .map(|v| (&v.name, vec![v.ty.clone()])),
+                    )
+                    .find(|v| v.0.to_string() == method)
+                    .map(|v| {
+                        let mut to_show = v.0.to_string();
+                        to_show.push_str(" : ");
+                        let length = to_show.len();
+                        let start = " ".repeat(length);
+                        to_show.reserve(start.len() * (v.1.len() * 15 /* function() takes up 10 characters, so 15 per type is probably a good enough guess */));
+                        v.1.into_iter().enumerate().for_each(|(v,i)| {
+                            if v > 0 {
+                                to_show.push('\n');
+                                to_show.push_str(&start);
+                            }
+                            to_show.push_str(&type_to_string(&i, false));
+                        });
+                        if let Some(x) = record_generator.documentation.get(v.0) {
+                            to_show.push('\n');
+                            to_show.push_str(x);
+                        }
+                        to_show
+                    })
+                    .unwrap_or_else(|| {
+                        let ty = type_to_string(&record_generator.ty, false);
+                        format!("{method} is not a part of {ty}")
+                    }),
+            };
+            lua.create_string(res)
+        },
+        lua,
+    )
+}
+/// Generates a function that is capable of returning the documentation of any type.
+///
+/// The first argument is the type you want to get the documentation for.
+///
+/// The second argument is the method/field you want to get the documentation for.
+///
+/// Both arguments can be nil. If the first is nil then it will print the documentation for the type that is marked as inlined
+///
+/// If the second argument is nil then it will print the documentation of the found type rather than a specific method/field
+///
+/// Ignores the second argument when the type is an enum.
+pub fn generate_help(
+    lua: &mlua::Lua,
+    types: TypeWalker,
+) -> mlua::Result<TypedFunction<HelpParams, mlua::String>> {
+    TypedFunction::from_rust(
+        move |lua, params: HelpParams| {
+            let mut found_types = types
+                .iter()
+                .filter(|x| match &params.ty {
+                    None => x.is_inlined(),
+                    Some(searching_for) => {
+                        crate::type_to_string(x.type_name(), false).starts_with(searching_for)
+                    }
+                })
+                .collect::<Vec<_>>();
+            found_types.sort_by_cached_key(|v| match &params.ty {
+                None => 10,
+                Some(searching_for) => {
+                    let ty_name = crate::type_to_string(v.type_name(), false);
+                    let res =
+                        searching_for
+                            .as_bytes()
+                            .iter()
+                            .enumerate()
+                            .try_fold(0, |acc, (i, v)| {
+                                if ty_name.as_bytes()[i] == *v {
+                                    ControlFlow::Continue(acc + 1)
+                                } else {
+                                    ControlFlow::Break(acc)
+                                }
+                            });
+                    match res {
+                        ControlFlow::Break(x) => x,
+                        ControlFlow::Continue(x) => x,
+                    }
+                }
+            });
+
+            match found_types.first() {
+                None => {
+                    let types = types
+                        .iter()
+                        .map(|v| type_to_string(v.type_name(), false))
+                        .join("\n");
+                    lua.create_string(
+                        "Could not find type for help.\nAvailable types:\n".to_owned() + &types,
+                    )
+                }
+                Some(found_type) => {
+                    generate_help_for_type(lua, (*found_type).to_owned())?.call(params.method)
+                }
+            }
+        },
+        lua,
+    )
 }

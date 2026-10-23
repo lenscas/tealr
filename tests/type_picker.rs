@@ -1,8 +1,7 @@
 use mlua::{IntoLua, Lua};
 use tealr::{
-    create_union_mlua,
-    mlu::{mlua::FromLua, TealData, TealDataMethods, TypedFunction, UserData},
-    ToTypename, TypeWalker,
+    ToTypename, TypeWalker, create_union_mlua,
+    mlu::{TealData, TealDataMethods, TypedFunction, UserData, mlua::FromLua},
 };
 
 create_union_mlua!(enum X = String | f32 | bool);
@@ -25,7 +24,7 @@ impl TealData for Example {
 }
 
 #[test]
-fn test_limited() {
+fn type_picker() {
     let file_contents = TypeWalker::new()
         .process_type::<Example>()
         .to_json()

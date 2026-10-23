@@ -101,6 +101,20 @@ pub trait TealDataMethods<T: ToTypename> {
     /// - `is(typename: string):boolean` - given the name of a type, returns true if it is the correct name
     /// - `tag():string` - returns the `typename` of this type
     fn add_tag(&mut self) -> &mut Self;
+    /// Adds an overload to the next function that will be registered.
+    ///
+    /// Tealr does _not_ check if the overload is compatible with the function being registered.
+    ///
+    /// Nor does it check if the given function properly works as the overload promises it does.
+    ///
+    /// It is up to _you_ to ensure that it works as advertised.
+    fn add_overload<Arguments: TealMultiValue, Returns: TealMultiValue>(&mut self) -> &mut Self;
+    /// Hides the signature of the function implementation from the generation of .d.tl files, .help() and online documentation.
+    /// Any overloads will still show up however.
+    ///
+    /// Useful when you have to supply a signature to the implementation that is much broader than you would like to expose to
+    /// support the given overloads.
+    fn hide_main(&mut self) -> &mut Self;
 }
 
 ///collects every instance that a type has

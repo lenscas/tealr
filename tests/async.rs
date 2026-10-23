@@ -1,9 +1,9 @@
 use tealr::{
-    mlu::{
-        mlua::{FromLua, Lua, Result},
-        TealData, TealDataMethods, UserData,
-    },
     ToTypename, TypeWalker,
+    mlu::{
+        TealData, TealDataMethods, UserData,
+        mlua::{FromLua, Lua, Result},
+    },
 };
 //this example shows how the new traits allow you to generate the .d.tl file
 //and shows how to use them to share data with lua
@@ -66,11 +66,7 @@ fn async_fn() -> Result<()> {
     if let serde_json::Value::String(x) = x {
         *x = tealr::get_tealr_version().to_string();
     }
-
-    assert_eq!(
-        serde_json::to_string(&generated).unwrap(),
-        serde_json::to_string(&original).unwrap()
-    );
+    assert_eq!(generated, original);
 
     //how you pass this type to lua hasn't changed:
     let lua = Lua::new();

@@ -1,4 +1,4 @@
-use crate::{mlu::teal_data_macros::TealDataMacros, ToTypename};
+use crate::{ToTypename, mlu::teal_data_macros::TealDataMacros};
 
 use super::{TealDataFields, TealDataMethods};
 

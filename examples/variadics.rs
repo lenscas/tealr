@@ -1,7 +1,7 @@
 use mlua::Variadic;
 use tealr::{
-    mlu::{TealData, TypedFunction},
     ToTypename, TypeWalker,
+    mlu::{TealData, TypedFunction},
 };
 use tealr_derive::MluaUserData;
 

@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
 use tealr::{
-    create_generic_mlua,
-    mlu::{mlua::FromLua, TealData, TealDataMethods, TypedFunction, UserData},
-    ToTypename, TypeWalker,
+    ToTypename, TypeWalker, create_generic_mlua,
+    mlu::{TealData, TealDataMethods, TypedFunction, UserData, mlua::FromLua},
 };
 
 create_generic_mlua!(X);

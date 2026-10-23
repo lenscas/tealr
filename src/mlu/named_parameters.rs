@@ -25,10 +25,12 @@
 #[macro_export]
 macro_rules! mlua_create_named_parameters {
     ($type_name:ident with $($field_name:ident : $field_type_name:ty, )*) => {
+        #[allow(missing_docs)]
         pub struct $type_name {
             $(pub $field_name : $field_type_name,)*
         }
         impl $crate::ToTypename for $type_name {
+            #[allow(clippy::vec_init_then_push)]
             fn to_typename() -> $crate::Type {
                 let mut x = Vec::new();
                 $(
@@ -36,6 +38,7 @@ macro_rules! mlua_create_named_parameters {
                 )*
                 std::convert::From::from($crate::Type::Tuple(x))
             }
+            #[allow(clippy::vec_init_then_push)]
             fn to_function_param() -> Vec<$crate::FunctionParam> {
                 let mut x = Vec::new();
                 $(

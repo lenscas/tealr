@@ -1,9 +1,9 @@
 use tealr::{
-    mlu::{
-        mlua::{FromLua, Lua, Result},
-        TealData, TealDataMethods, UserData,
-    },
     ToTypename, TypeWalker,
+    mlu::{
+        TealData, TealDataMethods, UserData,
+        mlua::{FromLua, Lua, Result},
+    },
 };
 #[derive(Clone, UserData, ToTypename)]
 struct Example {}
@@ -34,7 +34,7 @@ impl TealData for Example {
 }
 
 #[test]
-fn main() -> Result<()> {
+fn named_parameters() -> Result<()> {
     let file_contents = TypeWalker::new()
         .process_type::<Example>()
         .to_json()

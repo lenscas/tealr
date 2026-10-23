@@ -1,4 +1,4 @@
-use crate::{type_walker::GlobalInstance, ToTypename};
+use crate::{ToTypename, type_walker::GlobalInstance};
 
 pub(crate) struct InstanceWalker {
     doc: String,

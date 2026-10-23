@@ -1,0 +1,892 @@
+<%
+function render(str)
+-%><%=str-%><%
+end
+function render_html(str)
+-%><%-str-%><%
+end
+
+local renderer = get_type_renderer(render, render_html)
+local type_name_getter = get_type_renderer(function() end)
+
+function render_function(func, generics)
+    renderer["function"](func, {generics = generics})
+end
+function render_type(ty, generics)
+    type_to_string(ty,renderer, {generics = generics})
+end
+
+local macro_renderer = getMacroRenderer(render,render_function, render_type)
+function split_used_by(users)
+    local as_params = {}
+    local as_returns = {}
+    local as_fields = {}
+    local as_inherits = {}
+    for key, user in ipairs(users) do
+        if #user.as_params > 0 then
+            table.insert(as_params, {
+                ty=user.ty,
+                as_params=user.as_params
+            })
+        end
+        if #user.as_return > 0 then
+            table.insert(as_returns, {
+                ty=user.ty,
+                as_returns=user.as_return
+            })
+        end
+        if #user.as_fields > 0 then
+            table.insert(as_fields, {
+                ty=user.ty,
+                as_fields=user.as_fields
+            })
+        end
+        if #user.inherits > 0 then
+            table.insert(as_inherits, {ty=user.ty, as_inherits=user.inherits})
+        end
+    end
+    return as_params,as_returns,as_fields, as_inherits
+end
+
+function render_used_by(users)
+    local as_params,as_returns,as_fields, as_inherits = split_used_by(users)
+    local function render(to_render, name, field_name)
+        if #to_render > 0 then
+            
+%>
+            <h3 class="is-size-5"><%=name%></h3>
+            <p>
+                <ul>
+<%
+                    for _k, used_in_type in ipairs(to_render) do
+                        for _k, used_by in ipairs(used_in_type[field_name]) do
+%> 
+                            <li style="margin-top:1em; margin-bottom:1em;">
+                                <code class="is-size-6">
+                                    <a
+                                        href="<%=type_to_link(used_in_type.ty) .. "#".. (used_by.name or "" )%>"
+                                    >
+                                        <%=type_name_getter.single(used_in_type.ty, {})..((used_by.name and "." .. used_by.name) or "" )%>
+                                    </a>
+                                    <span>: </span>
+                                    <span>
+                                        <%render_type((used_by.signature or used_by), map(used_in_type.ty.generics, function(a) return a end))%>
+                                    </span>
+                                </code>
+                            </li>
+<% 
+                        end
+                    end
+%>
+                </ul>
+            <p>
+<%
+        end
+    end
+%>
+    <div class="panel max-width">
+        <input type="checkbox" id="type-uses" class="is-hidden hideable-state"/>
+        <div class="panel-block is-hidden hideable-content">
+<%
+            render(as_params,"As Parameter:","as_params")
+            render(as_returns,"Returned by:","as_returns")
+            render(as_fields,"As field:","as_fields")
+            render(as_inherits,"Inherits:","as_inherits")
+%>
+        </div>
+    </div>
+<%
+end
+
+
+function is_string_starting_with(str,start)
+   return string.sub(str,1,string.len(start))==start
+end
+
+function get_string_from(str,from)
+    return string.sub(str,from,string.len(str))
+end
+
+local function headingToSize(heading) 
+    return "is-" .. get_string_from(heading, 1)
+end
+
+function render_markdown(markdown)
+    local code_to_compile = nil
+    local skip_rust_example = false
+    local original_codeblock = nil
+    local transformer = function(toTransform)
+        if toTransform:IsStart() then
+            local start = toTransform:GetStartOrNil()
+            if start:IsCodeBlock() then
+                local block = start:GetCodeBlockOrNil()
+                original_codeblock = block
+                local fence = block:GetFencedOrNil()
+                if fence == "teal_lua" then
+                    code_to_compile = "local " .. library_name .. " = require(\""..definition_file_folder.."/" .. library_name .."\")"
+                    return
+                elseif is_string_starting_with(fence, "rs") or is_string_starting_with(fence,"rust") then
+                    skip_rust_example = true
+                    return
+                end
+            elseif start:IsLink() then
+                local link_type,to,title, identifier = start:GetLinkOrNil()
+                if is_string_starting_with(to,"#") then
+                    to = create_link(get_string_from(to,1))
+                elseif not is_string_starting_with(to,"http") then
+                    to = create_link(to)
+                end
+                return markdown_event_creator.NewStartFrom(start.NewLinkFrom(link_type,to,title,identifier))
+            elseif start:IsHeading() then
+                local heading_level, fragment, classes = start:GetHeadingOrNil()
+                table.insert(classes,"subtitle")
+                table.insert(classes,headingToSize(heading_level))
+                return markdown_event_creator.NewStartFrom(
+                    markdown_tag_creator.NewHeadingFrom(heading_level,fragment,classes, {})
+                )
+                
+            end
+        elseif code_to_compile ~= nil and toTransform:IsText() then
+            local text = toTransform:GetTextOrNil()
+            code_to_compile = code_to_compile .. '\n'.. text
+            return
+        elseif skip_rust_example and toTransform:IsText() then
+            return
+        elseif skip_rust_example and toTransform:IsEnd() then
+            local blockEnd = toTransform:GetEndOrNil()
+            if blockEnd:IsCodeBlock() then
+                skip_rust_example = false
+                return
+            end
+        elseif code_to_compile ~= nil and toTransform:IsEnd() then
+            local blockEnd = toTransform:GetEndOrNil()
+            if blockEnd:IsCodeBlock() then
+                local codeBlock = original_codeblock
+                if codeBlock:IsFenced() and codeBlock:GetFencedOrNil() == "teal_lua" then
+                    local tl = require("tl")
+                    local env = tl.init_env(false,false,true)
+                    local output,result = tl.gen(code_to_compile,env)
+                    if #result.syntax_errors > 0 then
+                        print("Syntax errors found at code:")
+                        print(code_to_compile)
+                        print("Errors:")
+                        for k,v in ipairs(result.syntax_errors) do
+                            print("Syntax error found at:" .. v.msg .. ' x=' .. tostring(v.x) .. ' y=' ..tostring(v.y))
+                        end
+                    end
+                    if #result.type_errors > 0 then
+                        print("Type errors found at code:")
+                        print(code_to_compile)
+                        print("Errors:")
+                        for k,v in ipairs(result.type_errors) do
+                            print("Type error found at:" .. v.msg .. ' x=' .. tostring(v.x) .. ' y=' ..tostring(v.y))
+                        end
+                    end
+                    local teal_code = code_to_compile
+                    code_to_compile = nil
+                    return {
+                        markdown_event_creator.NewHtmlFrom(
+                            [[
+                                <div class="tabs">
+                                    <ul>
+                                        <li class="select-teal"><a>Teal</a></li>
+                                        <li class="select-lua"><a>Lua</a></li>
+                                    </ul>
+                                </div>
+                            ]]
+                        ),
+                        markdown_event_creator.NewHtmlFrom("<div class=\"code-block-teal\">"),
+                        markdown_event_creator.NewStartFrom(
+                            markdown_tag_creator.NewCodeBlockFrom(
+                                markdown_codeblock_kind_creator.NewFencedFrom("lua")
+                            )
+                        ),
+                        markdown_event_creator.NewTextFrom(teal_code),
+                        markdown_event_creator.NewEndFrom(
+                            markdown_tag_end_creator.NewCodeBlock()
+                        ),
+                        markdown_event_creator.NewHtmlFrom("</div>"),
+                        markdown_event_creator.NewHtmlFrom("<div class=\"code-block-lua\">"),
+                        markdown_event_creator.NewStartFrom(
+                            markdown_tag_creator.NewCodeBlockFrom(
+                                markdown_codeblock_kind_creator.NewFencedFrom("lua")
+                            )
+                        ),
+                        markdown_event_creator.NewTextFrom(output),
+                        markdown_event_creator.NewEndFrom(
+                            markdown_tag_end_creator.NewCodeBlock()
+                        ),
+                        markdown_event_creator.NewHtmlFrom("</div>")
+                    }
+                end
+            end
+        end
+        return toTransform
+    end
+%>
+    <div class="container max-width">
+        <%- parse_markdown(markdown, transformer) -%>
+    </div>
+<% 
+end
+
+
+
+function parts_are_empty(record, parts)
+    for _,part in ipairs(parts) do
+        local part = record[part]
+        if part ~= nil and #part > 0 then
+            for _, member in ipairs(part) do
+                if (not member.is_hidden) or (member.overloads and #member.overloads > 0) then
+                    return false
+                end
+            end
+        end
+    end
+    return true
+end
+
+function render_macro_expr(macro)
+%>
+    <code class="highlight">
+        <%render(macro)%>
+    </code>
+<%
+end
+
+function render_record_part(header_name, record, parts, generics)
+    if parts_are_empty(record, parts) then
+        return
+    end
+
+    function render_part(part_name, record)
+        local work_with = record[part_name]
+        local fallback_docs = ""
+        if part_name == "tag" then
+            if record.tag then
+                work_with = {{
+                    name="where",
+                    value= record.tag
+                }}
+                fallback_docs = "The `where` macroexp tells teal how to differentiate between types at run time"
+            else 
+                work_with = {}
+            end
+        else
+            work_with = dedupe_by(work_with,function(x)return x.name end)
+        end
+        for x, member in pairs(work_with) do
+            local duped_generics = map(generics or {}, function(a) return a end)
+            local to_render = nil
+            
+            local to_work_with = member
+            local overloads = nil
+            if part_name == "methods" then
+                overloads = map(member.overloads, function(a) return a end)
+                if member.is_hidden then
+                    if #overloads > 0 then
+                        to_work_with = table.remove(overloads,1)
+                    else
+                        to_work_with = nil
+                    end
+                end
+                to_render = function(member) return render_function(member, duped_generics) end
+            elseif part_name == "fields" or part_name == "static_fields" then
+                to_render = function(member) return render_type(member.ty, duped_generics) end
+            elseif part_name == "tag" then
+                to_render = function(member) return render_macro_expr(member.value) end
+            elseif part_name == "macro_expressions" then
+                to_render = function(member) macro_renderer(member, duped_generics) end
+            end
+            if to_work_with == nil then
+                return
+            end
+%>
+            <div class="card block">
+                <div id="<%= member.name -%>" class="card-heading">
+                    <code class="card-header-title">
+                        <div class="member_name">
+                            <%
+                                if part_name == "macro_expressions" and member.is_meta_method then
+                                    render("metamethod ")
+                                end
+                            %>
+                            <p><%= member.name -%>:
+                        </div>
+                        <div>
+                            <p>
+                                <% to_render(to_work_with) %>
+                            </p>
+                            <%
+                                for _,v in ipairs(overloads or {}) do
+                            %>
+                                    <p> <% to_render(v) %> </p>
+                            <%
+                                end
+                            %>
+                        </div>
+                    </code>
+                </div>
+                <% 
+                    if record.documentation[member.name] or fallback_docs ~= "" then 
+                %>
+                        <div class="card-content content">
+                            <% render_markdown(record.documentation[member.name] or fallback_docs) %>
+                        </div>
+                <%
+                    end
+                %>
+            </div>
+<%
+        end
+    end
+
+%>
+    <div class="panel max-width">
+        <div class="panel-heading">
+            <p class="subtitle"><%=header_name-%>:</p>
+        </div>
+        <div class="panel-block">
+            <div class="container max-width">
+<%
+                for _,name in ipairs(parts) do
+                    render_part(name,record)
+                end
+%>
+            </div>
+        </div>
+    </div>
+<%
+end
+
+function render_inherits(record,generics)
+    local inherits = {}
+    if record.is_user_data then
+        table.insert(inherits, "userdata")
+    else
+        inherits = concat_array(inherits, record.implements)
+    end
+    
+%>
+    <div class="panel max-width">
+        <div class="panel-heading">
+            <p class="subtitle">Inherits:</p>
+        </div>
+        <div class="panel-block">
+            <div class="container max-width">
+<%
+                for _,inherit in ipairs(inherits) do
+%>
+                    <div class="card block">
+                        <div class="card-heading">
+                            <code class="card-header-title">
+<%
+                                if type(inherit) == "string" then
+                                    render(inherit)
+                                else
+                                    render_type(inherit, map(generics, function(a) return a end))
+                                end
+%>
+                            </code>
+                        </div>
+                    </div>
+<%
+                end
+%>
+            </div>
+        </div>
+    </div>
+<%
+end
+
+function render_definition_files()
+    for k,v in pairs(definition_config) do 
+%>
+        <a class="navbar-item" href="definitions/<%=  library_name .. v.extension %>"><%=k%></a>
+<% 
+    end
+end
+
+
+local page_name
+local type_name
+local type_members
+local used_by
+local t = page:GetTypeOrNil()
+local index = page:GetIndexPageOrNil()
+local custom_page = page:GetCustomPageOrNil()
+local generics
+if t then
+    type_members = t.type_members
+    local ty = type_members:type_name()
+    type_name = type_to_string(ty, type_name_getter, {})
+    used_by = t.used_by
+    
+    if type_members:IsRecord() then
+        local record = type_members:GetRecordOrNil()
+        if record.ty:IsSingle() then
+            local single = record.ty:GetSingleOrNil()
+            generics = single.generics
+        end
+    end
+elseif index then
+    type_name = index.type_name
+    type_members = index.type_members
+elseif custom_page then
+    page_name = custom_page.name
+end
+page_name = page_name or type_name
+%>
+
+<!DOCTYPE html>
+<html>
+
+<head id="head">
+    <link id="bulma-theme" rel="stylesheet" href="https://unpkg.com/bulmaswatch/default/bulmaswatch.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <link id="codeHighlight" rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/a11y-light.min.css"
+        integrity="sha512-WDk6RzwygsN9KecRHAfm9HTN87LQjqdygDmkHSJxVkVI7ErCZ8ZWxP6T8RvBujY1n2/E4Ac+bn2ChXnp5rnnHA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/a11y-dark.min.css" -->
+    <!-- integrity="sha512-Vj6gPCk8EZlqnoveEyuGyYaWZ1+jyjMPg8g4shwyyNlRQl6d3L9At02ZHQr5K6s5duZl/+YKMnM3/8pDhoUphg==" -->
+    <!-- crossorigin="anonymous" referrerpolicy="no-referrer" /> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"
+        integrity="sha512-IaaKO80nPNs5j+VLxd42eK/7sYuXQmr+fyywCNA0e+C6gtQnuCXNtORe9xR4LqGPz5U9VpH+ff41wKs/ZmC3iA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <title><%= page_name-%></title>
+    <style>
+        html,
+        body,
+        #app {
+            height: 100%;
+        }
+
+        #app {
+            min-height: 100%;
+        }
+
+        .footer {
+            margin-top: -12px;
+        }
+        .hideable-state:checked+.hideable-content {
+            display: block !important;
+        }
+
+        .sticky-sidebar {
+            height: calc(100vh - 3.25rem);
+            position: sticky;
+            top: 0;
+            overflow: auto;
+        }
+        .max-width {
+            max-width:100%;
+        }
+        .hidden-themes-selector {
+            display:none;
+        }
+        div:target {
+            border: 1px solid darkorange;
+        }
+        div.member_name {
+            align-self: baseline;
+            margin-right: 1em;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <nav class="navbar has-shadow">
+            <div class="navbar-brand">
+                <div class="navbar-item is-hidden-desktop">
+                    <label for="menu-toggle" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                    </label>
+                    
+                </div>
+            </div>
+            <div class="navbar-menu" id="navbar-id">
+                <div class="navbar-start">
+                    <div class="navbar-item has-dropdown is-hoverable">
+                        <a class="navbar-link hidden-themes-selector">
+                            Themes
+                        </a>
+                        <div class="navbar-dropdown is-boxed">
+                            <div class="columns">
+                                <div class="column theme-select-column1"></div>
+                                <div class="column theme-select-column2"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navbar-item has-dropdown is-hoverable">
+                        <a class="navbar-link">
+                            Definition files
+                        </a>
+                        <div class="navbar-dropdown is-boxed">
+                        <%
+                            render_definition_files()
+                        %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <section class="main-content columns is-fullheight">
+            <input type="checkbox" id="menu-toggle" class="is-hidden hideable-state"/>
+            <aside id="sidebar" class="column is-2 is-narrow-mobile is-fullheight section is-hidden-touch sticky-sidebar hideable-content">
+                <div class="is-hidden-desktop">
+                    <div class="dropdown is-hoverable">
+                        <div class="dropdown-trigger">
+                            <label for="theme-toggle" class="button hidden-themes-selector" aria-haspopup="true" aria-controls="dropdown-menu4">
+                                <span>Themes</span>
+                                <span class="icon is-small">
+                                    <i class="fa fa-angle-down" aria-hidden="true"></i>
+                                </span>
+                            </label>
+                        </div>
+                        <input type="checkbox" id="theme-toggle" class="is-hidden hideable-state"/>
+                        <div class="dropdown-menu hideable-content" id="dropdown-menu4" role="menu">
+                            <div class="dropdown-content">
+                                <div class="columns">
+                                    <div class="column theme-select-column1"></div>
+                                    <div class="column theme-select-column2"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dropdown is-hoverable">
+                        <div class="dropdown-trigger">
+                            <label for="definition-files-toggle" class="button" aria-haspopup="true" aria-controls="dropdown-menu5">
+                                <span>Def files</span>
+                                <span class="icon is-small">
+                                    <i class="fa fa-angle-down" aria-hidden="true"></i>
+                                </span>
+                            </label>
+                        </div>
+                        <input type="checkbox" id="definition-files-toggle" class="is-hidden hideable-state"/>
+                        <div class="dropdown-menu hideable-content" id="dropdown-menu5" role="menu">
+                            <div class="dropdown-content">
+                                <% render_definition_files() %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="menu-label is-hidden-touch">Navigation</p>
+                <ul class="menu-list">
+                    <% for i, side_bar_type in pairs(sidebar) do %>
+                        <li>
+                            <a href="<%= side_bar_type.link_to -%>" class="{is_active}">
+                                <span class="icon"><i class="fa fa-file"></i></span>
+                                <%= side_bar_type.name -%>
+                            </a>
+                            <ul>
+                                <% for z, type_member in pairs(side_bar_type.members) do %>
+                                    <li>
+                                        <a href="<%= side_bar_type.link_to -%>#<%= type_member.name -%>">
+                                            <span class="icon is-small"><i class="fa fa-link"></i></span>
+                                            <%= type_member.name -%>
+                                        </a>
+                                    </li>
+                                <% end %>
+                            </ul>
+                        </li>
+                    <% end %>
+                </ul>
+            </aside>
+            <div class="container column is-10">
+                <div class="section">
+                    <div class="panel">
+                        <div class="panel-heading">
+                            <h1 class="title">
+                                <%= page_name -%>
+                                <%
+                                    if page:IsType() then
+                                %>
+                                        <label style="float:right" for="type-uses" class="button">Uses</label>
+                                <%
+                                    end
+                                %>
+                            </h1>
+                        </div>
+                        <div class="panel-block">
+                            <div class="container max-width">
+                                <%
+                                    local custom_page = page:GetCustomPageOrNil()
+                                    if custom_page then
+                                        render_markdown(custom_page.markdown_content)
+                                    else
+                                        if page:IsType() then
+                                            render_used_by(used_by)
+                                        end
+                                        local record = type_members:GetRecordOrNil() 
+                                        if record then
+                                %>
+                                            <div class="panel max-width">
+                                                <div class="panel-heading">
+                                                    <p class="subtitle">Type doc:</p>
+                                                </div>
+                                                <div class="panel-block">
+                                                    <% render_markdown(record.type_doc or "") %>
+                                                </div>
+                                            </div>
+                                <%
+                                            render_record_part("Fields",record,{"fields","static_fields"}, generics)
+                                            render_record_part("Methods",record, {"methods",}, generics)
+                                            render_record_part("Teal macro expressions", record,{"tag", "macro_expressions"}, generics)
+
+                                            render_inherits(record, generics)
+                                            
+                                        end
+                                        local enum = type_members:GetEnumOrNil()
+                                        if enum then
+                                %>
+                                            <div class="panel max-width">
+                                                <div class="panel-heading">
+                                                    <p class="subtitle">Type doc:</p>
+                                                </div>
+                                                <div class="panel-block">
+                                                    <% render_markdown(enum.type_doc or "") %>
+                                                </div>
+                                            </div>
+                                            <div class="panel max-width">
+                                                <div class="panel-heading">
+                                                    <p class="subtitle">Variants</p>
+                                                </div>
+                                                <div class="panel-block">
+                                                    <div class="container max-width">
+                                                        <% for _, variant in ipairs(enum.variants) do %>
+                                                            <div class="card block">
+                                                                <div id="<%= variant %>" class="card-heading">
+                                                                    <code class="card-header-title"><p>"<%= variant %>" </p></code>
+                                                                </div>
+                                                            </div>
+                                                        <% end %>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                <%
+                                        end
+                                        if index then
+                                %>
+                                            <div class="panel max-width">
+                                                <div class="panel-heading">
+                                                    <p class="subtitle">Globals:</p>
+                                                </div>
+                                                <div class="panel-block">
+                                                    <div class="container max-width">
+                                                        <% for _, global_instance in ipairs(globals) do %>
+                                                            <div class="card block">
+                                                                <div id="<%= global_instance.name %>" class="card-heading">
+                                                                    <code class="card-header-title">
+                                                                        <h3>global <%= global_instance.name %> : <% render_type(global_instance.ty) %> </h3>
+                                                                    </code>
+                                                                </div>
+                                                        <%
+                                                                    if global_instance.doc then
+                                                        %>
+                                                                        <div class="card-content content">
+                                                        <%     
+                                                                            render_markdown(global_instance.doc)
+                                                        %>
+                                                                        </div>
+                                                        <%
+                                                                    end
+                                                        %>
+                                                            </div>
+                                                        <% end %>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                <%
+                                        end
+                                        if index then
+                                %>
+                                            <div class="panel max-width">
+                                                <div class="panel-heading">
+                                                    <p class="subtitle">Types:</p>
+                                                </div>
+                                                <div class="panel-block">
+                                                    <div class="container max-width">
+                                                        <%
+                                                            for _, teal_type in ipairs(all_types) do 
+                                                                local record = teal_type:GetRecordOrNil()
+                                                                if record and not record.should_be_inlined then
+                                                        %>
+                                                                    <div class="card block">
+                                                                        <div id="<%= record.type_name %>" class="card-heading">
+                                                                            <code class="card-header-title">
+                                                                                <p><% render_type(record.ty) %> </p>
+                                                                            </code>
+                                                                        </div>
+                                                                        <div class="card-content content">
+                                                                            <% render_markdown(record.type_doc) %>
+                                                                        </div>
+                                                                    </div>
+                                                        <% 
+                                                                end
+                                                            end
+                                                        %>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                <%
+                                        end
+                                    end
+                                %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    <script>
+        document.querySelectorAll(".hidden-themes-selector").forEach(x=>x.classList.remove("hidden-themes-selector"))
+        const bulmaTheme = document.getElementById("bulma-theme")
+        const isDarkTheme = {
+            "Cerulean": false,
+            "Cosmo": false,
+            "Cyborg": true,
+            "Darkly": true,
+            "Default": false,
+            "Flatly": false,
+            "Journal": false,
+            "Litera": false,
+            "Lumen": false,
+            "Lux": false,
+            "Materia": false,
+            "Minty": false,
+            "Nuclear": true,
+            "Pulse": false,
+            "Sandstone": false,
+            "Simplex": false,
+            "Slate": true,
+            "Solar": true,
+            "Spacelab": false,
+            "Superhero": true,
+            "United": false,
+            "Yeti": false
+        }
+        const lightHighlight = ` <link id="codeHighlight" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/a11y-light.min.css"
+        integrity="sha512-WDk6RzwygsN9KecRHAfm9HTN87LQjqdygDmkHSJxVkVI7ErCZ8ZWxP6T8RvBujY1n2/E4Ac+bn2ChXnp5rnnHA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />`
+        const darkHighlight = `<link id="codeHighlight" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/a11y-dark.min.css"
+integrity="sha512-Vj6gPCk8EZlqnoveEyuGyYaWZ1+jyjMPg8g4shwyyNlRQl6d3L9At02ZHQr5K6s5duZl/+YKMnM3/8pDhoUphg=="
+crossorigin="anonymous" referrerpolicy="no-referrer" />`
+        const setTheme = (str, name) => {
+            bulmaTheme.href = str;
+            document.getElementById("codeHighlight").remove()
+            const head = document.getElementById("head")
+            if (isDarkTheme[name]) {
+                head.insertAdjacentHTML("beforeend", darkHighlight)
+            } else {
+                head.insertAdjacentHTML("beforeend", lightHighlight)
+            }
+        }
+        const v = localStorage.getItem("editor_last_selected");
+        try {
+            if (v) {
+                const res = JSON.parse(v);
+                if (res && res.name && res.url) {
+                    setTheme(res.url, res.name)
+                }
+            }
+        } catch (e) {
+            console.error("Error while setting saved theme. Going back to default", e)
+            localStorage.removeItem("editor_last_selected")
+        }
+
+        fetch("https://jenil.github.io/bulmaswatch/api/themes.json")
+            .then(x => x.json())
+            .then(x => {
+
+                const max = x.themes.length / 2
+                const col1 = document.querySelectorAll(".theme-select-column1")
+                const col2 = document.querySelectorAll(".theme-select-column2")
+                x.themes.forEach((z, k) => {
+                    const createThemeButton = (el) => {
+                        const a = document.createElement("a")
+                        a.onclick = () => {
+                            console.log("got in click")
+                            setTheme(z.css, z.name)
+                            localStorage.setItem(
+                                "editor_last_selected",
+                                JSON.stringify({ url: z.css, name: z.name })
+                            );
+                        }
+                        a.text = z.name;
+                        const div = document.createElement("div")
+                        div.classList.add("navbar-item")
+                        div.appendChild(a)
+                        div.addEventListener("click",()=>{console.log("in div click")})
+                        el.appendChild(div)
+                    }
+                    
+                    if (k < max) {
+                        col1.forEach(createThemeButton)
+                    } else {
+                        col2.forEach(createThemeButton)
+                    }
+                })
+            })
+        const TEAL = "teal"
+        const LUA = "lua"
+        const getOpposite = (language) => language == TEAL ? LUA : TEAL
+        const preferredLanguage = localStorage.getItem("last_selected_language") || TEAL;
+        const disableLanguage = getOpposite(preferredLanguage)
+        const code_block = "code-block-"
+
+        const elementsToDisable = document.getElementsByClassName(code_block + disableLanguage)
+        for (var i = 0; i < elementsToDisable.length; i++) {
+            elementsToDisable[i].style.display = "none"
+        }
+
+        const selector = "select-"
+        const createSwitchLanguage = (newLang) =>
+            () => {
+                const oppositeLanguage = getOpposite(newLang)
+                const toShow = document.getElementsByClassName(code_block + newLang)
+
+                for (var i = 0; i < toShow.length; i++) {
+                    toShow[i].style.display = ""; // or
+                }
+                const toHide = document.getElementsByClassName(code_block + oppositeLanguage)
+                for (var i = 0; i < toHide.length; i++) {
+                    toHide[i].style.display = "none";
+                }
+                const removeFromActive = document.getElementsByClassName(selector + oppositeLanguage)
+                for (var i = 0; i < removeFromActive.length; i++) {
+                    removeFromActive[i].classList.remove("is-active")
+                }
+                const addToActive = document.getElementsByClassName(selector + newLang)
+                for (var i = 0; i < addToActive.length; i++) {
+                    addToActive[i].classList.add("is-active")
+                }
+                localStorage.setItem("last_selected_language", newLang)
+
+            }
+
+        const elementsToSetActive = document.getElementsByClassName(selector + preferredLanguage)
+        for (var i = 0; i < elementsToSetActive.length; i++) {
+            elementsToSetActive[i].classList.add("is-active")
+            elementsToSetActive[i].onclick = createSwitchLanguage(preferredLanguage)
+        }
+        const otherLangSelectors = document.getElementsByClassName(selector + disableLanguage)
+        for (var i = 0; i < otherLangSelectors.length; i++) {
+            otherLangSelectors[i].onclick = createSwitchLanguage(disableLanguage)
+        }
+    </script>
+    <script>
+        hljs.highlightAll();
+        document
+            .querySelectorAll('code.highlight')
+            .forEach(el => hljs.highlightElement(el));
+    </script>
+</body>
+
+</html>

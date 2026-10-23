@@ -25,13 +25,11 @@ impl CompileConfig {
             None => return Err(venial::Error::new("Missing code to run")),
         };
         match input.next() {
-            Some(TokenTree::Punct(x)) => {
-                if x.as_char() != ',' {
-                    return Err(venial::Error::new(format!(
-                        "Expected `,` got `{}`.",
-                        x.as_char()
-                    )));
-                }
+            Some(TokenTree::Punct(x)) if x.as_char() != ',' => {
+                return Err(venial::Error::new(format!(
+                    "Expected `,` got `{}`.",
+                    x.as_char()
+                )));
             }
             Some(x) => return Err(venial::Error::new(format!("Expected `,` got `{}`.", x))),
             None => (),

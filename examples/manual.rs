@@ -1,9 +1,9 @@
 use tealr::{
-    mlu::{
-        mlua::{FromLua, Lua, Result, UserData, UserDataMethods},
-        TealData, TealDataMethods, UserDataWrapper,
-    },
     ToTypename, TypeBody, TypeWalker,
+    mlu::{
+        TealData, TealDataMethods, UserDataWrapper,
+        mlua::{FromLua, Lua, Result, UserData, UserDataMethods},
+    },
 };
 //This example shows how to manually implement UserData using TealData
 //As you can see the amount of code is small and easy copy/paste able.
@@ -70,11 +70,11 @@ impl UserData for Example {
 
 impl TypeBody for Example {
     fn get_type_body() -> tealr::TypeGenerator {
-        let mut gen = tealr::RecordGenerator::new::<Self>(false);
-        gen.is_user_data = true;
-        <Self as TealData>::add_fields(&mut gen);
-        <Self as TealData>::add_methods(&mut gen);
-        gen.into()
+        let mut rec = tealr::RecordGenerator::new::<Self>(false);
+        rec.is_user_data = true;
+        <Self as TealData>::add_fields(&mut rec);
+        <Self as TealData>::add_methods(&mut rec);
+        rec.into()
     }
 }
 fn main() {

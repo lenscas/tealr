@@ -10,8 +10,8 @@ use crate::{Field, FunctionParam, FunctionRepresentation, NameContainer, Type};
 ///
 /// the emitted syntax will look like `[metamethod] {name}: function[<{generics}>]({args}): {return} = macroexp({args}):{returns} {expr} end`
 ///
-/// thus, a MacoExpr like
-/// ```
+/// thus, a MacroExp like
+/// ```rs
 /// use tealr::ToTypename;
 /// let x = tealr::MacroExpr {
 ///     name: "example".to_string().into(),
@@ -34,18 +34,18 @@ use crate::{Field, FunctionParam, FunctionRepresentation, NameContainer, Type};
     feature = "self_to_lua",
     tealr(tealr_name = crate)
 )]
-pub struct MacroExpr {
-    ///the name of the macro expression
+pub struct MacroExp {
+    /// the name of the macro expression
     pub name: NameContainer,
-    ///this is used to create the signature
+    /// this is used to create the signature
     pub signature: FunctionRepresentation,
-    ///the expression. You have to add the `return` keyword yourself. The `end` is added automatically
+    /// the expression. You have to add the `return` keyword yourself. The `end` is added automatically
     pub expr: String,
-    ///wether the macro expression is used to define a metamethod or not
+    /// wether the macro expression is used to define a metamethod or not
     pub is_meta_method: bool,
 }
 
-impl MacroExpr {
+impl MacroExp {
     ///Creates a new macro expression
     pub fn new(
         name: impl Into<Cow<'static, str>>,
@@ -71,7 +71,7 @@ impl MacroExpr {
             is_meta_method,
         }
     }
-    ///creates a new macroexpr that acts as a metamethod
+    ///creates a new macroexp that acts as a metamethod
     pub fn new_meta(
         name: impl Into<Cow<'static, str>>,
         args: Vec<Field>,
@@ -80,7 +80,7 @@ impl MacroExpr {
     ) -> Self {
         Self::new(name, args, returns, expr, true)
     }
-    ///creates a new macroexpr that acts as a normal method
+    ///creates a new macroexp that acts as a normal method
     pub fn new_method(
         name: impl Into<Cow<'static, str>>,
         args: Vec<Field>,

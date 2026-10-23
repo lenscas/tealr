@@ -1,8 +1,7 @@
 use mlua::IntoLua;
 use tealr::{
-    create_union_mlua,
-    mlu::{mlua::FromLua, TealData, TealDataMethods, TypedFunction, UserData},
-    ToTypename, TypeWalker,
+    ToTypename, TypeWalker, create_union_mlua,
+    mlu::{TealData, TealDataMethods, TypedFunction, UserData, mlua::FromLua},
 };
 
 create_union_mlua!(enum X = String | f32 | bool);
