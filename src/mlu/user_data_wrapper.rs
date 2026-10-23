@@ -35,7 +35,7 @@ where
     ///```
     ///# use std::borrow::Cow;
     ///# use mlua::{Lua, Result, UserData, UserDataMethods};
-    ///# use tealr::{Type, mlu::{TealData, TealDataMethods,UserDataWrapper}, TypeWalker, ToTypename,NamePart,TealType, KindOfType};
+    ///# use tealr::{Type, mlu::{TealData, TealDataMethods, UserDataWrapper}, TypeWalker, ToTypename, NamePart, TealType, KindOfType, TypeBody};
     /// struct Example {}
     /// impl TealData for Example {}
     /// impl ToTypename for Example {
@@ -48,8 +48,16 @@ where
     ///         let mut x = UserDataWrapper::from_user_data_methods(methods);
     ///         <Self as TealData>::add_methods(&mut x);
     ///     }
-    ///}
-    ///
+    /// }
+    /// impl TypeBody for Example {
+    ///     fn get_type_body() -> tealr::TypeGenerator {
+    ///         let mut generator = tealr::RecordGenerator::new::<Self>(false);
+    ///         generator.is_user_data = true;
+    ///         <Self as TealData>::add_fields(&mut generator);
+    ///         <Self as TealData>::add_methods(&mut generator);
+    ///         generator.into()
+    ///     }
+    /// }
     ///```
     pub fn from_user_data_methods(cont: &'a mut Container) -> Self {
         Self {

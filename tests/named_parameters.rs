@@ -34,7 +34,7 @@ impl TealData for Example {
 }
 
 #[test]
-fn main() -> Result<()> {
+fn named_parameters() -> Result<()> {
     let file_contents = TypeWalker::new()
         .process_type::<Example>()
         .to_json()

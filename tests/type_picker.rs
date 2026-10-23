@@ -24,7 +24,7 @@ impl TealData for Example {
 }
 
 #[test]
-fn test_limited() {
+fn type_picker() {
     let file_contents = TypeWalker::new()
         .process_type::<Example>()
         .to_json()

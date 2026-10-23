@@ -37,7 +37,7 @@
         "Typewalker",
         "userdata"
     ],
-    "rust-analyzer.cargo.features": ["tealr/mlua_lua54"],
+    "rust-analyzer.cargo.features": ["tealr/mlua_lua54", "tealr/mlua"],
     "Lua.addonManager.enable": true,
     "Lua.workspace.userThirdParty": ["./addons"],
     "Lua.workspace.library": [

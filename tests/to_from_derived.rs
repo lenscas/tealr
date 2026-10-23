@@ -57,7 +57,7 @@ struct Example {
 }
 
 #[test]
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn to_from_derived() -> Result<(), Box<dyn std::error::Error>> {
     //lets first generate the definition file
     let file_contents = TypeWalker::new()
         .process_type::<V>()

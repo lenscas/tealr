@@ -66,11 +66,7 @@ fn async_fn() -> Result<()> {
     if let serde_json::Value::String(x) = x {
         *x = tealr::get_tealr_version().to_string();
     }
-
-    assert_eq!(
-        serde_json::to_string(&generated).unwrap(),
-        serde_json::to_string(&original).unwrap()
-    );
+    assert_eq!(generated, original);
 
     //how you pass this type to lua hasn't changed:
     let lua = Lua::new();
